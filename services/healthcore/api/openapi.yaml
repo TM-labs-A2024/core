@@ -1,3 +1,9 @@
+# Healthcore's backend is NOT generated using this openapi file.
+# The generation process for the backend consists on:
+#   - Generate the mysql_schema
+#   - Convert the mysql schema into a postgresql schema
+#   - Generate models with sqlc and DB code.
+#
 openapi: 3.0.3
 info:
   title: Healthcore API - TM LABS EMR
@@ -11,7 +17,7 @@ tags:
   - name: nurse
   - name: institution-user
   - name: institution
-  - name: medical-record
+  - name: health-record
   - name: government
   - name: specialty
 security:
@@ -330,7 +336,7 @@ paths:
           description: Patient not found
         "500":
           $ref: "#/components/responses/ErrorMessage"
-  /patients/{govId}/medical-records:
+  /patients/{govId}/health-records:
     get:
       tags:
         - patient
@@ -345,6 +351,54 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/ListPatientRecords"
+        "400":
+          $ref: "#/components/responses/ErrorMessage"
+        "404":
+          description: Patient not found
+        "500":
+          $ref: "#/components/responses/ErrorMessage"
+  /patients/{govId}/health-records/{specialtyId}:
+    get:
+      tags:
+        - patient
+      summary: List health records by patient and specialty Id
+      parameters:
+        - name: govId
+          in: path
+          description: Gov Id of patient to return
+          required: true
+          schema:
+            type: string
+        - name: specialtyId
+          in: path
+          description: Id of the specialty to search medical record
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/ListPatientRecords"
+        "400":
+          $ref: "#/components/responses/ErrorMessage"
+        "404":
+          description: Patient not found
+        "500":
+          $ref: "#/components/responses/ErrorMessage"
+  /patients/{govId}/health-records/specialties:
+    get:
+      tags:
+        - patient
+      summary: List health records by patient and specialty Id
+      parameters:
+        - name: govId
+          in: path
+          description: Gov Id of patient to return
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/ListSpecialties"
         "400":
           $ref: "#/components/responses/ErrorMessage"
         "404":
@@ -596,7 +650,7 @@ paths:
       summary: Add a new institutions to the system
       requestBody:
         required: true
-        $ref: "#/components/requestBodies/InsertInstitution"
+        $ref: "#/components/requestBodies/InsertInstitutionWithOGUser"
       responses:
         "200":
           $ref: "#/components/responses/ReadInstitution"
@@ -650,6 +704,20 @@ paths:
           $ref: "#/components/responses/ErrorMessage"
         "404":
           description: Institution not found
+        "500":
+          $ref: "#/components/responses/ErrorMessage"
+  /institutions/approved:
+    get:
+      tags:
+        - institution
+      summary: List ALL approved institutions
+      responses:
+        "200":
+          $ref: "#/components/responses/ListInstitutions"
+        "400":
+          $ref: "#/components/responses/ErrorMessage"
+        "404":
+          description: Doctor not found
         "500":
           $ref: "#/components/responses/ErrorMessage"
   /institutions/{institutionUuid}:
@@ -895,50 +963,50 @@ paths:
         "500":
           $ref: "#/components/responses/ErrorMessage"
   ######################################### MEDICAL RECORDS #######################################################
-  /medical-record:
+  /health-record:
     post:
       tags:
-        - medical-record
-      summary: Add a new medical-record to the system
+        - health-record
+      summary: Add a new health-record to the system
       requestBody:
         required: true
-        $ref: "#/components/requestBodies/InsertHealthRecord"
+        $ref: "#/components/requestBodies/InsertHealthReacord"
       responses:
         "200":
-          $ref: "#/components/responses/ReadHealthRecords"
+          $ref: "#/components/responses/ReadHealthReacords"
         "400":
           $ref: "#/components/responses/ErrorMessage"
         "500":
           $ref: "#/components/responses/ErrorMessage"
-  /medical-record/{healthRecordUuid}:
+  /health-record/{healthReacordUuid}:
     get:
       tags:
-        - medical-record
-      summary: Find medical-record by UUID
+        - health-record
+      summary: Find health-record by UUID
       parameters:
-        - name: healthRecordUuid
+        - name: healthReacordUuid
           in: path
-          description: UUID of medical-record to return
+          description: UUID of health-record to return
           required: true
           schema:
             $ref: "#/components/schemas/UUID"
       responses:
         "200":
-          $ref: "#/components/responses/ReadHealthRecords"
+          $ref: "#/components/responses/ReadHealthReacords"
         "400":
           $ref: "#/components/responses/ErrorMessage"
         "404":
-          description: HealthRecord not found
+          description: HealthReacord not found
         "500":
           $ref: "#/components/responses/ErrorMessage"
     delete:
       tags:
-        - medical-record
-      summary: Deletes a medical-record on the DB ONLY
+        - health-record
+      summary: Deletes a health-record on the DB ONLY
       parameters:
-        - name: healthRecordUuid
+        - name: healthReacordUuid
           in: path
-          description: HealthRecord id to delete
+          description: HealthReacord id to delete
           required: true
           schema:
             $ref: "#/components/schemas/UUID"
@@ -957,13 +1025,7 @@ paths:
       summary: Returns a list of specialties
       responses:
         "200":
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Specialty"
+          $ref: "#/components/responses/ListSpecialties"
         "400":
           $ref: "#/components/responses/ErrorMessage"
         "404":
@@ -1064,6 +1126,8 @@ components:
     Doctor:
       type: object
       properties:
+        institutionUuid:
+          $ref: "#/components/schemas/UUID"
         firstname:
           type: string
           example: "José"
@@ -1088,6 +1152,8 @@ components:
     Nurse:
       type: object
       properties:
+        institutionUuid:
+          $ref: "#/components/schemas/UUID"
         firstname:
           type: string
           example: "José"
@@ -1109,12 +1175,6 @@ components:
         credentials:
           type: string
           example: "D5767898908"
-        pending:
-          type: boolean
-          example: true
-        patientPending:
-          type: boolean
-          example: true
     Patient:
       type: object
       properties:
@@ -1142,12 +1202,6 @@ components:
         pending:
           type: boolean
           example: false
-        status:
-          type: string
-          example: "hospitalizado"
-        bed:
-          type: string
-          example: "b-185"
     Institution:
       type: object
       properties:
@@ -1157,11 +1211,31 @@ components:
         govId:
           type: string
           example: J-99885566
+        credentials:
+          type: string
+          example: J-99885566
+        type:
+          type: string
+        address:
+          type: string
+    InstitutionWithUser:
+      allOf:
+        - $ref: "#/components/schemas/Institution"
+        - allOf:
+            - type: object
+              properties:
+                institutionUser:
+                  $ref: "#/components/schemas/InstitutionUserWithoutInstitutionUuid"
     InstitutionUser:
+      allOf:
+        - type: object
+          properties:
+            institutionUuid:
+              $ref: "#/components/schemas/UUID"          
+        - $ref: "#/components/schemas/InstitutionUserWithoutInstitutionUuid"
+    InstitutionUserWithoutInstitutionUuid:
       type: object
       properties:
-        institutionUuid:
-          $ref: "#/components/schemas/UUID"
         firstname:
           type: string
           example: "José"
@@ -1177,12 +1251,14 @@ components:
           example: "1197-08-20"
         email:
           $ref: "#/components/schemas/Email"
+        password:
+          type: string  
         phoneNumber:
           type: string
           example: "+584127659814"
         role:
           $ref: "#/components/schemas/InstitutionUserRole"
-    HealthRecord:
+    HealthReacord:
       type: object
       properties:
         content:
@@ -1193,8 +1269,7 @@ components:
           type: string
           example: evolution
         specialty:
-          type: string
-          example: cardiology
+          $ref: "#/components/schemas/Specialty"
         content-format:
           type: string
           example: pdf
@@ -1269,7 +1344,7 @@ components:
           type: string
           enum:
             - doctor
-            - nurse 
+            - nurse
     InstitutionEnrollmentRequest:
       type: object
       properties:
@@ -1390,13 +1465,13 @@ components:
                     type: string
                     example: secure-pass
               - $ref: "#/components/schemas/Patient"
-    InsertInstitution:
+    InsertInstitutionWithOGUser:
       description: Insitution to be added to the DB
       required: true
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Institution"
+            $ref: "#/components/schemas/InstitutionWithUser"
     UpdateInstitution:
       description: Insitution to be updated on the DB
       required: true
@@ -1454,8 +1529,8 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Login"
-    InsertHealthRecord:
-      description: HealthRecord insert object to be added to the DB
+    InsertHealthReacord:
+      description: HealthReacord insert object to be added to the DB
       content:
         multipart/form-data:
           schema:
@@ -1485,6 +1560,12 @@ components:
                 properties:
                   uuid:
                     $ref: "#/components/schemas/UUID"
+                  status:
+                    type: string
+                    example: "hospitalizado"
+                  bed:
+                    type: string
+                    example: "b-185"
               - $ref: "#/components/schemas/Patient"
     ReadDoctor:
       description: Doctor on the DB
@@ -1517,6 +1598,9 @@ components:
                 properties:
                   uuid:
                     $ref: "#/components/schemas/UUID"
+                  pending:
+                    type: boolean
+                    example: true
               - $ref: "#/components/schemas/Nurse"
     ReadInstitution:
       description: Insitution on the DB
@@ -1528,6 +1612,9 @@ components:
                 properties:
                   uuid:
                     $ref: "#/components/schemas/UUID"
+                  pending:
+                    type: boolean
+                    example: true
               - $ref: "#/components/schemas/Institution"
     ReadInstitutionUser:
       description: Insitution user on the DB
@@ -1540,7 +1627,7 @@ components:
                   uuid:
                     $ref: "#/components/schemas/UUID"
               - $ref: "#/components/schemas/InstitutionUser"
-    ReadHealthRecords:
+    ReadHealthReacords:
       description: Health record on the DB
       content:
         application/json:
@@ -1550,7 +1637,7 @@ components:
                 properties:
                   uuid:
                     $ref: "#/components/schemas/UUID"
-              - $ref: "#/components/schemas/HealthRecord"
+              - $ref: "#/components/schemas/HealthReacord"
     ListPatients:
       description: Patients on the DB
       content:
@@ -1563,6 +1650,12 @@ components:
                   properties:
                     uuid:
                       $ref: "#/components/schemas/UUID"
+                    status:
+                      type: string
+                      example: "hospitalizado"
+                    bed:
+                      type: string
+                      example: "b-185"
                 - $ref: "#/components/schemas/Patient"
     ListDoctors:
       description: Doctors on the DB
@@ -1599,6 +1692,9 @@ components:
                   properties:
                     uuid:
                       $ref: "#/components/schemas/UUID"
+                    pending:
+                      type: boolean
+                      example: true
                 - $ref: "#/components/schemas/Nurse"
     ListDoctorAccessRequest:
       description: Access request to patient's records on the DB
@@ -1612,6 +1708,12 @@ components:
                   properties:
                     uuid:
                       $ref: "#/components/schemas/UUID"
+                    pending:
+                      type: boolean
+                      example: true
+                    approved:
+                      type: boolean
+                      default: false
                 - $ref: "#/components/schemas/DoctorAccessRequest"
     ListPatientOrders:
       description: Patient's health records of type order on the DB
@@ -1621,7 +1723,7 @@ components:
             type: array
             items:
               allOf:
-                - $ref: "#/components/schemas/HealthRecord"
+                - $ref: "#/components/schemas/HealthReacord"
                 - type: object
                   properties:
                     type:
@@ -1640,7 +1742,7 @@ components:
                   properties:
                     uuid:
                       $ref: "#/components/schemas/UUID"
-                - $ref: "#/components/schemas/HealthRecord"
+                - $ref: "#/components/schemas/HealthReacord"
     ListInstitutionUsers:
       description: Patient's health records on the DB
       content:
@@ -1693,6 +1795,14 @@ components:
                     uuid:
                       $ref: "#/components/schemas/UUID"
                 - $ref: "#/components/schemas/Institution"
+    ListSpecialties:
+      description: Specialties list
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/Specialty"
     jwt:
       description: Successful login
       content:

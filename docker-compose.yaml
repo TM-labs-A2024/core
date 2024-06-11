@@ -1,0 +1,7 @@
+services:
+  healthcore:
+    build:
+      context: ./services/healthcore
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
