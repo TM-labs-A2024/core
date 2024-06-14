@@ -1,9 +1,12 @@
 package server
 
 import (
+	"context"
 	"log/slog"
 	"os"
 
+	"github.com/TM-labs-A2024/core/services/healthcore/internal/db"
+	"github.com/jackc/pgx/v5"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -12,22 +15,34 @@ import (
 type Server struct {
 	Router *echo.Echo
 	Logger *slog.Logger
+	DB     *db.Queries
 }
 
 // NewServer returns an empty or an initialized container for your handlers.
 func NewServer() (Server, error) {
+	ctx := context.Background()
+
+	conn, err := pgx.Connect(ctx, os.Getenv("DATABASE_URL"))
+	if err != nil {
+		return Server{}, err
+	}
+	defer conn.Close(ctx)
+
+	queries := db.New(conn)
+
 	s := Server{
 		Router: echo.New(),
 		Logger: slog.New(slog.NewTextHandler(os.Stdout, nil)),
+		DB:     queries,
 	}
 	return s, nil
 }
 
-func (s *Server) Start(port string) error {
+func (s Server) Start(port string) error {
 	return s.Router.Start(port)
 }
 
-func (s *Server) AddRoutes() {
+func (s Server) AddRoutes() {
 
 	// Middleware
 	s.Router.Use(middleware.Logger())
@@ -203,5 +218,4 @@ func (s *Server) AddRoutes() {
 
 	// SpecialtiesGet - Returns a list of specialties
 	s.Router.GET("/specialties", s.SpecialtiesGet)
-
 }
