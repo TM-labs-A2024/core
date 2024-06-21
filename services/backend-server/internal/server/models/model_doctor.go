@@ -36,17 +36,17 @@ type DoctorAccessResponse struct {
 }
 
 func NewDoctorAccessResponse(dar db.DoctorAccessRequest) (DoctorAccessResponse, error) {
-	darUUID, err := uuid.FromBytes(dar.Uuid.Bytes[:])
+	darUUID, err := uuid.FromBytes(dar.ID.Bytes[:])
 	if err != nil {
 		return DoctorAccessResponse{}, err
 	}
 
-	doctorUUID, err := uuid.FromBytes(dar.DoctorUuid.Bytes[:])
+	doctorUUID, err := uuid.FromBytes(dar.DoctorID.Bytes[:])
 	if err != nil {
 		return DoctorAccessResponse{}, err
 	}
 
-	patientUUID, err := uuid.FromBytes(dar.DoctorUuid.Bytes[:])
+	patientUUID, err := uuid.FromBytes(dar.DoctorID.Bytes[:])
 	if err != nil {
 		return DoctorAccessResponse{}, err
 	}
@@ -88,20 +88,25 @@ type NewDoctorResponseArgs struct {
 }
 
 func NewDoctorResponse(args NewDoctorResponseArgs) (DoctorsResponse, error) {
-	doctorUUID, err := uuid.FromBytes(args.Doctor.Uuid.Bytes[:])
+	doctorUUID, err := uuid.FromBytes(args.Doctor.ID.Bytes[:])
 	if err != nil {
 		return DoctorsResponse{}, err
 	}
 
-	institutionUUID, err := uuid.FromBytes(args.Doctor.InstitutionUuid.Bytes[:])
+	institutionUUID, err := uuid.FromBytes(args.Doctor.InstitutionID.Bytes[:])
 	if err != nil {
 		return DoctorsResponse{}, err
 	}
 
+	// Fetch specialties
 	specialties := []Specialty{}
 	for _, s := range args.Specialties {
+		specialtyUUID, err := uuid.FromBytes(s.ID.Bytes[:])
+		if err != nil {
+			return DoctorsResponse{}, err
+		}
 		specialties = append(specialties, Specialty{
-			ID:          int(s.ID),
+			ID:          specialtyUUID,
 			Description: s.Description,
 			Name:        SpecialtyName(s.Name),
 		})

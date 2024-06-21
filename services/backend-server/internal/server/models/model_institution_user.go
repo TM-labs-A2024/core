@@ -32,12 +32,12 @@ type InstitutionsUsersResponse struct {
 }
 
 func NewInstitutionUserResponse(user db.InstitutionUser) (InstitutionsUsersResponse, error) {
-	userUUID, err := uuid.FromBytes(user.Uuid.Bytes[:])
+	userUUID, err := uuid.FromBytes(user.ID.Bytes[:])
 	if err != nil {
 		return InstitutionsUsersResponse{}, err
 	}
 
-	institutionUUID, err := uuid.FromBytes(user.InstitutionUuid.Bytes[:])
+	institutionUUID, err := uuid.FromBytes(user.InstitutionID.Bytes[:])
 	if err != nil {
 		return InstitutionsUsersResponse{}, err
 	}

@@ -33,7 +33,7 @@ type PatientsResponse struct {
 }
 
 func NewPatientsResponse(patient db.Patient) (PatientsResponse, error) {
-	patientUUID, err := uuid.FromBytes(patient.Uuid.Bytes[:])
+	patientUUID, err := uuid.FromBytes(patient.ID.Bytes[:])
 	if err != nil {
 		return PatientsResponse{}, err
 	}
@@ -62,7 +62,12 @@ type PatientsHealthRecordsResponse struct {
 }
 
 func NewPatientsHealthRecordsResponse(hr db.HealthRecord, content string, specialty db.Specialty) (PatientsHealthRecordsResponse, error) {
-	hrUUID, err := uuid.FromBytes(hr.Uuid.Bytes[:])
+	hrUUID, err := uuid.FromBytes(hr.ID.Bytes[:])
+	if err != nil {
+		return PatientsHealthRecordsResponse{}, err
+	}
+
+	specialtyUUID, err := uuid.FromBytes(specialty.ID.Bytes[:])
 	if err != nil {
 		return PatientsHealthRecordsResponse{}, err
 	}
@@ -70,9 +75,9 @@ func NewPatientsHealthRecordsResponse(hr db.HealthRecord, content string, specia
 	return PatientsHealthRecordsResponse{
 		UUID:    hrUUID,
 		Content: content,
-		Type:    hr.Type,
+		Type:    string(hr.Type),
 		Specialty: Specialty{
-			ID:          int(specialty.ID),
+			ID:          specialtyUUID,
 			Description: specialty.Description,
 			Name:        SpecialtyName(specialty.Name),
 		},

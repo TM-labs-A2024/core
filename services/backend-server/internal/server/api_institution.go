@@ -1,18 +1,43 @@
 package server
 
 import (
+	"context"
 	"net/http"
 
+	"github.com/TM-labs-A2024/core/services/backend-server/internal/server/models"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/labstack/echo/v4"
 )
 
 // InstitutionsApprovedGet - List ALL approved institutions
 func (c *Server) InstitutionsApprovedGet(ctx echo.Context) error {
-	return ctx.JSON(http.StatusOK, nil)
+	approvedInstitutions, err := c.DB.ListApprovedInstitutions(context.Background())
+	if err != nil {
+		return err
+	}
+
+	resp, err := models.NewApprovedInstitutionResponse(approvedInstitutions)
+	if err != nil {
+		return err
+	}
+
+	return ctx.JSON(http.StatusOK, resp)
 }
 
 // InstitutionsEnrollmentDoctorUUIDRevokePost - Deny doctor into institution
 func (c *Server) InstitutionsEnrollmentDoctorUUIDRevokePost(ctx echo.Context) error {
+	uuidStr := ctx.Param("enrollment_request_uuid")
+	erid, err := uuid.FromBytes([]byte(uuidStr))
+	if err != nil {
+		return ctx.String(http.StatusBadRequest, err.Error())
+	}
+
+	er, err := c.DB.GetInstitutionEnrollmentRequestsByID(context.Background(), pgtype.UUID{
+		Bytes: erid,
+		Valid: true,
+	})
+
 	return ctx.JSON(http.StatusOK, nil)
 }
 

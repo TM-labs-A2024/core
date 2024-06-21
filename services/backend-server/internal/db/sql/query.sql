@@ -1,143 +1,468 @@
--- name: GetDoctorByUUID :one
-SELECT institution_uuid,
+-- name: GetDoctorByID :one
+SELECT id,
+    institution_id,
     firstname,
     lastname,
     gov_id,
     birthdate,
     email,
     phone_number,
-    credentials
-FROM Doctor
-WHERE uuid = $1;
-
--- INSERT INTO Doctor(institutionUuid, firstname, lastname, govId, birthdate, email, phoneNumber, credentials) VALUES ($1, $2, $3, ?, ?, ?, ?, ?);
--- UPDATE Doctor SET institutionUuid = ?, firstname = ?, lastname = ?, govId = ?, birthdate = ?, email = ?, phoneNumber = ?, credentials = ? WHERE 1;
--- DELETE FROM Doctor WHERE 0;
--- SELECT patientUuid, doctorUuid FROM DoctorAccessRequest WHERE 1;
--- INSERT INTO DoctorAccessRequest(patientUuid, doctorUuid) VALUES (?, ?);
--- UPDATE DoctorAccessRequest SET patientUuid = ?, doctorUuid = ? WHERE 1;
--- DELETE FROM DoctorAccessRequest WHERE 0;
--- SELECT institutionUuid, doctorUuid, pending, approved, professional-type FROM DoctorEnrollmentRequest WHERE 1;
--- INSERT INTO DoctorEnrollmentRequest(institutionUuid, doctorUuid, pending, approved, professional-type) VALUES (?, ?, ?, ?, ?);
--- UPDATE DoctorEnrollmentRequest SET institutionUuid = ?, doctorUuid = ?, pending = ?, approved = ?, professional-type = ? WHERE 1;
--- DELETE FROM DoctorEnrollmentRequest WHERE 0;
--- SELECT firstname, lastname, govId, birthdate, email, phoneNumber, sex, pending, status, bed, uuid FROM _doctors__doctorUuid__patients_get_200_response_inner WHERE 1;
--- INSERT INTO _doctors__doctorUuid__patients_get_200_response_inner(firstname, lastname, govId, birthdate, email, phoneNumber, sex, pending, status, bed, uuid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
--- UPDATE _doctors__doctorUuid__patients_get_200_response_inner SET firstname = ?, lastname = ?, govId = ?, birthdate = ?, email = ?, phoneNumber = ?, sex = ?, pending = ?, status = ?, bed = ?, uuid = ? WHERE 1;
--- DELETE FROM _doctors__doctorUuid__patients_get_200_response_inner WHERE 0;
--- SELECT institutionUuid, firstname, lastname, govId, birthdate, email, phoneNumber, credentials, uuid, specialities, pending, patientPending FROM _doctors_get_200_response_inner WHERE 1;
--- INSERT INTO _doctors_get_200_response_inner(institutionUuid, firstname, lastname, govId, birthdate, email, phoneNumber, credentials, uuid, specialities, pending, patientPending) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
--- UPDATE _doctors_get_200_response_inner SET institutionUuid = ?, firstname = ?, lastname = ?, govId = ?, birthdate = ?, email = ?, phoneNumber = ?, credentials = ?, uuid = ?, specialities = ?, pending = ?, patientPending = ? WHERE 1;
--- DELETE FROM _doctors_get_200_response_inner WHERE 0;
--- SELECT institutionUuid, firstname, lastname, govId, birthdate, email, phoneNumber, credentials, password, specialties FROM _doctors_post_request WHERE 1;
--- INSERT INTO _doctors_post_request(institutionUuid, firstname, lastname, govId, birthdate, email, phoneNumber, credentials, password, specialties) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
--- UPDATE _doctors_post_request SET institutionUuid = ?, firstname = ?, lastname = ?, govId = ?, birthdate = ?, email = ?, phoneNumber = ?, credentials = ?, password = ?, specialties = ? WHERE 1;
--- DELETE FROM _doctors_post_request WHERE 0;
--- SELECT institutionUuid, firstname, lastname, govId, birthdate, email, phoneNumber, credentials, uuid, password, specialties FROM _doctors_put_request WHERE 1;
--- INSERT INTO _doctors_put_request(institutionUuid, firstname, lastname, govId, birthdate, email, phoneNumber, credentials, uuid, password, specialties) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
--- UPDATE _doctors_put_request SET institutionUuid = ?, firstname = ?, lastname = ?, govId = ?, birthdate = ?, email = ?, phoneNumber = ?, credentials = ?, uuid = ?, password = ?, specialties = ? WHERE 1;
--- DELETE FROM _doctors_put_request WHERE 0;
--- SELECT uuid, name FROM Government WHERE 1;
--- INSERT INTO Government(uuid, name) VALUES (?, ?);
--- UPDATE Government SET uuid = ?, name = ? WHERE 1;
--- DELETE FROM Government WHERE 0;
--- SELECT institutionUuid, pending, approved, uuid FROM _government_enrollment_requests_get_200_response_inner WHERE 1;
--- INSERT INTO _government_enrollment_requests_get_200_response_inner(institutionUuid, pending, approved, uuid) VALUES (?, ?, ?, ?);
--- UPDATE _government_enrollment_requests_get_200_response_inner SET institutionUuid = ?, pending = ?, approved = ?, uuid = ? WHERE 1;
--- DELETE FROM _government_enrollment_requests_get_200_response_inner WHERE 0;
--- SELECT content, type, specialty, content-format FROM HealthRecord WHERE 1;
--- INSERT INTO HealthRecord(content, type, specialty, content-format) VALUES (?, ?, ?, ?);
--- UPDATE HealthRecord SET content = ?, type = ?, specialty = ?, content-format = ? WHERE 1;
--- DELETE FROM HealthRecord WHERE 0;
--- SELECT name, govId FROM Institution WHERE 1;
--- INSERT INTO Institution(name, govId) VALUES (?, ?);
--- UPDATE Institution SET name = ?, govId = ? WHERE 1;
--- DELETE FROM Institution WHERE 0;
--- SELECT institutionUuid, pending, approved FROM InstitutionEnrollmentRequest WHERE 1;
--- INSERT INTO InstitutionEnrollmentRequest(institutionUuid, pending, approved) VALUES (?, ?, ?);
--- UPDATE InstitutionEnrollmentRequest SET institutionUuid = ?, pending = ?, approved = ? WHERE 1;
--- DELETE FROM InstitutionEnrollmentRequest WHERE 0;
--- SELECT institutionUuid, doctorUuid, pending, approved, professional-type, uuid FROM _institutions_enrollment_requests_get_200_response_inner WHERE 1;
--- INSERT INTO _institutions_enrollment_requests_get_200_response_inner(institutionUuid, doctorUuid, pending, approved, professional-type, uuid) VALUES (?, ?, ?, ?, ?, ?);
--- UPDATE _institutions_enrollment_requests_get_200_response_inner SET institutionUuid = ?, doctorUuid = ?, pending = ?, approved = ?, professional-type = ?, uuid = ? WHERE 1;
--- DELETE FROM _institutions_enrollment_requests_get_200_response_inner WHERE 0;
--- SELECT name, govId, uuid FROM _institutions_get_200_response_inner WHERE 1;
--- INSERT INTO _institutions_get_200_response_inner(name, govId, uuid) VALUES (?, ?, ?);
--- UPDATE _institutions_get_200_response_inner SET name = ?, govId = ?, uuid = ? WHERE 1;
--- DELETE FROM _institutions_get_200_response_inner WHERE 0;
--- SELECT institutionUuid, firstname, lastname, govId, birthdate, email, phoneNumber, role, uuid FROM _institutions__institutionUuid__users_get_200_response_inner WHERE 1;
--- INSERT INTO _institutions__institutionUuid__users_get_200_response_inner(institutionUuid, firstname, lastname, govId, birthdate, email, phoneNumber, role, uuid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
--- UPDATE _institutions__institutionUuid__users_get_200_response_inner SET institutionUuid = ?, firstname = ?, lastname = ?, govId = ?, birthdate = ?, email = ?, phoneNumber = ?, role = ?, uuid = ? WHERE 1;
--- DELETE FROM _institutions__institutionUuid__users_get_200_response_inner WHERE 0;
--- SELECT institutionUuid, firstname, lastname, govId, birthdate, email, phoneNumber, role, password FROM _institutions__institutionUuid__users_post_request WHERE 1;
--- INSERT INTO _institutions__institutionUuid__users_post_request(institutionUuid, firstname, lastname, govId, birthdate, email, phoneNumber, role, password) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
--- UPDATE _institutions__institutionUuid__users_post_request SET institutionUuid = ?, firstname = ?, lastname = ?, govId = ?, birthdate = ?, email = ?, phoneNumber = ?, role = ?, password = ? WHERE 1;
--- DELETE FROM _institutions__institutionUuid__users_post_request WHERE 0;
--- SELECT institutionUuid, firstname, lastname, govId, birthdate, email, phoneNumber, role, uuid, password FROM _institutions__institutionUuid__users_put_request WHERE 1;
--- INSERT INTO _institutions__institutionUuid__users_put_request(institutionUuid, firstname, lastname, govId, birthdate, email, phoneNumber, role, uuid, password) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
--- UPDATE _institutions__institutionUuid__users_put_request SET institutionUuid = ?, firstname = ?, lastname = ?, govId = ?, birthdate = ?, email = ?, phoneNumber = ?, role = ?, uuid = ?, password = ? WHERE 1;
--- DELETE FROM _institutions__institutionUuid__users_put_request WHERE 0;
--- SELECT name, govId, uuid, pending FROM _institutions_put_200_response WHERE 1;
--- INSERT INTO _institutions_put_200_response(name, govId, uuid, pending) VALUES (?, ?, ?, ?);
--- UPDATE _institutions_put_200_response SET name = ?, govId = ?, uuid = ?, pending = ? WHERE 1;
--- DELETE FROM _institutions_put_200_response WHERE 0;
--- SELECT institutionUuid, firstname, lastname, govId, birthdate, email, phoneNumber, role FROM InstitutionUser WHERE 1;
--- INSERT INTO InstitutionUser(institutionUuid, firstname, lastname, govId, birthdate, email, phoneNumber, role) VALUES (?, ?, ?, ?, ?, ?, ?, ?);
--- UPDATE InstitutionUser SET institutionUuid = ?, firstname = ?, lastname = ?, govId = ?, birthdate = ?, email = ?, phoneNumber = ?, role = ? WHERE 1;
--- DELETE FROM InstitutionUser WHERE 0;
+    credentials,
+    pending,
+    patient_pending
+FROM doctor
+WHERE id = $1;
+-- name: CreateDoctor :one
+INSERT INTO doctor(
+        institution_id,
+        firstname,
+        lastname,
+        gov_id,
+        birthdate,
+        password,
+        email,
+        phone_number,
+        credentials,
+        pending,
+        patient_pending
+    )
+VALUES (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6,
+        $7,
+        $8,
+        $9,
+        $10,
+        $11
+    )
+RETURNING *;
+-- name: UpdateDoctorByID :one
+UPDATE doctor
+SET institution_id = $1,
+    firstname = $2,
+    lastname = $3,
+    gov_id = $4,
+    birthdate = $5,
+    password = $6,
+    email = $7,
+    phone_number = $8,
+    credentials = $9,
+    pending = $10,
+    patient_pending = $11
+WHERE id = $12
+RETURNING *;
+-- name: DeleteDoctorByID :exec
+DELETE FROM doctor
+WHERE id = $1;
+-- name: GetAccessRequestByPatientID :one
+SELECT id,
+    patient_id,
+    doctor_id,
+    pending,
+    approved
+FROM doctor_access_request
+WHERE patient_id = $1;
+-- name: GetAccessRequestByDoctorID :one
+SELECT id,
+    patient_id,
+    doctor_id,
+    pending,
+    approved
+FROM doctor_access_request
+WHERE doctor_id = $1;
+-- name: CreateAccessRequest :one
+INSERT INTO doctor_access_request(patient_id, doctor_id)
+VALUES ($1, $2)
+RETURNING *;
+-- name: UpdateAccessRequestByID :one
+UPDATE doctor_access_request
+SET patient_id = $1,
+    doctor_id = $2,
+    pending = $3,
+    approved = $4
+WHERE id = $5
+RETURNING *;
+-- name: DeleteAccessRequestByID :exec
+DELETE FROM doctor_access_request
+WHERE id = $1;
+-- name: ListInstitutionEnrollmentRequestsByInstitutionID :many
+SELECT id,
+    institution_id,
+    doctor_id,
+    nurse_id,
+    pending,
+    approved
+FROM institution_enrollment_request
+WHERE institution_id = $1;
+-- name: GetInstitutionEnrollmentRequestsByID :one
+SELECT id,
+    institution_id,
+    doctor_id,
+    nurse_id,
+    pending,
+    approved
+FROM institution_enrollment_request
+WHERE id = $1;
+-- name: CreateInstitutionEnrollmentRequest :one
+INSERT INTO institution_enrollment_request(
+        institution_id,
+        doctor_id,
+        nurse_id
+    )
+VALUES ($1, $2, $3)
+RETURNING *;
+-- name: UpdateInstitutionEnrollmentRequestByID :one
+UPDATE institution_enrollment_request
+SET institution_id = $1,
+    doctor_id = $2,
+    nurse_id = $3,
+    pending = $4,
+    approved = $5
+WHERE id = $6
+RETURNING *;
+-- name: DeleteInstitutionEnrollmentRequestByID :exec
+DELETE FROM institution_enrollment_request
+WHERE id = $1;
+-- name: GetGovernment :one
+SELECT id,
+    email
+FROM government
+LIMIT 1;
+-- name: CreateGovernment :one
+INSERT INTO government(email, password)
+VALUES ($1, $2)
+RETURNING *;
+-- name: UpdateGovernmentByID :one
+UPDATE government
+SET email = $1,
+    password = $2
+WHERE id = $3
+RETURNING *;
+-- name: DeleteGovernmentByID :exec
+DELETE FROM government
+WHERE id = $1;
+-- name: GetHealthRecordsBySpecialtyID :many
+SELECT id,
+    patient_id,
+    private_key,
+    type,
+    specialty_id,
+    content_format
+FROM health_record
+WHERE specialty_id = $1;
+-- name: GetHealthRecordsBySpecialtyIDAndPatientID :many
+SELECT id,
+    patient_id,
+    private_key,
+    type,
+    specialty_id,
+    content_format
+FROM health_record
+WHERE specialty_id = $1
+    AND patient_id = $2;
+-- name: GetHealthRecordsByPatientID :many
+SELECT id,
+    patient_id,
+    private_key,
+    type,
+    specialty_id,
+    content_format
+FROM health_record
+WHERE patient_id = $1;
+-- name: CreateHealthRecord :one
+INSERT INTO health_record (
+        patient_id,
+        private_key,
+        type,
+        specialty_id,
+        content_format
+    )
+VALUES ($1, $2, $3, $4, $5)
+RETURNING *;
+-- name: UpdateHealthRecordByID :one
+UPDATE health_record
+SET patient_id = $1,
+    private_key = $2,
+    type = $3,
+    specialty_id = $4,
+    content_format = $5
+WHERE id = $6
+RETURNING *;
+-- name: DeleteHealthRecordByID :exec
+DELETE FROM health_record
+WHERE id = $1;
+-- name: GetInstitutionByID :one
+SELECT id,
+    name,
+    address,
+    credentials,
+    type,
+    gov_id,
+    pending
+FROM institution
+WHERE id = $1;
+-- name: ListInstitutions :many
+SELECT id,
+    name,
+    address,
+    credentials,
+    type,
+    gov_id,
+    pending
+FROM institution;
+-- name: ListApprovedInstitutions :many
+SELECT id,
+    name,
+    address,
+    credentials,
+    type,
+    gov_id,
+    pending
+FROM institution
+WHERE id IN (SELECT institution_id FROM government_enrollment_request WHERE approved = TRUE);
+-- name: InsertInstitution :one
+INSERT INTO institution (
+        name,
+        address,
+        credentials,
+        type,
+        gov_id,
+        pending
+    )
+VALUES ($1, $2, $3, $4, $5, $6)
+RETURNING *;
+-- name: UpdateInstitutionByID :one
+UPDATE institution
+SET name = $1,
+    address = $2,
+    credentials = $3,
+    type = $4,
+    gov_id = $5,
+    pending = $6
+WHERE id = $7
+RETURNING *;
+-- name: DeleteInstitutionByID :exec
+DELETE FROM institution
+WHERE id = $1;
+-- name: ListGovernmentEnrollmentRequests :many
+SELECT id,
+    institution_id,
+    pending,
+    approved
+FROM government_enrollment_request;
+-- name: CreateGovernmentEnrollmentRequests :one
+INSERT INTO government_enrollment_request (institution_id)
+VALUES ($1)
+RETURNING *;
+-- name: UpdateGovernmentEnrollmentRequestsByID :one
+UPDATE government_enrollment_request
+SET institution_id = $1,
+    pending = $2,
+    approved = $3
+WHERE id = $4
+RETURNING *;
+-- name: DeleteGovernmentEnrollmentRequestByID :exec
+DELETE FROM government_enrollment_request
+WHERE id = $1;
+-- name: GetInstitutionUserByID :many
+SELECT id,
+    institution_id,
+    firstname,
+    lastname,
+    gov_id,
+    birthdate,
+    email,
+    phone_number,
+    role
+FROM institution_user
+WHERE id = $1;
+-- name: ListInstitutionUserByInstitutionID :many
+SELECT id,
+    institution_id,
+    firstname,
+    lastname,
+    gov_id,
+    birthdate,
+    email,
+    phone_number,
+    role
+FROM institution_user
+WHERE institution_id = $1;
+-- name: CreateInstitutionUser :one
+INSERT INTO institution_user(
+        institution_id,
+        firstname,
+        lastname,
+        gov_id,
+        birthdate,
+        email,
+        password,
+        phone_number,
+        role
+    )
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+RETURNING *;
+-- name: UpdateInstitutionUserByGovID :one
+UPDATE institution_user
+SET institution_id = $1,
+    firstname = $2,
+    lastname = $3,
+    gov_id = $4,
+    birthdate = $5,
+    email = $6,
+    password = $7,
+    phone_number = $8,
+    role = $9
+WHERE gov_id = $10
+RETURNING *;
+-- name: DeleteInstitutionUserByID :exec
+DELETE FROM institution_user
+WHERE id = $1;
 -- SELECT  FROM InstitutionUserRole WHERE 1;
 -- INSERT INTO InstitutionUserRole() VALUES ();
 -- UPDATE InstitutionUserRole SET  WHERE 1;
--- DELETE FROM InstitutionUserRole WHERE 0;
--- SELECT email, password FROM Login WHERE 1;
--- INSERT INTO Login(email, password) VALUES (?, ?);
--- UPDATE Login SET email = ?, password = ? WHERE 1;
--- DELETE FROM Login WHERE 0;
--- SELECT institutionUuid, firstname, lastname, govId, birthdate, email, phoneNumber, credentials FROM Nurse WHERE 1;
--- INSERT INTO Nurse(institutionUuid, firstname, lastname, govId, birthdate, email, phoneNumber, credentials) VALUES (?, ?, ?, ?, ?, ?, ?, ?);
--- UPDATE Nurse SET institutionUuid = ?, firstname = ?, lastname = ?, govId = ?, birthdate = ?, email = ?, phoneNumber = ?, credentials = ? WHERE 1;
--- DELETE FROM Nurse WHERE 0;
--- SELECT institutionUuid, firstname, lastname, govId, birthdate, email, phoneNumber, credentials, uuid, pending FROM _nurses_get_200_response_inner WHERE 1;
--- INSERT INTO _nurses_get_200_response_inner(institutionUuid, firstname, lastname, govId, birthdate, email, phoneNumber, credentials, uuid, pending) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
--- UPDATE _nurses_get_200_response_inner SET institutionUuid = ?, firstname = ?, lastname = ?, govId = ?, birthdate = ?, email = ?, phoneNumber = ?, credentials = ?, uuid = ?, pending = ? WHERE 1;
--- DELETE FROM _nurses_get_200_response_inner WHERE 0;
--- SELECT institutionUuid, firstname, lastname, govId, birthdate, email, phoneNumber, credentials, password FROM _nurses_post_request WHERE 1;
--- INSERT INTO _nurses_post_request(institutionUuid, firstname, lastname, govId, birthdate, email, phoneNumber, credentials, password) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
--- UPDATE _nurses_post_request SET institutionUuid = ?, firstname = ?, lastname = ?, govId = ?, birthdate = ?, email = ?, phoneNumber = ?, credentials = ?, password = ? WHERE 1;
--- DELETE FROM _nurses_post_request WHERE 0;
--- SELECT institutionUuid, firstname, lastname, govId, birthdate, email, phoneNumber, credentials, uuid, password FROM _nurses_put_request WHERE 1;
--- INSERT INTO _nurses_put_request(institutionUuid, firstname, lastname, govId, birthdate, email, phoneNumber, credentials, uuid, password) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
--- UPDATE _nurses_put_request SET institutionUuid = ?, firstname = ?, lastname = ?, govId = ?, birthdate = ?, email = ?, phoneNumber = ?, credentials = ?, uuid = ?, password = ? WHERE 1;
--- DELETE FROM _nurses_put_request WHERE 0;
--- SELECT firstname, lastname, govId, birthdate, email, phoneNumber, sex, pending, status, bed FROM Patient WHERE 1;
--- INSERT INTO Patient(firstname, lastname, govId, birthdate, email, phoneNumber, sex, pending, status, bed) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
--- UPDATE Patient SET firstname = ?, lastname = ?, govId = ?, birthdate = ?, email = ?, phoneNumber = ?, sex = ?, pending = ?, status = ?, bed = ? WHERE 1;
--- DELETE FROM Patient WHERE 0;
--- SELECT patientUuid, doctorUuid, uuid, completed FROM _patients_access_requests_get_200_response_inner WHERE 1;
--- INSERT INTO _patients_access_requests_get_200_response_inner(patientUuid, doctorUuid, uuid, completed) VALUES (?, ?, ?, ?);
--- UPDATE _patients_access_requests_get_200_response_inner SET patientUuid = ?, doctorUuid = ?, uuid = ?, completed = ? WHERE 1;
--- DELETE FROM _patients_access_requests_get_200_response_inner WHERE 0;
--- SELECT content, type, specialty, content-format, uuid FROM _patients__govId__medical_records_get_200_response_inner WHERE 1;
--- INSERT INTO _patients__govId__medical_records_get_200_response_inner(content, type, specialty, content-format, uuid) VALUES (?, ?, ?, ?, ?);
--- UPDATE _patients__govId__medical_records_get_200_response_inner SET content = ?, type = ?, specialty = ?, content-format = ?, uuid = ? WHERE 1;
--- DELETE FROM _patients__govId__medical_records_get_200_response_inner WHERE 0;
--- SELECT content, type, specialty, content-format FROM _patients__govId__orders_get_200_response_inner WHERE 1;
--- INSERT INTO _patients__govId__orders_get_200_response_inner(content, type, specialty, content-format) VALUES (?, ?, ?, ?);
--- UPDATE _patients__govId__orders_get_200_response_inner SET content = ?, type = ?, specialty = ?, content-format = ? WHERE 1;
--- DELETE FROM _patients__govId__orders_get_200_response_inner WHERE 0;
--- SELECT firstname, lastname, govId, birthdate, email, phoneNumber, sex, pending, status, bed, password FROM _patients_post_request WHERE 1;
--- INSERT INTO _patients_post_request(firstname, lastname, govId, birthdate, email, phoneNumber, sex, pending, status, bed, password) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
--- UPDATE _patients_post_request SET firstname = ?, lastname = ?, govId = ?, birthdate = ?, email = ?, phoneNumber = ?, sex = ?, pending = ?, status = ?, bed = ?, password = ? WHERE 1;
--- DELETE FROM _patients_post_request WHERE 0;
--- SELECT firstname, lastname, govId, birthdate, email, phoneNumber, sex, pending, status, bed, uuid, password FROM _patients_put_request WHERE 1;
--- INSERT INTO _patients_put_request(firstname, lastname, govId, birthdate, email, phoneNumber, sex, pending, status, bed, uuid, password) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
--- UPDATE _patients_put_request SET firstname = ?, lastname = ?, govId = ?, birthdate = ?, email = ?, phoneNumber = ?, sex = ?, pending = ?, status = ?, bed = ?, uuid = ?, password = ? WHERE 1;
--- DELETE FROM _patients_put_request WHERE 0;
--- SELECT id, description, name FROM Specialty WHERE 1;
--- INSERT INTO Specialty(id, description, name) VALUES (?, ?, ?);
--- UPDATE Specialty SET id = ?, description = ?, name = ? WHERE 1;
--- DELETE FROM Specialty WHERE 0;
+-- DELETE FROM institution_user_role WHERE id = $1;
+-- name: GetNurseByID :one
+SELECT id,
+    institution_id,
+    firstname,
+    lastname,
+    gov_id,
+    birthdate,
+    email,
+    phone_number,
+    credentials,
+    pending
+FROM nurse
+WHERE id = $1;
+-- name: CreateNurse :one
+INSERT INTO nurse(
+        institution_id,
+        firstname,
+        lastname,
+        gov_id,
+        birthdate,
+        email,
+        phone_number,
+        credentials,
+        password,
+        pending
+    )
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+RETURNING *;
+-- name: UpdateNurseByID :one
+UPDATE nurse
+SET institution_id = $1,
+    firstname = $2,
+    lastname = $3,
+    gov_id = $4,
+    birthdate = $5,
+    email = $6,
+    phone_number = $7,
+    credentials = $8,
+    password = $9,
+    pending = $10
+WHERE id = $11
+RETURNING *;
+-- name: DeleteNurseByID :exec
+DELETE FROM nurse
+WHERE id = $1;
+-- name: GetPatientByID :one
+SELECT id,
+    firstname,
+    lastname,
+    gov_id,
+    birthdate,
+    email,
+    password,
+    phone_number,
+    sex,
+    pending,
+    status,
+    bed
+FROM patient
+WHERE id = $1;
+-- name: CreatePatient :one
+INSERT INTO patient(
+        firstname,
+        lastname,
+        gov_id,
+        birthdate,
+        email,
+        password,
+        phone_number,
+        sex,
+        pending,
+        status,
+        bed
+    )
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+RETURNING *;
+-- name: UpdatePatientByID :one
+UPDATE patient
+SET firstname = $1,
+    lastname = $2,
+    gov_id = $3,
+    birthdate = $4,
+    email = $5,
+    password = $6,
+    phone_number = $7,
+    sex = $8,
+    pending = $9,
+    status = $10,
+    bed = $11
+WHERE id = $12
+RETURNING *;
+-- name: DeletePatientByID :exec
+DELETE FROM patient
+WHERE id = $1;
+-- name: GetSpecialtyByID :one
+SELECT id,
+    description,
+    name
+FROM specialty
+WHERE 1;
+-- name: ListSpecialties :many
+SELECT id,
+    description,
+    name
+FROM specialty;
+-- name: CreateSpecialty :one
+INSERT INTO specialty(description, name)
+VALUES ($1, $2)
+RETURNING *;
+-- name: UpdateSpecialtyByID :one
+UPDATE specialty
+SET description = $1,
+    name = $2
+WHERE id = $3
+RETURNING *;
+-- name: DeleteSpecialtyByID :exec
+DELETE FROM specialty
+WHERE id = $1;
+-- name: ListSpecialtyDoctorJunctionsByDoctorID :many
+SELECT doctor_id,
+    specialty_id
+FROM doctor_specialty
+WHERE doctor_id = $1;
+-- name: ListSpecialtyDoctorJunctionsBySpecialtyID :many
+SELECT doctor_id,
+    specialty_id
+FROM doctor_specialty
+WHERE specialty_id = $1;
+-- name: CreateSpecialtyDoctorJunction :one
+INSERT INTO doctor_specialty(doctor_id, specialty_id)
+VALUES ($1, $2)
+RETURNING *;
+-- name: DeleteSpecialtyDoctorJunction :exec
+DELETE FROM doctor_specialty
+WHERE doctor_id = $1
+    AND specialty_id = $2;
 -- SELECT  FROM SpecialtyName WHERE 1;
 -- INSERT INTO SpecialtyName() VALUES ();
 -- UPDATE SpecialtyName SET  WHERE 1;
--- DELETE FROM SpecialtyName WHERE 0;
+-- DELETE FROM specialty_name WHERE id = $1;

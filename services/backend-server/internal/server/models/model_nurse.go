@@ -35,12 +35,12 @@ type NursesResponse struct {
 }
 
 func NewNurseResponse(nurse db.Nurse) (NursesResponse, error) {
-	nurseUUID, err := uuid.FromBytes(nurse.Uuid.Bytes[:])
+	nurseUUID, err := uuid.FromBytes(nurse.ID.Bytes[:])
 	if err != nil {
 		return NursesResponse{}, err
 	}
 
-	institutionUUID, err := uuid.FromBytes(nurse.InstitutionUuid.Bytes[:])
+	institutionUUID, err := uuid.FromBytes(nurse.InstitutionID.Bytes[:])
 	if err != nil {
 		return NursesResponse{}, err
 	}

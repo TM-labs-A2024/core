@@ -20,7 +20,7 @@ type InstitutionsResponse struct {
 }
 
 func NewInstitutionResponse(institution db.Institution) (InstitutionsResponse, error) {
-	institutionUUID, err := uuid.FromBytes(institution.Uuid.Bytes[:])
+	institutionUUID, err := uuid.FromBytes(institution.ID.Bytes[:])
 	if err != nil {
 		return InstitutionsResponse{}, err
 	}
@@ -31,11 +31,35 @@ func NewInstitutionResponse(institution db.Institution) (InstitutionsResponse, e
 			Name:        institution.Name,
 			GovId:       institution.GovID,
 			Credentials: institution.Credentials,
-			Type:        institution.Type,
+			Type:        string(institution.Type),
 			Address:     institution.Address,
 		},
 		Pending: institution.Pending,
 	}, nil
+}
+
+func NewApprovedInstitutionResponse(institutions []db.ListApprovedInstitutionsRow) ([]InstitutionsResponse, error) {
+	resp := []InstitutionsResponse{}
+	for _, institution := range institutions {
+		institutionUUID, err := uuid.FromBytes(institution.ID.Bytes[:])
+		if err != nil {
+			return nil, err
+		}
+
+		resp = append(resp, InstitutionsResponse{
+			UUID: institutionUUID,
+			Institution: Institution{
+				Name:        institution.Name,
+				GovId:       institution.GovID,
+				Credentials: institution.Credentials,
+				Type:        string(institution.Type),
+				Address:     institution.Address,
+			},
+			Pending: institution.Pending,
+		})
+	}
+
+	return resp, nil
 }
 
 type InstitutionsEnrollmentRequestsResponse struct {
@@ -48,38 +72,37 @@ type InstitutionsEnrollmentRequestsResponse struct {
 }
 
 func NewInstitutionsEnrollmentRequestsResponse(uer db.InstitutionEnrollmentRequest) (InstitutionsEnrollmentRequestsResponse, error) {
-	uerUUID, err := uuid.FromBytes(uer.Uuid.Bytes[:])
+	uerUUID, err := uuid.FromBytes(uer.ID.Bytes[:])
 	if err != nil {
 		return InstitutionsEnrollmentRequestsResponse{}, err
 	}
 
-	institutionUUID, err := uuid.FromBytes(uer.InstitutionUuid.Bytes[:])
+	institutionUUID, err := uuid.FromBytes(uer.InstitutionID.Bytes[:])
 	if err != nil {
 		return InstitutionsEnrollmentRequestsResponse{}, err
 	}
 
-	doctorUUID, err := uuid.FromBytes(uer.DoctorUuid.Bytes[:])
+	doctorUUID, err := uuid.FromBytes(uer.DoctorID.Bytes[:])
 	if err != nil {
 		return InstitutionsEnrollmentRequestsResponse{}, err
 	}
 
 	return InstitutionsEnrollmentRequestsResponse{
-		UUID:             uerUUID,
-		InstitutionUUID:  institutionUUID,
-		DoctorUUID:       doctorUUID,
-		Pending:          uer.Pending,
-		Approved:         uer.Approved,
-		ProfessionalType: string(uer.ProfessionalType),
+		UUID:            uerUUID,
+		InstitutionUUID: institutionUUID,
+		DoctorUUID:      doctorUUID,
+		Pending:         uer.Pending,
+		Approved:        uer.Approved,
 	}, nil
 }
 
 func NewGovernmentEnrollmentRequestsResponse(ger db.GovernmentEnrollmentRequest) (GovernmentEnrollmentRequestsResponse, error) {
-	gerUUID, err := uuid.FromBytes(ger.Uuid.Bytes[:])
+	gerUUID, err := uuid.FromBytes(ger.ID.Bytes[:])
 	if err != nil {
 		return GovernmentEnrollmentRequestsResponse{}, err
 	}
 
-	institutionUUID, err := uuid.FromBytes(ger.InstitutionUuid.Bytes[:])
+	institutionUUID, err := uuid.FromBytes(ger.InstitutionID.Bytes[:])
 	if err != nil {
 		return GovernmentEnrollmentRequestsResponse{}, err
 	}

@@ -763,13 +763,13 @@ paths:
           $ref: "#/components/responses/ListDoctorEnrollmentRequests"
         "500":
           $ref: "#/components/responses/ErrorMessage"
-  /institutions/enrollment-requests/{enrollmentRequestUuid}/approve:
+  /institutions/enrollment-requests/{enrollment_request_uuid}/approve:
     post:
       tags:
         - institution
       summary: Approve doctor into institution
       parameters:
-        - name: enrollmentRequestUuid
+        - name: enrollment_request_uuid
           in: path
           description: Institution id to delete
           required: true
@@ -782,13 +782,13 @@ paths:
           description: Enrollment request not found
         "500":
           $ref: "#/components/responses/ErrorMessage"
-  /institutions/enrollment-requests/{enrollmentRequestUuid}/deny:
+  /institutions/enrollment-requests/{enrollment_request_uuid}/deny:
     post:
       tags:
         - institution
       summary: Deny doctor into institution
       parameters:
-        - name: enrollmentRequestUuid
+        - name: enrollment_request_uuid
           in: path
           description: Institution id to delete
           required: true
@@ -1069,13 +1069,13 @@ paths:
           $ref: "#/components/responses/ListInstitutionEnrollmentRequests"
         "500":
           $ref: "#/components/responses/ErrorMessage"
-  /government/enrollment-requests/{enrollmentRequestUuid}/approve:
+  /government/enrollment-requests/{enrollment_request_uuid}/approve:
     post:
       tags:
         - government
       summary: Approve institution into the system
       parameters:
-        - name: enrollmentRequestUuid
+        - name: enrollment_request_uuid
           in: path
           description: UUID of enrollment request
           required: true
@@ -1086,13 +1086,13 @@ paths:
           description: Successful operation
         "500":
           $ref: "#/components/responses/ErrorMessage"
-  /government/enrollment-requests/{enrollmentRequestUuid}/deny:
+  /government/enrollment-requests/{enrollment_request_uuid}/deny:
     post:
       tags:
         - government
       summary: Deny institution into the system
       parameters:
-        - name: enrollmentRequestUuid
+        - name: enrollment_request_uuid
           in: path
           description: UUID of enrollment request
           required: true
