@@ -10,25 +10,62 @@ import (
 )
 
 // NursesGet - List ALL nurses
-func (c *Server) NursesGet(ctx echo.Context) error {
-	return ctx.JSON(http.StatusOK, nil)
+func (s *Server) NursesGet(ctx echo.Context) error {
+	nurses, err := s.Controller.ListNurses()
+	if err != nil {
+		return err
+	}
+
+	resps := []models.NursesResponse{}
+	for _, nurse := range nurses {
+		resp, err := models.NewNurseResponse(nurse)
+		if err != nil {
+			return err
+		}
+
+		resps = append(resps, resp)
+	}
+	return ctx.JSON(http.StatusOK, resps)
 }
 
-// NursesInstitutionUUIDGet - List ALL nurses in an institution
-func (c *Server) NursesInstitutionUUIDGet(ctx echo.Context) error {
-	return ctx.JSON(http.StatusOK, nil)
+// NursesInstitutionIDGet - List ALL nurses in an institution
+func (s *Server) NursesInstitutionIDGet(ctx echo.Context) error {
+	uuidStr := ctx.Param("institutionId")
+	institutionId, err := uuid.Parse(uuidStr)
+	if err != nil {
+		return ctx.String(http.StatusBadRequest, err.Error())
+	}
+
+	nurses, err := s.Controller.ListNursesByInstitutionID(institutionId)
+	if err != nil {
+		return err
+	}
+
+	resps := []models.NursesResponse{}
+	for _, nurse := range nurses {
+		resp, err := models.NewNurseResponse(nurse)
+		if err != nil {
+			return err
+		}
+
+		resps = append(resps, resp)
+	}
+	return ctx.JSON(http.StatusOK, resps)
 }
 
 // NursesLoginPost -
-func (c *Server) NursesLoginPost(ctx echo.Context) error {
+func (s *Server) NursesLoginPost(ctx echo.Context) error {
 	request := models.Login{}
 	if err := ctx.Bind(&request); err != nil {
 		return err
 	}
 
-	// TODO: login and obtain doctor UUID
+	user, err := s.Controller.GetNurseByLogin(request.Email, request.Password)
+	if err != nil {
+		return err
+	}
 
-	token, err := controller.NewClaim(uuid.New())
+	token, err := controller.NewClaim(user.ID.Bytes, user.InstitutionID.Bytes)
 	if err != nil {
 		return err
 	}
@@ -38,22 +75,78 @@ func (c *Server) NursesLoginPost(ctx echo.Context) error {
 	})
 }
 
-// NursesNurseUUIDDelete - Deletes a nurse
-func (c *Server) NursesNurseUUIDDelete(ctx echo.Context) error {
-	return ctx.JSON(http.StatusOK, nil)
+// NursesNurseIDDelete - Deletes a nurse
+func (s *Server) NursesNurseIDDelete(ctx echo.Context) error {
+	uuidStr := ctx.Param("nurseId")
+	nurseId, err := uuid.Parse(uuidStr)
+	if err != nil {
+		return ctx.String(http.StatusBadRequest, err.Error())
+	}
+
+	if err := s.Controller.DeleteNurseByID(nurseId); err != nil {
+		return err
+	}
+
+	return ctx.NoContent(http.StatusNoContent)
 }
 
-// NursesNurseUUIDGet - Find nurse by UUID
-func (c *Server) NursesNurseUUIDGet(ctx echo.Context) error {
-	return ctx.JSON(http.StatusOK, nil)
+// NursesNurseIDGet - Find nurse by ID
+func (s *Server) NursesNurseIDGet(ctx echo.Context) error {
+	uuidStr := ctx.Param("nurseId")
+	nurseId, err := uuid.Parse(uuidStr)
+	if err != nil {
+		return ctx.String(http.StatusBadRequest, err.Error())
+	}
+
+	nurse, err := s.Controller.GetNurseByID(nurseId)
+	if err != nil {
+		return err
+	}
+
+	resp, err := models.NewNurseResponse(nurse)
+	if err != nil {
+		return err
+	}
+
+	return ctx.JSON(http.StatusOK, resp)
 }
 
 // NursesPost - Add a new nurse to the system
-func (c *Server) NursesPost(ctx echo.Context) error {
-	return ctx.JSON(http.StatusOK, nil)
+func (s *Server) NursesPost(ctx echo.Context) error {
+	req := models.NursePostRequest{}
+	if err := ctx.Bind(&req); err != nil {
+		return err
+	}
+
+	user, err := s.Controller.CreateNurse(req)
+	if err != nil {
+		return err
+	}
+
+	resp, err := models.NewNurseResponse(user)
+	if err != nil {
+		return err
+	}
+
+	return ctx.JSON(http.StatusOK, resp)
 }
 
-// NursesPut - Update an existing nurse by UUID
-func (c *Server) NursesPut(ctx echo.Context) error {
-	return ctx.JSON(http.StatusOK, nil)
+// NursesPut - Update an existing nurse by ID
+func (s *Server) NursesPut(ctx echo.Context) error {
+	req := models.NursesPutRequest{}
+	if err := ctx.Bind(&req); err != nil {
+		return err
+	}
+
+	user, err := s.Controller.UpdateNurse(req)
+	if err != nil {
+		return err
+	}
+
+	resp, err := models.NewNurseResponse(user)
+	if err != nil {
+		return err
+	}
+
+	return ctx.JSON(http.StatusOK, resp)
 }

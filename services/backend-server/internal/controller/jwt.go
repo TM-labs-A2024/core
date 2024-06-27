@@ -26,14 +26,16 @@ func init() {
 }
 
 type JWTCustomClaims struct {
-	UserUUID uuid.UUID `json:"name"`
+	InstitutionID uuid.UUID `json:"institutionID"`
+	UserID        uuid.UUID `json:"userID"`
 	jwt.RegisteredClaims
 }
 
-func NewClaim(userUUID uuid.UUID) (string, error) {
+func NewClaim(userID, institutionID uuid.UUID) (string, error) {
 	// Set custom claims
 	claims := &JWTCustomClaims{
-		UserUUID: userUUID,
+		UserID:        userID,
+		InstitutionID: institutionID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(constants.ExpriationDuration)),
 		},

@@ -17,29 +17,29 @@ type Patient struct {
 	Pending     bool   `json:"pending,omitempty"`
 }
 
-type PatientsPostRequest struct {
+type PatientPostRequest struct {
 	Patient
 	Password string `json:"password,omitempty"`
 }
 
-type PatientsPutRequest struct {
-	UUID uuid.UUID `json:"uuid,omitempty"`
-	PatientsPostRequest
+type PatientPutRequest struct {
+	ID uuid.UUID `json:"id,omitempty"`
+	PatientPostRequest
 }
 
-type PatientsResponse struct {
-	UUID uuid.UUID `json:"uuid,omitempty"`
+type PatientResponse struct {
+	ID uuid.UUID `json:"id,omitempty"`
 	Patient
 }
 
-func NewPatientsResponse(patient db.Patient) (PatientsResponse, error) {
-	patientUUID, err := uuid.FromBytes(patient.ID.Bytes[:])
+func NewPatientResponse(patient db.Patient) (PatientResponse, error) {
+	patientID, err := uuid.FromBytes(patient.ID.Bytes[:])
 	if err != nil {
-		return PatientsResponse{}, err
+		return PatientResponse{}, err
 	}
 
-	return PatientsResponse{
-		UUID: patientUUID,
+	return PatientResponse{
+		ID: patientID,
 		Patient: Patient{
 			Firstname:   patient.Firstname,
 			Lastname:    patient.Lastname,
@@ -54,7 +54,7 @@ func NewPatientsResponse(patient db.Patient) (PatientsResponse, error) {
 }
 
 type PatientsHealthRecordsResponse struct {
-	UUID          uuid.UUID `json:"uuid,omitempty"`
+	UUID          uuid.UUID `json:"id,omitempty"`
 	Content       string    `json:"content,omitempty"`
 	Type          string    `json:"type,omitempty"`
 	Specialty     Specialty `json:"specialty,omitempty"`

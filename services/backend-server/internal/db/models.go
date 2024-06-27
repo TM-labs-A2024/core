@@ -165,7 +165,7 @@ type Doctor struct {
 	Firstname      string             `json:"firstname"`
 	Lastname       string             `json:"lastname"`
 	GovID          string             `json:"govId"`
-	Birthdate      pgtype.Date        `json:"birthdate"`
+	Birthdate      pgtype.Timestamp   `json:"birthdate"`
 	Email          string             `json:"email"`
 	Password       string             `json:"password"`
 	PhoneNumber    string             `json:"phoneNumber"`
@@ -249,7 +249,7 @@ type InstitutionUser struct {
 	Firstname     string             `json:"firstname"`
 	Lastname      string             `json:"lastname"`
 	GovID         string             `json:"govId"`
-	Birthdate     pgtype.Date        `json:"birthdate"`
+	Birthdate     pgtype.Timestamp   `json:"birthdate"`
 	Email         string             `json:"email"`
 	Password      string             `json:"password"`
 	PhoneNumber   string             `json:"phoneNumber"`
@@ -264,7 +264,7 @@ type Nurse struct {
 	Firstname     string             `json:"firstname"`
 	Lastname      string             `json:"lastname"`
 	GovID         string             `json:"govId"`
-	Birthdate     pgtype.Date        `json:"birthdate"`
+	Birthdate     pgtype.Timestamp   `json:"birthdate"`
 	Email         string             `json:"email"`
 	Password      string             `json:"password"`
 	PhoneNumber   string             `json:"phoneNumber"`
@@ -280,7 +280,7 @@ type Patient struct {
 	Firstname     string             `json:"firstname"`
 	Lastname      string             `json:"lastname"`
 	GovID         string             `json:"govId"`
-	Birthdate     pgtype.Date        `json:"birthdate"`
+	Birthdate     pgtype.Timestamp   `json:"birthdate"`
 	Email         string             `json:"email"`
 	Password      string             `json:"password"`
 	PhoneNumber   string             `json:"phoneNumber"`

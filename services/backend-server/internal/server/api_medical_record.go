@@ -7,7 +7,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// MedicalRecordHealthRecordUUIDDelete - Deletes a medical-record on the DB ONLY
+// MedicalRecordHealthRecordUUIDDelete - Deletes a medical-record on the db ONLY
 func (c *Server) MedicalRecordHealthRecordUUIDDelete(ctx echo.Context) error {
 	return ctx.NoContent(http.StatusNoContent)
 }

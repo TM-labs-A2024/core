@@ -1,86 +1,208 @@
 package server
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/TM-labs-A2024/core/services/backend-server/internal/controller"
+	"github.com/TM-labs-A2024/core/services/backend-server/internal/db"
 	"github.com/TM-labs-A2024/core/services/backend-server/internal/server/models"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/labstack/echo/v4"
 )
 
 // DoctorsDoctorUUIDDelete - Deletes a doctor
-func (c *Server) DoctorsDoctorUUIDDelete(ctx echo.Context) error {
-	uuidStr := ctx.Param("doctor_uuid")
-	doctorUUID, err := uuid.FromBytes([]byte(uuidStr))
+func (s *Server) DoctorsDoctorIDDelete(ctx echo.Context) error {
+	uuidStr := ctx.Param("doctorId")
+	doctorID, err := uuid.Parse((uuidStr))
 	if err != nil {
 		return ctx.String(http.StatusBadRequest, err.Error())
 	}
-	_ = doctorUUID
 
-	user := ctx.Get("user").(*jwt.Token)
-	claims := user.Claims.(*controller.JWTCustomClaims)
-
-	c.Logger.Debug(fmt.Sprintf("%s deleted by %s", doctorUUID, claims.UserUUID))
+	if err := s.Controller.DeleteDoctorByID(doctorID); err != nil {
+		return err
+	}
 
 	return ctx.NoContent(http.StatusNoContent)
 }
 
 // DoctorsDoctorUUIDGet - Returns a single doctor by UUID
-func (c *Server) DoctorsDoctorUUIDGet(ctx echo.Context) error {
-	uuidStr := ctx.Param("doctor_uuid")
-	doctorUUID, err := uuid.FromBytes([]byte(uuidStr))
+func (s *Server) DoctorsDoctorIDGet(ctx echo.Context) error {
+	uuidStr := ctx.Param("doctorId")
+	doctorID, err := uuid.Parse(uuidStr)
 	if err != nil {
 		return ctx.String(http.StatusBadRequest, err.Error())
 	}
-	_ = doctorUUID
 
-	return ctx.JSON(http.StatusOK, nil)
+	doctor, err := s.Controller.GetDoctorByID(doctorID)
+	if err != nil {
+		return err
+	}
+
+	specialties, err := s.Controller.ListSpecialtiesByDoctorID(doctor.ID.Bytes)
+	if err != nil {
+		return err
+	}
+
+	accessRequests, err := s.Controller.ListAccessRequestsByDoctorID(doctor.ID.Bytes)
+	if err != nil && err != pgx.ErrNoRows {
+		return err
+	}
+
+	enrollmentRequests, err := s.Controller.GetInstitutionEnrollmentRequestByDoctorIDAndInstitutionID(
+		doctor.ID.Bytes,
+		doctor.InstitutionID.Bytes,
+	)
+	if err != nil && err != pgx.ErrNoRows {
+		return err
+	}
+
+	resp, err := models.NewDoctorResponse(models.NewDoctorResponseArgs{
+		Doctor:         doctor,
+		Specialties:    specialties,
+		PatientPending: len(accessRequests) != 0,
+		Pending:        enrollmentRequests.ID.Valid,
+	})
+	if err != nil {
+		return err
+	}
+
+	return ctx.JSON(http.StatusOK, resp)
 }
 
 // DoctorsDoctorUUIDPatientsGet - Returns a list of patients treated by doctor
-func (c *Server) DoctorsDoctorUUIDPatientsGet(ctx echo.Context) error {
-	uuidStr := ctx.Param("doctor_uuid")
-	doctorUUID, err := uuid.FromBytes([]byte(uuidStr))
+func (s *Server) DoctorsDoctorIDPatientsGet(ctx echo.Context) error {
+	uuidStr := ctx.Param("doctorId")
+	doctorID, err := uuid.Parse((uuidStr))
 	if err != nil {
 		return ctx.String(http.StatusBadRequest, err.Error())
 	}
-	_ = doctorUUID
 
-	return ctx.JSON(http.StatusOK, nil)
+	patients, err := s.Controller.ListPatientsTreatedByDoctorID(doctorID)
+	if err != nil {
+		return err
+	}
+
+	resps := []models.PatientResponse{}
+	for _, patient := range patients {
+		resp, err := models.NewPatientResponse(patient)
+		if err != nil {
+			return err
+		}
+
+		resps = append(resps, resp)
+	}
+
+	return ctx.JSON(http.StatusOK, resps)
 }
 
 // DoctorsGet - List ALL doctors
-func (c *Server) DoctorsGet(ctx echo.Context) error {
-	return ctx.JSON(http.StatusOK, nil)
+func (s *Server) DoctorsGet(ctx echo.Context) error {
+	resps := []models.DoctorsResponse{}
+	doctors, err := s.Controller.ListDoctors()
+	if err != nil {
+		return err
+	}
+	for _, doctor := range doctors {
+		speciaties, err := s.Controller.ListSpecialtiesByDoctorID(doctor.ID.Bytes)
+		if err != nil {
+			return err
+		}
+
+		accessRequests, err := s.Controller.ListAccessRequestsByDoctorID(doctor.ID.Bytes)
+		if err != nil && err != pgx.ErrNoRows {
+			return err
+		}
+
+		enrollmentRequests, err := s.Controller.GetInstitutionEnrollmentRequestByDoctorIDAndInstitutionID(
+			doctor.ID.Bytes,
+			doctor.InstitutionID.Bytes,
+		)
+		if err != nil && err != pgx.ErrNoRows {
+			return err
+		}
+
+		resp, err := models.NewDoctorResponse(models.NewDoctorResponseArgs{
+			Doctor:         doctor,
+			Specialties:    speciaties,
+			PatientPending: len(accessRequests) != 0,
+			Pending:        enrollmentRequests.ID.Valid,
+		})
+		if err != nil {
+			return err
+		}
+
+		resps = append(resps, resp)
+	}
+
+	return ctx.JSON(http.StatusOK, resps)
 }
 
 // DoctorsInstitutionUUIDGet - List ALL doctors in an institution
-func (c *Server) DoctorsInstitutionUUIDGet(ctx echo.Context) error {
-	uuidStr := ctx.Param("institution_uuid")
-	doctorUUID, err := uuid.FromBytes([]byte(uuidStr))
+func (s *Server) DoctorsInstitutionIDGet(ctx echo.Context) error {
+	resps := []models.DoctorsResponse{}
+	uuidStr := ctx.Param("institutionId")
+	institutionId, err := uuid.Parse((uuidStr))
 	if err != nil {
 		return ctx.String(http.StatusBadRequest, err.Error())
 	}
-	_ = doctorUUID
 
-	return ctx.JSON(http.StatusOK, nil)
+	doctors, err := s.Controller.ListDoctorsByInstitutionID(institutionId)
+	if err != nil {
+		return err
+	}
+
+	for _, doctor := range doctors {
+		speciaties, err := s.Controller.ListSpecialtiesByDoctorID(doctor.ID.Bytes)
+		if err != nil {
+			return err
+		}
+
+		accessRequests, err := s.Controller.ListAccessRequestsByDoctorID(doctor.ID.Bytes)
+		if err != nil && err != pgx.ErrNoRows {
+			return err
+		}
+
+		enrollmentRequests, err := s.Controller.GetInstitutionEnrollmentRequestByDoctorIDAndInstitutionID(
+			doctor.ID.Bytes,
+			doctor.InstitutionID.Bytes,
+		)
+		if err != nil && err != pgx.ErrNoRows {
+			return err
+		}
+
+		resp, err := models.NewDoctorResponse(models.NewDoctorResponseArgs{
+			Doctor:         doctor,
+			Specialties:    speciaties,
+			PatientPending: len(accessRequests) != 0,
+			Pending:        enrollmentRequests.ID.Valid,
+		})
+		if err != nil {
+			return err
+		}
+
+		resps = append(resps, resp)
+	}
+
+	return ctx.JSON(http.StatusOK, resps)
 }
 
 // DoctorsLoginPost -
-func (c *Server) DoctorsLoginPost(ctx echo.Context) error {
+func (s *Server) DoctorsLoginPost(ctx echo.Context) error {
 	request := models.Login{}
 	if err := ctx.Bind(&request); err != nil {
-		return ctx.String(http.StatusBadRequest, err.Error())
+		return err
 	}
 
-	// TODO: login and obtain doctor UUID
-
-	token, err := controller.NewClaim(uuid.New())
+	user, err := s.Controller.GetDoctorByLogin(request.Email, request.Password)
 	if err != nil {
-		return ctx.String(http.StatusBadRequest, err.Error())
+		return err
+	}
+
+	token, err := controller.NewClaim(user.ID.Bytes, user.InstitutionID.Bytes)
+	if err != nil {
+		return err
 	}
 
 	return ctx.JSON(http.StatusOK, echo.Map{
@@ -89,38 +211,150 @@ func (c *Server) DoctorsLoginPost(ctx echo.Context) error {
 }
 
 // DoctorsPost - Add a new doctor to the system
-func (c *Server) DoctorsPost(ctx echo.Context) error {
-	request := models.DoctorsPostRequest{}
-	if err := ctx.Bind(&request); err != nil {
+func (s *Server) DoctorsPost(ctx echo.Context) error {
+	req := models.DoctorsPostRequest{}
+	if err := ctx.Bind(&req); err != nil {
 		return ctx.String(http.StatusBadRequest, err.Error())
 	}
 
-	return ctx.JSON(http.StatusOK, nil)
+	doctor, err := s.Controller.CreateDoctor(req)
+	if err != nil {
+		return err
+	}
+
+	specialties := []db.Specialty{}
+	for _, specialty := range req.Specialties {
+		err := s.Controller.LinkDoctorToSpecialty(doctor.ID.Bytes, specialty)
+		if err != nil {
+			return err
+		}
+
+		specialty, err := s.Controller.GetSpecialtyByID(specialty)
+		if err != nil {
+			return err
+		}
+
+		specialties = append(specialties, specialty)
+	}
+
+	resp, err := models.NewDoctorResponse(models.NewDoctorResponseArgs{
+		Doctor:      doctor,
+		Specialties: specialties,
+	})
+	if err != nil {
+		return err
+	}
+
+	return ctx.JSON(http.StatusOK, resp)
 }
 
 // DoctorsPut - Update an existing doctor by Id
-func (c *Server) DoctorsPut(ctx echo.Context) error {
-	request := models.DoctorsPutRequest{}
-	if err := ctx.Bind(&request); err != nil {
+func (s *Server) DoctorsPut(ctx echo.Context) error {
+	req := models.DoctorsPutRequest{}
+	if err := ctx.Bind(&req); err != nil {
 		return ctx.String(http.StatusBadRequest, err.Error())
 	}
-	return ctx.JSON(http.StatusOK, nil)
+
+	doctor, err := s.Controller.UpdateDoctorByID(req)
+	if err != nil {
+		return err
+	}
+
+	specialties, err := s.Controller.ListSpecialtiesByDoctorID(doctor.ID.Bytes)
+	if err != nil {
+		return err
+	}
+
+	resp, err := models.NewDoctorResponse(models.NewDoctorResponseArgs{
+		Doctor:      doctor,
+		Specialties: specialties,
+	})
+	if err != nil {
+		return err
+	}
+
+	return ctx.JSON(http.StatusOK, resp)
 }
 
 // DoctorsSpecialtyIdGet - Returns a list of doctors by specialty
-func (c *Server) DoctorsSpecialtyIdGet(ctx echo.Context) error {
-	request := models.DoctorsPostRequest{}
-	if err := ctx.Bind(&request); err != nil {
+func (s *Server) DoctorsSpecialtyIdGet(ctx echo.Context) error {
+	resps := []models.DoctorsResponse{}
+	uuidStr := ctx.Param("specialtyId")
+	specialtyId, err := uuid.Parse(uuidStr)
+	if err != nil {
 		return ctx.String(http.StatusBadRequest, err.Error())
 	}
-	return ctx.JSON(http.StatusOK, nil)
+
+	specialtyDoctorJunctions, err := s.Controller.ListDoctorsBySpecialtyID(specialtyId)
+	if err != nil {
+		return err
+	}
+
+	for _, specialtyDoctorJunction := range specialtyDoctorJunctions {
+		doctor, err := s.Controller.GetDoctorByID(specialtyDoctorJunction.DoctorID.Bytes)
+		if err != nil {
+			return err
+		}
+
+		speciaties, err := s.Controller.ListSpecialtiesByDoctorID(doctor.ID.Bytes)
+		if err != nil {
+			return err
+		}
+
+		accessRequests, err := s.Controller.ListAccessRequestsByDoctorID(doctor.ID.Bytes)
+		if err != nil && err != pgx.ErrNoRows {
+			return err
+		}
+
+		enrollmentRequests, err := s.Controller.GetInstitutionEnrollmentRequestByDoctorIDAndInstitutionID(
+			doctor.ID.Bytes,
+			doctor.InstitutionID.Bytes,
+		)
+		if err != nil && err != pgx.ErrNoRows {
+			return err
+		}
+
+		resp, err := models.NewDoctorResponse(models.NewDoctorResponseArgs{
+			Doctor:         doctor,
+			Specialties:    speciaties,
+			PatientPending: len(accessRequests) != 0,
+			Pending:        enrollmentRequests.ID.Valid,
+		})
+		if err != nil {
+			return err
+		}
+
+		resps = append(resps, resp)
+	}
+
+	return ctx.JSON(http.StatusOK, resps)
 }
 
 // DoctorsSpecialtyIdPatientsGet - Returns a list of patients that have at least one record for a given  specialty that are treated by a doctor
-func (c *Server) DoctorsSpecialtyIdPatientsGet(ctx echo.Context) error {
-	request := models.DoctorsPostRequest{}
-	if err := ctx.Bind(&request); err != nil {
+func (s *Server) DoctorsSpecialtyIdPatientsGet(ctx echo.Context) error {
+	uuidStr := ctx.Param("specialtyId")
+	specialtyId, err := uuid.Parse(uuidStr)
+	if err != nil {
 		return ctx.String(http.StatusBadRequest, err.Error())
 	}
-	return ctx.JSON(http.StatusOK, nil)
+
+	user := ctx.Get("user").(*jwt.Token)
+	claims := user.Claims.(*controller.JWTCustomClaims)
+
+	patients, err := s.Controller.ListPatientsTreatedByDoctorIDWithHealthRecordOfSpecialtyID(claims.UserID, specialtyId)
+	if err != nil {
+		return err
+	}
+
+	resps := []models.PatientResponse{}
+	for _, patient := range patients {
+		resp, err := models.NewPatientResponse(patient)
+		if err != nil {
+			return err
+		}
+
+		resps = append(resps, resp)
+	}
+
+	return ctx.JSON(http.StatusOK, resps)
 }

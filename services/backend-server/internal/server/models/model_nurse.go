@@ -7,29 +7,30 @@ import (
 )
 
 type Nurse struct {
-	InstitutionUUID uuid.UUID `json:"institution_uuid,omitempty"`
-	Firstname       string    `json:"firstname,omitempty"`
-	Lastname        string    `json:"lastname,omitempty"`
-	GovId           string    `json:"gov_id,omitempty"`
-	Birthdate       string    `json:"birthdate,omitempty"`
-	Email           string    `json:"email,omitempty"`
-	PhoneNumber     string    `json:"phone_number,omitempty"`
-	Credentials     string    `json:"credentials,omitempty"`
+	InstitutionID uuid.UUID `json:"institutionId,omitempty"`
+	Firstname     string    `json:"firstname,omitempty"`
+	Lastname      string    `json:"lastname,omitempty"`
+	GovId         string    `json:"gov_id,omitempty"`
+	Birthdate     string    `json:"birthdate,omitempty"`
+	Email         string    `json:"email,omitempty"`
+	PhoneNumber   string    `json:"phone_number,omitempty"`
+	Credentials   string    `json:"credentials,omitempty"`
 }
 
 type NursesPutRequest struct {
-	UUID uuid.UUID `json:"uuid,omitempty"`
+	ID uuid.UUID `json:"id,omitempty"`
 	Nurse
 	Password string `json:"password,omitempty"`
+	Pending  bool   `json:"pending,omitempty"`
 }
 
-type NursesPostRequest struct {
+type NursePostRequest struct {
 	Nurse
 	Password string `json:"password,omitempty"`
 }
 
 type NursesResponse struct {
-	UUID uuid.UUID `json:"uuid,omitempty"`
+	UUID uuid.UUID `json:"id,omitempty"`
 	Nurse
 	Pending bool `json:"pending,omitempty"`
 }
@@ -48,14 +49,14 @@ func NewNurseResponse(nurse db.Nurse) (NursesResponse, error) {
 	return NursesResponse{
 		UUID: nurseUUID,
 		Nurse: Nurse{
-			InstitutionUUID: institutionUUID,
-			Firstname:       nurse.Firstname,
-			Lastname:        nurse.Lastname,
-			GovId:           nurse.GovID,
-			Birthdate:       nurse.Birthdate.Time.Format(constants.ISOLayout),
-			Email:           nurse.Email,
-			PhoneNumber:     nurse.PhoneNumber,
-			Credentials:     nurse.Credentials,
+			InstitutionID: institutionUUID,
+			Firstname:     nurse.Firstname,
+			Lastname:      nurse.Lastname,
+			GovId:         nurse.GovID,
+			Birthdate:     nurse.Birthdate.Time.Format(constants.ISOLayout),
+			Email:         nurse.Email,
+			PhoneNumber:   nurse.PhoneNumber,
+			Credentials:   nurse.Credentials,
 		},
 		Pending: nurse.Pending,
 	}, nil

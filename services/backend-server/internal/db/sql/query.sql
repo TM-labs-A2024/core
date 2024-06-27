@@ -1,17 +1,18 @@
 -- name: GetDoctorByID :one
-SELECT id,
-    institution_id,
-    firstname,
-    lastname,
-    gov_id,
-    birthdate,
-    email,
-    phone_number,
-    credentials,
-    pending,
-    patient_pending
+SELECT *
 FROM doctor
 WHERE id = $1;
+-- name: GetDoctorByLogin :one
+SELECT *
+FROM doctor
+WHERE email = $1 AND password = crypt($2, password);
+-- name: ListDoctors :many
+SELECT *
+FROM doctor;
+-- name: ListDoctorsByInstitutionID :many
+SELECT *
+FROM doctor
+WHERE institution_id = $1;
 -- name: CreateDoctor :one
 INSERT INTO doctor(
         institution_id,
@@ -22,9 +23,7 @@ INSERT INTO doctor(
         password,
         email,
         phone_number,
-        credentials,
-        pending,
-        patient_pending
+        credentials
     )
 VALUES (
         $1,
@@ -32,12 +31,10 @@ VALUES (
         $3,
         $4,
         $5,
-        $6,
+        crypt($6, gen_salt('bf')),
         $7,
         $8,
-        $9,
-        $10,
-        $11
+        $9
     )
 RETURNING *;
 -- name: UpdateDoctorByID :one
@@ -47,7 +44,7 @@ SET institution_id = $1,
     lastname = $3,
     gov_id = $4,
     birthdate = $5,
-    password = $6,
+    password = crypt($6, gen_salt('bf')),
     email = $7,
     phone_number = $8,
     credentials = $9,
@@ -58,20 +55,24 @@ RETURNING *;
 -- name: DeleteDoctorByID :exec
 DELETE FROM doctor
 WHERE id = $1;
--- name: GetAccessRequestByPatientID :one
-SELECT id,
-    patient_id,
-    doctor_id,
-    pending,
-    approved
+-- name: GetAccessRequestsByID :one
+SELECT *
+FROM doctor_access_request
+WHERE id = $1;
+-- name: GetAccessRequestsByPatientAndDoctorID :one
+SELECT *
+FROM doctor_access_request
+WHERE patient_id = $1 AND doctor_id = $2;
+-- name: ListAccessRequestsByPatientID :many
+SELECT *
 FROM doctor_access_request
 WHERE patient_id = $1;
--- name: GetAccessRequestByDoctorID :one
-SELECT id,
-    patient_id,
-    doctor_id,
-    pending,
-    approved
+-- name: ListApprovedAccessRequestsByPatientID :many
+SELECT *
+FROM doctor_access_request
+WHERE patient_id = $1 AND approved = TRUE;
+-- name: ListAccessRequestsByDoctorID :many
+SELECT *
 FROM doctor_access_request
 WHERE doctor_id = $1;
 -- name: CreateAccessRequest :one
@@ -90,23 +91,25 @@ RETURNING *;
 DELETE FROM doctor_access_request
 WHERE id = $1;
 -- name: ListInstitutionEnrollmentRequestsByInstitutionID :many
-SELECT id,
-    institution_id,
-    doctor_id,
-    nurse_id,
-    pending,
-    approved
+SELECT *
 FROM institution_enrollment_request
 WHERE institution_id = $1;
 -- name: GetInstitutionEnrollmentRequestsByID :one
-SELECT id,
-    institution_id,
-    doctor_id,
-    nurse_id,
-    pending,
-    approved
+SELECT *
 FROM institution_enrollment_request
 WHERE id = $1;
+-- name: ListInstitutionEnrollmentRequestByDoctorID :many
+SELECT *
+FROM institution_enrollment_request
+WHERE doctor_id = $1;
+-- name: GetInstitutionEnrollmentRequestByDoctorIDAndInstitutionID :one
+SELECT *
+FROM institution_enrollment_request
+WHERE doctor_id = $1 AND institution_id = $2;
+-- name: ListInstitutionEnrollmentRequestByNurseID :many
+SELECT *
+FROM institution_enrollment_request
+WHERE nurse_id = $1;
 -- name: CreateInstitutionEnrollmentRequest :one
 INSERT INTO institution_enrollment_request(
         institution_id,
@@ -115,6 +118,10 @@ INSERT INTO institution_enrollment_request(
     )
 VALUES ($1, $2, $3)
 RETURNING *;
+-- name: GetNurseByLogin :one
+SELECT *
+FROM nurse
+WHERE email = $1 AND password = crypt($2, password);
 -- name: UpdateInstitutionEnrollmentRequestByID :one
 UPDATE institution_enrollment_request
 SET institution_id = $1,
@@ -127,11 +134,10 @@ RETURNING *;
 -- name: DeleteInstitutionEnrollmentRequestByID :exec
 DELETE FROM institution_enrollment_request
 WHERE id = $1;
--- name: GetGovernment :one
-SELECT id,
-    email
+-- name: GetGovernmentByLogin :one
+SELECT *
 FROM government
-LIMIT 1;
+WHERE email = $1 AND password = crypt($2, password);
 -- name: CreateGovernment :one
 INSERT INTO government(email, password)
 VALUES ($1, $2)
@@ -145,95 +151,66 @@ RETURNING *;
 -- name: DeleteGovernmentByID :exec
 DELETE FROM government
 WHERE id = $1;
--- name: GetHealthRecordsBySpecialtyID :many
-SELECT id,
-    patient_id,
-    private_key,
-    type,
-    specialty_id,
-    content_format
+-- name: ListHealthRecordsBySpecialtyID :many
+SELECT *
 FROM health_record
 WHERE specialty_id = $1;
--- name: GetHealthRecordsBySpecialtyIDAndPatientID :many
-SELECT id,
-    patient_id,
-    private_key,
-    type,
-    specialty_id,
-    content_format
+-- name: ListHealthRecordsByPatientID :many
+SELECT *
+FROM health_record
+WHERE patient_id = $1;
+-- name: ListHealthRecordsBySpecialtyAndPatientID :many
+SELECT *
 FROM health_record
 WHERE specialty_id = $1
     AND patient_id = $2;
--- name: GetHealthRecordsByPatientID :many
-SELECT id,
-    patient_id,
-    private_key,
-    type,
-    specialty_id,
-    content_format
+-- name: ListHealthRecordsByTypeAndPatientID :many
+SELECT *
 FROM health_record
-WHERE patient_id = $1;
+WHERE type = $1
+    AND patient_id = $2;
 -- name: CreateHealthRecord :one
 INSERT INTO health_record (
         patient_id,
         private_key,
+        public_key,
         type,
         specialty_id,
         content_format
     )
-VALUES ($1, $2, $3, $4, $5)
-RETURNING *;
--- name: UpdateHealthRecordByID :one
-UPDATE health_record
-SET patient_id = $1,
-    private_key = $2,
-    type = $3,
-    specialty_id = $4,
-    content_format = $5
-WHERE id = $6
+VALUES ($1, $2, $3, $4, $5, $6)
 RETURNING *;
 -- name: DeleteHealthRecordByID :exec
 DELETE FROM health_record
 WHERE id = $1;
--- name: GetInstitutionByID :one
-SELECT id,
-    name,
-    address,
-    credentials,
-    type,
-    gov_id,
-    pending
-FROM institution
+-- name: GetHealthRecordByID :one
+SELECT * 
+FROM health_record
 WHERE id = $1;
+-- name: GetInstitutionByGovID :one
+SELECT *
+FROM institution
+WHERE gov_id = $1;
 -- name: ListInstitutions :many
-SELECT id,
-    name,
-    address,
-    credentials,
-    type,
-    gov_id,
-    pending
+SELECT *
 FROM institution;
 -- name: ListApprovedInstitutions :many
-SELECT id,
-    name,
-    address,
-    credentials,
-    type,
-    gov_id,
-    pending
+SELECT *
 FROM institution
-WHERE id IN (SELECT institution_id FROM government_enrollment_request WHERE approved = TRUE);
--- name: InsertInstitution :one
+WHERE id IN (
+        SELECT institution_id
+        FROM government_enrollment_request
+        WHERE approved = TRUE
+    );
+-- name: CreateInstitution :one
 INSERT INTO institution (
         name,
         address,
         credentials,
         type,
-        gov_id,
-        pending
+        gov_id
     )
-VALUES ($1, $2, $3, $4, $5, $6)
+VALUES ($1, $2, $3, $4, $5)
 RETURNING *;
 -- name: UpdateInstitutionByID :one
 UPDATE institution
@@ -249,10 +226,7 @@ RETURNING *;
 DELETE FROM institution
 WHERE id = $1;
 -- name: ListGovernmentEnrollmentRequests :many
-SELECT id,
-    institution_id,
-    pending,
-    approved
+SELECT *
 FROM government_enrollment_request;
 -- name: CreateGovernmentEnrollmentRequests :one
 INSERT INTO government_enrollment_request (institution_id)
@@ -268,28 +242,30 @@ RETURNING *;
 -- name: DeleteGovernmentEnrollmentRequestByID :exec
 DELETE FROM government_enrollment_request
 WHERE id = $1;
+-- name: GetGovernmentEnrollmentRequestByID :one
+SELECT *
+FROM government_enrollment_request
+WHERE id = $1;
+-- name: GetInstitutionUserByLogin :one
+SELECT *
+FROM institution_user
+WHERE email = $1 AND password = crypt($2, password);;
 -- name: GetInstitutionUserByID :many
-SELECT id,
-    institution_id,
-    firstname,
-    lastname,
-    gov_id,
-    birthdate,
-    email,
-    phone_number,
-    role
+SELECT *
 FROM institution_user
 WHERE id = $1;
+-- name: GetInstitutionUserByGovAndInstitutionID :one
+SELECT *
+FROM institution_user
+WHERE gov_id = $1 AND institution_id = $2;
+-- name: GetFirstInstitutionUserByInstitutionID :one
+SELECT *
+FROM institution_user
+WHERE institution_id = $1
+ORDER BY created_at
+LIMIT 1;
 -- name: ListInstitutionUserByInstitutionID :many
-SELECT id,
-    institution_id,
-    firstname,
-    lastname,
-    gov_id,
-    birthdate,
-    email,
-    phone_number,
-    role
+SELECT *
 FROM institution_user
 WHERE institution_id = $1;
 -- name: CreateInstitutionUser :one
@@ -304,41 +280,37 @@ INSERT INTO institution_user(
         phone_number,
         role
     )
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+VALUES ($1, $2, $3, $4, $5, $6, crypt($7, gen_salt('bf')), $8, $9)
 RETURNING *;
 -- name: UpdateInstitutionUserByGovID :one
 UPDATE institution_user
-SET institution_id = $1,
-    firstname = $2,
+SET firstname = $2,
     lastname = $3,
-    gov_id = $4,
     birthdate = $5,
     email = $6,
-    password = $7,
+    password = crypt($7, gen_salt('bf')),
     phone_number = $8,
     role = $9
-WHERE gov_id = $10
+WHERE gov_id = $4 AND institution_id = $1
 RETURNING *;
--- name: DeleteInstitutionUserByID :exec
+-- name: DeleteInstitutionUserByInsitutionAndUserID :exec
 DELETE FROM institution_user
-WHERE id = $1;
+WHERE id = $1 AND institution_id = $2;
 -- SELECT  FROM InstitutionUserRole WHERE 1;
 -- INSERT INTO InstitutionUserRole() VALUES ();
 -- UPDATE InstitutionUserRole SET  WHERE 1;
 -- DELETE FROM institution_user_role WHERE id = $1;
 -- name: GetNurseByID :one
-SELECT id,
-    institution_id,
-    firstname,
-    lastname,
-    gov_id,
-    birthdate,
-    email,
-    phone_number,
-    credentials,
-    pending
+SELECT *
 FROM nurse
 WHERE id = $1;
+-- name: ListNurses :many
+SELECT *
+FROM nurse;
+-- name: ListNursesByInstitutionID :many
+SELECT *
+FROM nurse
+WHERE institution_id = $1;
 -- name: CreateNurse :one
 INSERT INTO nurse(
         institution_id,
@@ -352,7 +324,7 @@ INSERT INTO nurse(
         password,
         pending
     )
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, crypt($9, gen_salt('bf')), $10)
 RETURNING *;
 -- name: UpdateNurseByID :one
 UPDATE nurse
@@ -364,7 +336,7 @@ SET institution_id = $1,
     email = $6,
     phone_number = $7,
     credentials = $8,
-    password = $9,
+    password = crypt($9, gen_salt('bf')),
     pending = $10
 WHERE id = $11
 RETURNING *;
@@ -372,20 +344,17 @@ RETURNING *;
 DELETE FROM nurse
 WHERE id = $1;
 -- name: GetPatientByID :one
-SELECT id,
-    firstname,
-    lastname,
-    gov_id,
-    birthdate,
-    email,
-    password,
-    phone_number,
-    sex,
-    pending,
-    status,
-    bed
+SELECT *
 FROM patient
 WHERE id = $1;
+-- name: GetPatientByGovID :one
+SELECT *
+FROM patient
+WHERE gov_id = $1;
+-- name: GetPatientByLogin :one
+SELECT *
+FROM patient
+WHERE email = $1 AND password = crypt($2, password);
 -- name: CreatePatient :one
 INSERT INTO patient(
         firstname,
@@ -400,7 +369,7 @@ INSERT INTO patient(
         status,
         bed
     )
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+VALUES ($1, $2, $3, $4, $5, crypt($6, gen_salt('bf')), $7, $8, $9, $10, $11)
 RETURNING *;
 -- name: UpdatePatientByID :one
 UPDATE patient
@@ -409,7 +378,7 @@ SET firstname = $1,
     gov_id = $3,
     birthdate = $4,
     email = $5,
-    password = $6,
+    password =  crypt($6, password),
     phone_number = $7,
     sex = $8,
     pending = $9,
@@ -420,16 +389,36 @@ RETURNING *;
 -- name: DeletePatientByID :exec
 DELETE FROM patient
 WHERE id = $1;
+-- name: ListPatientsTreatedByDoctorID :many
+SELECT *
+FROM patient
+WHERE id = ANY(
+    SELECT patient_id 
+    FROM doctor_access_request 
+    WHERE doctor_id = $1
+);
+-- name: ListPatients :many
+SELECT *
+FROM patient;
+-- name: ListPatientsTreatedByDoctorIDWithHealthRecordOfSpecialtyID :many
+SELECT *
+FROM patient
+WHERE id = ANY(
+    SELECT patient_id 
+    FROM doctor_access_request 
+    WHERE doctor_id = $1
+) AND
+(
+    SELECT COUNT(*) 
+    FROM health_record 
+    WHERE specialty_id = $2
+) > 0;
 -- name: GetSpecialtyByID :one
-SELECT id,
-    description,
-    name
+SELECT *
 FROM specialty
-WHERE 1;
+WHERE id = $1;
 -- name: ListSpecialties :many
-SELECT id,
-    description,
-    name
+SELECT *
 FROM specialty;
 -- name: CreateSpecialty :one
 INSERT INTO specialty(description, name)
@@ -445,13 +434,11 @@ RETURNING *;
 DELETE FROM specialty
 WHERE id = $1;
 -- name: ListSpecialtyDoctorJunctionsByDoctorID :many
-SELECT doctor_id,
-    specialty_id
+SELECT *
 FROM doctor_specialty
 WHERE doctor_id = $1;
 -- name: ListSpecialtyDoctorJunctionsBySpecialtyID :many
-SELECT doctor_id,
-    specialty_id
+SELECT *
 FROM doctor_specialty
 WHERE specialty_id = $1;
 -- name: CreateSpecialtyDoctorJunction :one
@@ -462,6 +449,7 @@ RETURNING *;
 DELETE FROM doctor_specialty
 WHERE doctor_id = $1
     AND specialty_id = $2;
+
 -- SELECT  FROM SpecialtyName WHERE 1;
 -- INSERT INTO SpecialtyName() VALUES ();
 -- UPDATE SpecialtyName SET  WHERE 1;

@@ -10,15 +10,18 @@ import (
 )
 
 // GovermentLoginPost -
-func (c *Server) GovermentLoginPost(ctx echo.Context) error {
+func (s *Server) GovermentLoginPost(ctx echo.Context) error {
 	request := models.Login{}
 	if err := ctx.Bind(&request); err != nil {
 		return err
 	}
 
-	// TODO: login and obtain doctor UUID
+	user, err := s.Controller.GetGovernmentByLogin(request.Email, request.Password)
+	if err != nil {
+		return err
+	}
 
-	token, err := controller.NewClaim(uuid.New())
+	token, err := controller.NewClaim(user.ID.Bytes, uuid.UUID{})
 	if err != nil {
 		return err
 	}
@@ -28,27 +31,70 @@ func (c *Server) GovermentLoginPost(ctx echo.Context) error {
 	})
 }
 
-// GovernmentEnrollmentInstitutionUUIDRevokePost - Deny institution into the system
-func (c *Server) GovernmentEnrollmentInstitutionUUIDRevokePost(ctx echo.Context) error {
-	return ctx.JSON(http.StatusOK, nil)
+// GovernmentEnrollmentInstitutionIDRevokePost - Deny institution into the system
+func (s *Server) GovernmentEnrollmentInstitutionIDRevokePost(ctx echo.Context) error {
+	uuidStr := ctx.Param("institutionId")
+	instId, err := uuid.Parse(uuidStr)
+	if err != nil {
+		return ctx.String(http.StatusBadRequest, err.Error())
+	}
+
+	if err := s.Controller.DeleteInstitutionByID(instId); err != nil {
+		return err
+	}
+
+	return ctx.JSON(http.StatusNoContent, nil)
 }
 
-// GovernmentEnrollmentRequestsEnrollmentRequestUUIDApprovePost - Approve institution into the system
-func (c *Server) GovernmentEnrollmentRequestsEnrollmentRequestUUIDApprovePost(ctx echo.Context) error {
-	return ctx.JSON(http.StatusOK, nil)
+// GovernmentEnrollmentRequestsEnrollmentRequestIDApprovePost - Approve institution into the system
+func (s *Server) GovernmentEnrollmentRequestsEnrollmentRequestIDApprovePost(ctx echo.Context) error {
+	uuidStr := ctx.Param("enrollmentRequestId")
+	erId, err := uuid.Parse(uuidStr)
+	if err != nil {
+		return ctx.String(http.StatusBadRequest, err.Error())
+	}
+
+	er, err := s.Controller.ApproveGovernmentEnrollmentRequest(erId)
+	if err != nil {
+		return err
+	}
+
+	return ctx.JSON(http.StatusOK, models.NewGovernmentEnrollmentRequest(er))
 }
 
-// GovernmentEnrollmentRequestsEnrollmentRequestUUIDDenyPost - Deny institution into the system
-func (c *Server) GovernmentEnrollmentRequestsEnrollmentRequestUUIDDenyPost(ctx echo.Context) error {
-	return ctx.JSON(http.StatusOK, nil)
+// GovernmentEnrollmentRequestsEnrollmentRequestIDDenyPost - Deny institution into the system
+func (s *Server) GovernmentEnrollmentRequestsEnrollmentRequestIDDenyPost(ctx echo.Context) error {
+	uuidStr := ctx.Param("enrollmentRequestId")
+	erId, err := uuid.Parse(uuidStr)
+	if err != nil {
+		return ctx.String(http.StatusBadRequest, err.Error())
+	}
+
+	er, err := s.Controller.DenyGovernmentEnrollmentRequest(erId)
+	if err != nil {
+		return err
+	}
+
+	return ctx.JSON(http.StatusOK, models.NewGovernmentEnrollmentRequest(er))
 }
 
 // GovernmentEnrollmentRequestsGet - List request to approve institution into government
-func (c *Server) GovernmentEnrollmentRequestsGet(ctx echo.Context) error {
-	return ctx.JSON(http.StatusOK, nil)
+func (s *Server) GovernmentEnrollmentRequestsGet(ctx echo.Context) error {
+	ers, err := s.Controller.ListGovernmentEnrollmentRequest()
+	if err != nil {
+		return err
+	}
+
+	resps := []models.GovernmentEnrollmentRequest{}
+	for _, er := range ers {
+		resp := models.NewGovernmentEnrollmentRequest(er)
+		resps = append(resps, resp)
+	}
+
+	return ctx.JSON(http.StatusOK, resps)
 }
 
 // GovernmentEnrollmentRequestsPost - Send request to approve institution into government
-func (c *Server) GovernmentEnrollmentRequestsPost(ctx echo.Context) error {
-	return ctx.JSON(http.StatusOK, nil)
-}
+// func (s *Server) GovernmentEnrollmentRequestsPost(ctx echo.Context) error {
+// 	return ctx.JSON(http.StatusOK, nil)
+// }

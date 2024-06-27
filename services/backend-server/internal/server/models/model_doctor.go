@@ -1,83 +1,90 @@
 package models
 
 import (
+	"github.com/TM-labs-A2024/core/services/backend-server/internal/constants"
 	"github.com/TM-labs-A2024/core/services/backend-server/internal/db"
 	"github.com/google/uuid"
 )
 
 type Doctor struct {
-	InstitutionUUID uuid.UUID `json:"institution_uuid,omitempty"`
-	Firstname       string    `json:"firstname,omitempty"`
-	Lastname        string    `json:"lastname,omitempty"`
-	GovId           string    `json:"gov_id,omitempty"`
-	Birthdate       string    `json:"birthdate,omitempty"`
-	Email           string    `json:"email,omitempty"`
-	PhoneNumber     string    `json:"phone_number,omitempty"`
-	Credentials     string    `json:"credentials,omitempty"`
+	InstitutionID uuid.UUID `json:"institutionId,omitempty"`
+	Firstname     string    `json:"firstname,omitempty"`
+	Lastname      string    `json:"lastname,omitempty"`
+	GovId         string    `json:"govId,omitempty"`
+	Birthdate     string    `json:"birthdate,omitempty"`
+	Email         string    `json:"email,omitempty"`
+	PhoneNumber   string    `json:"phoneNumber,omitempty"`
+	Credentials   string    `json:"credentials,omitempty"`
 }
 
-// DoctorEnrollmentRequest <= NOT USED ON API, ONLY DB
+// DoctorEnrollmentRequest <= NOT USED ON API, ONLY db
 // type DoctorEnrollmentRequest struct {
-// 	InstitutionUUID  uuid.UUID `json:"institution_uuid,omitempty"`
-// 	DoctorUUID       uuid.UUID `json:"doctor_uuid,omitempty"`
+// 	InstitutionUUID  uuid.UUID `json:"institutionId,omitempty"`
+// 	DoctorUUID       uuid.UUID `json:"doctorId,omitempty"`
 // 	Pending          bool   `json:"pending,omitempty"`
 // 	Approved         bool   `json:"approved,omitempty"`
 // 	ProfessionalType string `json:"professional-type,omitempty"`
 // }
 
 type DoctorAccessRequest struct {
-	PatientUUID uuid.UUID `json:"patient_uuid,omitempty"`
-	DoctorUUID  uuid.UUID `json:"doctor_uuid,omitempty"`
+	PatientID uuid.UUID `json:"patientId,omitempty"`
+	DoctorID  uuid.UUID `json:"doctorId,omitempty"`
+	Pending   bool      `json:"pending,omitempty"`
+	Approved  bool      `json:"approved,omitempty"`
 }
 
-type DoctorAccessResponse struct {
-	UUID uuid.UUID `json:"uuid"`
+type DoctorPutAccessRequest struct {
+	ID uuid.UUID `json:"id"`
 	DoctorAccessRequest
 }
 
+type DoctorAccessResponse DoctorPutAccessRequest
+
 func NewDoctorAccessResponse(dar db.DoctorAccessRequest) (DoctorAccessResponse, error) {
-	darUUID, err := uuid.FromBytes(dar.ID.Bytes[:])
+	darID, err := uuid.FromBytes(dar.ID.Bytes[:])
 	if err != nil {
 		return DoctorAccessResponse{}, err
 	}
 
-	doctorUUID, err := uuid.FromBytes(dar.DoctorID.Bytes[:])
+	doctorID, err := uuid.FromBytes(dar.DoctorID.Bytes[:])
 	if err != nil {
 		return DoctorAccessResponse{}, err
 	}
 
-	patientUUID, err := uuid.FromBytes(dar.DoctorID.Bytes[:])
+	patientID, err := uuid.FromBytes(dar.PatientID.Bytes[:])
 	if err != nil {
 		return DoctorAccessResponse{}, err
 	}
 
 	return DoctorAccessResponse{
-		UUID: darUUID,
+		ID: darID,
 		DoctorAccessRequest: DoctorAccessRequest{
-			PatientUUID: patientUUID,
-			DoctorUUID:  doctorUUID,
+			PatientID: patientID,
+			DoctorID:  doctorID,
+			Pending:   dar.Pending,
+			Approved:  dar.Approved,
 		},
 	}, nil
 }
 
 type DoctorsPostRequest struct {
 	Doctor
-	Password    string `json:"password,omitempty"`
-	Specialties []int  `json:"specialties,omitempty"`
+	Password    string      `json:"password,omitempty"`
+	Specialties []uuid.UUID `json:"specialties,omitempty"`
 }
 
 type DoctorsPutRequest struct {
-	UUID string `json:"uuid,omitempty"`
+	ID uuid.UUID `json:"id,omitempty"`
 	DoctorsPostRequest
 	Approved bool `json:"approved,omitempty"`
 }
 
 type DoctorsResponse struct {
-	UUID uuid.UUID `json:"uuid,omitempty"`
+	ID uuid.UUID `json:"id,omitempty"`
 	Doctor
 	Specialities   []Specialty `json:"specialities,omitempty"`
 	Pending        bool        `json:"pending,omitempty"`
-	PatientPending bool        `json:"patient_pending,omitempty"`
+	PatientPending bool        `json:"patientPending,omitempty"`
 }
 
 type NewDoctorResponseArgs struct {
@@ -88,12 +95,12 @@ type NewDoctorResponseArgs struct {
 }
 
 func NewDoctorResponse(args NewDoctorResponseArgs) (DoctorsResponse, error) {
-	doctorUUID, err := uuid.FromBytes(args.Doctor.ID.Bytes[:])
+	doctorID, err := uuid.FromBytes(args.Doctor.ID.Bytes[:])
 	if err != nil {
 		return DoctorsResponse{}, err
 	}
 
-	institutionUUID, err := uuid.FromBytes(args.Doctor.InstitutionID.Bytes[:])
+	institutionID, err := uuid.FromBytes(args.Doctor.InstitutionID.Bytes[:])
 	if err != nil {
 		return DoctorsResponse{}, err
 	}
@@ -101,28 +108,24 @@ func NewDoctorResponse(args NewDoctorResponseArgs) (DoctorsResponse, error) {
 	// Fetch specialties
 	specialties := []Specialty{}
 	for _, s := range args.Specialties {
-		specialtyUUID, err := uuid.FromBytes(s.ID.Bytes[:])
-		if err != nil {
-			return DoctorsResponse{}, err
-		}
 		specialties = append(specialties, Specialty{
-			ID:          specialtyUUID,
+			ID:          s.ID.Bytes,
 			Description: s.Description,
 			Name:        SpecialtyName(s.Name),
 		})
 	}
 
 	return DoctorsResponse{
-		UUID: doctorUUID,
+		ID: doctorID,
 		Doctor: Doctor{
-			InstitutionUUID: institutionUUID,
-			Firstname:       args.Doctor.Firstname,
-			Lastname:        args.Doctor.Lastname,
-			GovId:           args.Doctor.GovID,
-			Birthdate:       args.Doctor.Birthdate.Time.Format("2006-01-02"),
-			Email:           args.Doctor.Email,
-			PhoneNumber:     args.Doctor.PhoneNumber,
-			Credentials:     args.Doctor.Credentials,
+			InstitutionID: institutionID,
+			Firstname:     args.Doctor.Firstname,
+			Lastname:      args.Doctor.Lastname,
+			GovId:         args.Doctor.GovID,
+			Birthdate:     args.Doctor.Birthdate.Time.Format(constants.ISOLayout),
+			Email:         args.Doctor.Email,
+			PhoneNumber:   args.Doctor.PhoneNumber,
+			Credentials:   args.Doctor.Credentials,
 		},
 		Specialities:   specialties,
 		Pending:        args.Doctor.Pending,

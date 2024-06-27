@@ -12,11 +12,11 @@ info:
     url: https://www.gnu.org/licenses/gpl-3.0.html
   version: 0.0.1
 tags:
+  - name: institution
   - name: doctor
   - name: patient
   - name: nurse
   - name: institution-user
-  - name: institution
   - name: health-record
   - name: government
   - name: specialty
@@ -67,13 +67,13 @@ paths:
           $ref: "#/components/responses/ErrorMessage"
         "500":
           $ref: "#/components/responses/ErrorMessage"
-  /doctors/{doctor_uuid}:
+  /doctors/{doctorId}:
     get:
       tags:
         - doctor
       summary: Returns a single doctor by UUID
       parameters:
-        - name: doctor_uuid
+        - name: doctorId
           in: path
           description: id of doctor to return
           required: true
@@ -94,7 +94,7 @@ paths:
         - doctor
       summary: Deletes a doctor
       parameters:
-        - name: doctor_uuid
+        - name: doctorId
           in: path
           description: Doctor id to delete
           required: true
@@ -124,13 +124,13 @@ paths:
           description: Bad credentials
         "500":
           $ref: "#/components/responses/ErrorMessage"
-  /doctors/{institution_uuid}:
+  /doctors/institutions/{institutionId}:
     get:
       tags:
         - doctor
       summary: List ALL doctors in an institution
       parameters:
-        - name: institution_uuid
+        - name: institutionId
           in: path
           description: Id of the instution the Doctor belongs to
           required: true
@@ -145,13 +145,13 @@ paths:
           description: Doctor not found
         "500":
           $ref: "#/components/responses/ErrorMessage"
-  /doctors/{doctor_uuid}/patients:
+  /doctors/patients/{doctorId}:
     get:
       tags:
         - doctor
       summary: Returns a list of patients treated by doctor
       parameters:
-        - name: doctor_uuid
+        - name: doctorId
           in: path
           description: Doctor id to delete
           required: true
@@ -166,7 +166,7 @@ paths:
           description: Doctor not found
         "500":
           $ref: "#/components/responses/ErrorMessage"
-  /doctors/{specialtyId}:
+  /doctors/specialties/{specialtyId}:
     get:
       tags:
         - doctor
@@ -187,7 +187,7 @@ paths:
           description: Specialty not found
         "500":
           $ref: "#/components/responses/ErrorMessage"
-  /doctors/{specialtyId}/patients:
+  /doctors/patients/specialties/{specialtyId}:
     get:
       tags:
         - doctor
@@ -232,7 +232,7 @@ paths:
     put:
       tags:
         - patient
-      summary: Update an existing patient by uuid
+      summary: Update an existing patient by id
       requestBody:
         required: true
         $ref: "#/components/requestBodies/UpdatePatient"
@@ -256,13 +256,13 @@ paths:
           $ref: "#/components/responses/ErrorMessage"
         "500":
           $ref: "#/components/responses/ErrorMessage"
-  /patients/{gov_id}:
+  /patients/{govId}:
     get:
       tags:
         - patient
-      summary: Find patient by gov_id
+      summary: Find patient by govId
       parameters:
-        - name: gov_id
+        - name: govId
           in: path
           description: Gov Id of patient to return
           required: true
@@ -277,13 +277,13 @@ paths:
           description: Patient not found
         "500":
           $ref: "#/components/responses/ErrorMessage"
-  /patients/{patient_uuid}:
+  /patients/{patientId}:
     delete:
       tags:
         - patient
       summary: Deletes a patient
       parameters:
-        - name: patient_uuid
+        - name: patientId
           in: path
           description: Gov Ident id to delete
           required: true
@@ -315,15 +315,15 @@ paths:
           description: Patient not found
         "500":
           $ref: "#/components/responses/ErrorMessage"
-  /patients/{gov_id}/doctors:
+  /patients/{govId}/doctors:
     get:
       tags:
         - patient
       summary: Returns a list of doctors treating patients
       parameters:
-        - name: gov_id
+        - name: govId
           in: path
-          description: gov_id of patient to return
+          description: govId of patient to return
           required: true
           schema:
             type: string
@@ -336,13 +336,13 @@ paths:
           description: Patient not found
         "500":
           $ref: "#/components/responses/ErrorMessage"
-  /patients/{gov_id}/health-records:
+  /patients/{govId}/health-records:
     get:
       tags:
         - patient
       summary: List health records by patient
       parameters:
-        - name: gov_id
+        - name: govId
           in: path
           description: Gov Id of patient to return
           required: true
@@ -357,13 +357,13 @@ paths:
           description: Patient not found
         "500":
           $ref: "#/components/responses/ErrorMessage"
-  /patients/{gov_id}/health-records/{specialtyId}:
+  /patients/{govId}/health-records/{specialtyId}:
     get:
       tags:
         - patient
       summary: List health records by patient and specialty Id
       parameters:
-        - name: gov_id
+        - name: govId
           in: path
           description: Gov Id of patient to return
           required: true
@@ -384,13 +384,13 @@ paths:
           description: Patient not found
         "500":
           $ref: "#/components/responses/ErrorMessage"
-  /patients/{gov_id}/health-records/specialties:
+  /patients/{govId}/health-records/specialties:
     get:
       tags:
         - patient
       summary: List health records by patient and specialty Id
       parameters:
-        - name: gov_id
+        - name: govId
           in: path
           description: Gov Id of patient to return
           required: true
@@ -405,13 +405,13 @@ paths:
           description: Patient not found
         "500":
           $ref: "#/components/responses/ErrorMessage"
-  /patients/{gov_id}/orders:
+  /patients/{govId}/orders:
     get:
       tags:
         - patient
       summary: List health orders by patient
       parameters:
-        - name: gov_id
+        - name: govId
           in: path
           description: Gov Id of patient to return
           required: true
@@ -436,15 +436,15 @@ paths:
           $ref: "#/components/responses/ListDoctorAccessRequest"
         "500":
           $ref: "#/components/responses/ErrorMessage"
-  /patients/{patient_uuid}/access-requests:
+  /patients/{patientId}/access-requests:
     post:
       tags:
         - patient
       summary: Make request for doctor to access patient records
       parameters:
-        - name: patient_uuid
+        - name: patientId
           in: path
-          description: patient_uuid of patient to make access request to
+          description: patientId of patient to make access request to
           required: true
           schema:
             $ref: "#/components/schemas/UUID"
@@ -457,13 +457,13 @@ paths:
           description: Patient not found
         "500":
           $ref: "#/components/responses/ErrorMessage"
-  /patients/access-requests/{accessRequestUuid}/approve:
+  /patients/access-requests/{accessRequestId}/approve:
     post:
       tags:
         - patient
       summary: Approve doctor access to patient records
       parameters:
-        - name: accessRequestUuid
+        - name: accessRequestId
           in: path
           description: Id of the access request
           required: true
@@ -478,13 +478,13 @@ paths:
           description: Access request not found
         "500":
           $ref: "#/components/responses/ErrorMessage"
-  /patients/access-requests/{accessRequestUuid}/deny:
+  /patients/access-requests/{accessRequestId}/deny:
     post:
       tags:
         - patient
       summary: Deny doctor access to patient records
       parameters:
-        - name: accessRequestUuid
+        - name: accessRequestId
           in: path
           description: Id of the access request
           required: true
@@ -499,13 +499,13 @@ paths:
           description: Access request not found
         "500":
           $ref: "#/components/responses/ErrorMessage"
-  /patients/access/{doctor_uuid}/revoke:
+  /patients/access/{doctorId}/revoke:
     post:
       tags:
         - patient
       summary: Deny doctor access to patient records
       parameters:
-        - name: doctor_uuid
+        - name: doctorId
           in: path
           description: Id of the doctor to revoke acess to
           required: true
@@ -564,15 +564,15 @@ paths:
           $ref: "#/components/responses/ErrorMessage"
         "500":
           $ref: "#/components/responses/ErrorMessage"
-  /nurses/{nurseUuid}:
+  /nurses/{nurseId}:
     get:
       tags:
         - nurse
       summary: Find nurse by UUID
       parameters:
-        - name: nurseUuid
+        - name: nurseId
           in: path
-          description: nurseUuid of nurse to return
+          description: nurseId of nurse to return
           required: true
           schema:
             type: string
@@ -591,7 +591,7 @@ paths:
         - nurse
       summary: Deletes a nurse
       parameters:
-        - name: nurseUuid
+        - name: nurseId
           in: path
           description: Nurse id to delete
           required: true
@@ -621,13 +621,13 @@ paths:
           description: Nurse not found
         "500":
           $ref: "#/components/responses/ErrorMessage"
-  /nurses/{institution_uuid}:
+  /nurses/institutions/{institutionId}:
     get:
       tags:
         - nurse
       summary: List ALL nurses in an institution
       parameters:
-        - name: institution_uuid
+        - name: institutionId
           in: path
           description: id of the institutions the nurses belong to
           required: true
@@ -685,15 +685,15 @@ paths:
           description: Doctor not found
         "500":
           $ref: "#/components/responses/ErrorMessage"
-  /institutions/{gov_id}:
+  /institutions/{govId}:
     get:
       tags:
         - institution
-      summary: Returns a single institution by gov_id
+      summary: Returns a single institution by govId
       parameters:
-        - name: gov_id
+        - name: govId
           in: path
-          description: gov_id of institutions to return
+          description: govId of institutions to return
           required: true
           schema:
             type: string
@@ -720,13 +720,13 @@ paths:
           description: Doctor not found
         "500":
           $ref: "#/components/responses/ErrorMessage"
-  /institutions/{institution_uuid}:
+  /institutions/{institutionId}:
     delete:
       tags:
         - institution
       summary: Delete an institution
       parameters:
-        - name: institution_uuid
+        - name: institutionId
           in: path
           description: Institution id to delete
           required: true
@@ -763,13 +763,13 @@ paths:
           $ref: "#/components/responses/ListDoctorEnrollmentRequests"
         "500":
           $ref: "#/components/responses/ErrorMessage"
-  /institutions/enrollment-requests/{enrollment_request_uuid}/approve:
+  /institutions/enrollment-requests/{enrollmentRequestId}/approve:
     post:
       tags:
         - institution
       summary: Approve doctor into institution
       parameters:
-        - name: enrollment_request_uuid
+        - name: enrollmentRequestId
           in: path
           description: Institution id to delete
           required: true
@@ -782,13 +782,13 @@ paths:
           description: Enrollment request not found
         "500":
           $ref: "#/components/responses/ErrorMessage"
-  /institutions/enrollment-requests/{enrollment_request_uuid}/deny:
+  /institutions/enrollment-requests/{enrollmentRequestId}/deny:
     post:
       tags:
         - institution
       summary: Deny doctor into institution
       parameters:
-        - name: enrollment_request_uuid
+        - name: enrollmentRequestId
           in: path
           description: Institution id to delete
           required: true
@@ -801,15 +801,15 @@ paths:
           description: Enrollment request not found
         "500":
           $ref: "#/components/responses/ErrorMessage"
-  /institutions/enrollment/{doctor_uuid}/revoke:
+  /institutions/enrollment/{professionalId}/revoke:
     post:
       tags:
         - institution
       summary: Deny doctor into institution
       parameters:
-        - name: doctor_uuid
+        - name: professionalId
           in: path
-          description: UUID of the doctor
+          description: ID of the professional that is to be revoked
           required: true
           schema:
             $ref: "#/components/schemas/UUID"
@@ -820,13 +820,13 @@ paths:
           description: Doctor not found
         "500":
           $ref: "#/components/responses/ErrorMessage"
-  /institutions/{institution_uuid}/users:
+  /institutions/{institutionId}/users:
     get:
       tags:
         - institution
       summary: list all institutions users on the system
       parameters:
-        - name: institution_uuid
+        - name: institutionId
           in: path
           description: Institution id to delete
           required: true
@@ -840,13 +840,14 @@ paths:
         "500":
           $ref: "#/components/responses/ErrorMessage"
     ######################################### INSTITUTION USERS #######################################################
+  /institutions/users:
     post:
       security: []
       tags:
         - institution-user
       summary: Add a new institutions user to the system
       parameters:
-        - name: institution_uuid
+        - name: institutionId
           in: path
           description: Institution id to create user to
           required: true
@@ -869,7 +870,7 @@ paths:
         - institution-user
       summary: Update an existing institutions user by Id
       parameters:
-        - name: institution_uuid
+        - name: institutionId
           in: path
           description: Institution id to delete
           required: true
@@ -887,19 +888,19 @@ paths:
           description: Institution user or institution not found
         "500":
           $ref: "#/components/responses/ErrorMessage"
-  /institutions/{institution_uuid}/users/{gov_id}:
+  /institutions/{institutionId}/users/{govId}:
     get:
       tags:
         - institution-user
       summary: Returns a single institution user by gov id
       parameters:
-        - name: gov_id
+        - name: govId
           in: path
           description: UUID of institutions user to return
           required: true
           schema:
             type: string
-        - name: institution_uuid
+        - name: institutionId
           in: path
           description: Institution id to delete
           required: true
@@ -914,19 +915,19 @@ paths:
           description: Institution user or institution not found
         "500":
           $ref: "#/components/responses/ErrorMessage"
-  /institutions/{institution_uuid}/users/{userUuid}:
+  /institutions/{institutionId}/users/{userId}:
     delete:
       tags:
         - institution-user
       summary: Deletes a institution user
       parameters:
-        - name: userUuid
+        - name: userId
           in: path
           description: InstitutionUser id to delete
           required: true
           schema:
             $ref: "#/components/schemas/UUID"
-        - name: institution_uuid
+        - name: institutionId
           in: path
           description: Institution id to delete
           required: true
@@ -939,12 +940,12 @@ paths:
           $ref: "#/components/responses/ErrorMessage"
         "500":
           $ref: "#/components/responses/ErrorMessage"
-  /institutions/{institution_uuid}/users/login:
+  /institutions/{institutionId}/users/login:
     post:
       tags:
         - institution-user
       parameters:
-        - name: institution_uuid
+        - name: institutionId
           in: path
           description: Institution id to delete
           required: true
@@ -970,21 +971,21 @@ paths:
       summary: Add a new health-record to the system
       requestBody:
         required: true
-        $ref: "#/components/requestBodies/InsertHealthReacord"
+        $ref: "#/components/requestBodies/InsertHealthRecord"
       responses:
         "200":
-          $ref: "#/components/responses/ReadHealthReacords"
+          $ref: "#/components/responses/ReadHealthRecords"
         "400":
           $ref: "#/components/responses/ErrorMessage"
         "500":
           $ref: "#/components/responses/ErrorMessage"
-  /health-record/{healthReacordUuid}:
+  /health-record/{HealthRecordId}:
     get:
       tags:
         - health-record
       summary: Find health-record by UUID
       parameters:
-        - name: healthReacordUuid
+        - name: HealthRecordId
           in: path
           description: UUID of health-record to return
           required: true
@@ -992,11 +993,11 @@ paths:
             $ref: "#/components/schemas/UUID"
       responses:
         "200":
-          $ref: "#/components/responses/ReadHealthReacords"
+          $ref: "#/components/responses/ReadHealthRecords"
         "400":
           $ref: "#/components/responses/ErrorMessage"
         "404":
-          description: HealthReacord not found
+          description: HealthRecord not found
         "500":
           $ref: "#/components/responses/ErrorMessage"
     delete:
@@ -1004,9 +1005,9 @@ paths:
         - health-record
       summary: Deletes a health-record on the DB ONLY
       parameters:
-        - name: healthReacordUuid
+        - name: HealthRecordId
           in: path
-          description: HealthReacord id to delete
+          description: HealthRecord id to delete
           required: true
           schema:
             $ref: "#/components/schemas/UUID"
@@ -1069,13 +1070,13 @@ paths:
           $ref: "#/components/responses/ListInstitutionEnrollmentRequests"
         "500":
           $ref: "#/components/responses/ErrorMessage"
-  /government/enrollment-requests/{enrollment_request_uuid}/approve:
+  /government/enrollment-requests/{enrollmentRequestId}/approve:
     post:
       tags:
         - government
       summary: Approve institution into the system
       parameters:
-        - name: enrollment_request_uuid
+        - name: enrollmentRequestId
           in: path
           description: UUID of enrollment request
           required: true
@@ -1086,13 +1087,13 @@ paths:
           description: Successful operation
         "500":
           $ref: "#/components/responses/ErrorMessage"
-  /government/enrollment-requests/{enrollment_request_uuid}/deny:
+  /government/enrollment-requests/{enrollmentRequestId}/deny:
     post:
       tags:
         - government
       summary: Deny institution into the system
       parameters:
-        - name: enrollment_request_uuid
+        - name: enrollmentRequestId
           in: path
           description: UUID of enrollment request
           required: true
@@ -1103,13 +1104,13 @@ paths:
           description: Successful operation
         "500":
           $ref: "#/components/responses/ErrorMessage"
-  /government/enrollment/{institution_uuid}/revoke:
+  /government/enrollment/{institutionId}/revoke:
     post:
       tags:
         - government
       summary: Deny institution into the system
       parameters:
-        - name: institution_uuid
+        - name: institutionId
           in: path
           description: UUID of institution to revoke access to the system
           required: true
@@ -1126,7 +1127,7 @@ components:
     Doctor:
       type: object
       properties:
-        institution_uuid:
+        institutionId:
           $ref: "#/components/schemas/UUID"
         firstname:
           type: string
@@ -1134,7 +1135,7 @@ components:
         lastname:
           type: string
           example: "González"
-        gov_id:
+        govId:
           type: string
           example: E99885566
         birthdate:
@@ -1143,7 +1144,7 @@ components:
           example: "1197-08-20"
         email:
           $ref: "#/components/schemas/Email"
-        phone_number:
+        phoneNumber:
           type: string
           example: "+584127659814"
         credentials:
@@ -1152,7 +1153,7 @@ components:
     Nurse:
       type: object
       properties:
-        institution_uuid:
+        institutionId:
           $ref: "#/components/schemas/UUID"
         firstname:
           type: string
@@ -1160,7 +1161,7 @@ components:
         lastname:
           type: string
           example: "González"
-        gov_id:
+        govId:
           type: string
           example: E99885566
         birthdate:
@@ -1169,7 +1170,7 @@ components:
           example: "1197-08-20"
         email:
           $ref: "#/components/schemas/Email"
-        phone_number:
+        phoneNumber:
           type: string
           example: "+584127659814"
         credentials:
@@ -1184,7 +1185,7 @@ components:
         lastname:
           type: string
           example: "González"
-        gov_id:
+        govId:
           type: string
           example: E99885566
         birthdate:
@@ -1193,7 +1194,7 @@ components:
           example: "1197-08-20"
         email:
           $ref: "#/components/schemas/Email"
-        phone_number:
+        phoneNumber:
           type: string
           example: "+584127659814"
         sex:
@@ -1208,7 +1209,7 @@ components:
         name:
           type: string
           example: Clínica Mérida
-        gov_id:
+        govId:
           type: string
           example: J-99885566
         credentials:
@@ -1225,15 +1226,15 @@ components:
             - type: object
               properties:
                 institutionUser:
-                  $ref: "#/components/schemas/InstitutionUserWithoutinstitution_uuid"
+                  $ref: "#/components/schemas/InstitutionUserWithoutInstitutionId"
     InstitutionUser:
       allOf:
         - type: object
           properties:
-            institution_uuid:
+            institutionId:
               $ref: "#/components/schemas/UUID"          
-        - $ref: "#/components/schemas/InstitutionUserWithoutinstitution_uuid"
-    InstitutionUserWithoutinstitution_uuid:
+        - $ref: "#/components/schemas/InstitutionUserWithoutInstitutionId"
+    InstitutionUserWithoutInstitutionId:
       type: object
       properties:
         firstname:
@@ -1242,7 +1243,7 @@ components:
         lastname:
           type: string
           example: "González"
-        gov_id:
+        govId:
           type: string
           example: E99885566
         birthdate:
@@ -1253,12 +1254,12 @@ components:
           $ref: "#/components/schemas/Email"
         password:
           type: string  
-        phone_number:
+        phoneNumber:
           type: string
           example: "+584127659814"
         role:
           $ref: "#/components/schemas/InstitutionUserRole"
-    HealthReacord:
+    HealthRecord:
       type: object
       properties:
         content:
@@ -1278,9 +1279,9 @@ components:
       format: email
     UUID:
       type: string
-      format: uuid
+      format: id
     SpecialtyId:
-      type: integer
+      $ref: "#/components/schemas/UUID" 
     Specialty:
       type: object
       properties:
@@ -1322,16 +1323,16 @@ components:
     DoctorAccessRequest:
       type: object
       properties:
-        patient_uuid:
+        patientId:
           $ref: "#/components/schemas/UUID"
-        doctor_uuid:
+        doctorId:
           $ref: "#/components/schemas/UUID"
     DoctorEnrollmentRequest:
       type: object
       properties:
-        institution_uuid:
+        institutionId:
           $ref: "#/components/schemas/UUID"
-        doctor_uuid:
+        doctorId:
           $ref: "#/components/schemas/UUID"
         pending:
           type: boolean
@@ -1348,7 +1349,7 @@ components:
     InstitutionEnrollmentRequest:
       type: object
       properties:
-        institution_uuid:
+        institutionId:
           $ref: "#/components/schemas/UUID"
         pending:
           type: boolean
@@ -1360,7 +1361,7 @@ components:
     Government:
       type: object
       properties:
-        uuid:
+        id:
           $ref: "#/components/schemas/UUID"
         name:
           type: string
@@ -1399,7 +1400,7 @@ components:
             allOf:
               - type: object
                 properties:
-                  uuid:
+                  id:
                     $ref: "#/components/schemas/UUID"
                   password:
                     type: string
@@ -1431,7 +1432,7 @@ components:
             allOf:
               - type: object
                 properties:
-                  uuid:
+                  id:
                     $ref: "#/components/schemas/UUID"
                   password:
                     type: string
@@ -1459,7 +1460,7 @@ components:
             allOf:
               - type: object
                 properties:
-                  uuid:
+                  id:
                     $ref: "#/components/schemas/UUID"
                   password:
                     type: string
@@ -1481,8 +1482,11 @@ components:
             allOf:
               - type: object
                 properties:
-                  uuid:
+                  id:
                     $ref: "#/components/schemas/UUID"
+                  pending:
+                    type: boolean
+                    default: true
               - $ref: "#/components/schemas/Institution"
     InsertInstitutionUser:
       description: Institution user to be added to the DB
@@ -1505,7 +1509,7 @@ components:
               - $ref: "#/components/schemas/InstitutionUser"
               - type: object
                 properties:
-                  uuid:
+                  id:
                     $ref: "#/components/schemas/UUID"
                   password:
                     type: string
@@ -1529,8 +1533,8 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Login"
-    InsertHealthReacord:
-      description: HealthReacord insert object to be added to the DB
+    InsertHealthRecord:
+      description: HealthRecord insert object to be added to the DB
       content:
         multipart/form-data:
           schema:
@@ -1538,6 +1542,8 @@ components:
             properties:
               specialty:
                 $ref: "#/components/schemas/SpecialtyId"
+              patientId:
+                $ref: "#/components/schemas/UUID"
               type:
                 type: string
                 enum:
@@ -1558,7 +1564,7 @@ components:
             allOf:
               - type: object
                 properties:
-                  uuid:
+                  id:
                     $ref: "#/components/schemas/UUID"
                   status:
                     type: string
@@ -1575,7 +1581,7 @@ components:
             allOf:
               - type: object
                 properties:
-                  uuid:
+                  id:
                     $ref: "#/components/schemas/UUID"
                   specialities:
                     type: array
@@ -1596,7 +1602,7 @@ components:
             allOf:
               - type: object
                 properties:
-                  uuid:
+                  id:
                     $ref: "#/components/schemas/UUID"
                   pending:
                     type: boolean
@@ -1610,7 +1616,7 @@ components:
             allOf:
               - type: object
                 properties:
-                  uuid:
+                  id:
                     $ref: "#/components/schemas/UUID"
                   pending:
                     type: boolean
@@ -1624,10 +1630,10 @@ components:
             allOf:
               - type: object
                 properties:
-                  uuid:
+                  id:
                     $ref: "#/components/schemas/UUID"
               - $ref: "#/components/schemas/InstitutionUser"
-    ReadHealthReacords:
+    ReadHealthRecords:
       description: Health record on the DB
       content:
         application/json:
@@ -1635,9 +1641,9 @@ components:
             allOf:
               - type: object
                 properties:
-                  uuid:
+                  id:
                     $ref: "#/components/schemas/UUID"
-              - $ref: "#/components/schemas/HealthReacord"
+              - $ref: "#/components/schemas/HealthRecord"
     ListPatients:
       description: Patients on the DB
       content:
@@ -1648,7 +1654,7 @@ components:
               allOf:
                 - type: object
                   properties:
-                    uuid:
+                    id:
                       $ref: "#/components/schemas/UUID"
                     status:
                       type: string
@@ -1667,7 +1673,7 @@ components:
               allOf:
                 - type: object
                   properties:
-                    uuid:
+                    id:
                       $ref: "#/components/schemas/UUID"
                     specialities:
                       type: array
@@ -1690,7 +1696,7 @@ components:
               allOf:
                 - type: object
                   properties:
-                    uuid:
+                    id:
                       $ref: "#/components/schemas/UUID"
                     pending:
                       type: boolean
@@ -1706,7 +1712,7 @@ components:
               allOf:
                 - type: object
                   properties:
-                    uuid:
+                    id:
                       $ref: "#/components/schemas/UUID"
                     pending:
                       type: boolean
@@ -1723,7 +1729,7 @@ components:
             type: array
             items:
               allOf:
-                - $ref: "#/components/schemas/HealthReacord"
+                - $ref: "#/components/schemas/HealthRecord"
                 - type: object
                   properties:
                     type:
@@ -1740,9 +1746,9 @@ components:
               allOf:
                 - type: object
                   properties:
-                    uuid:
+                    id:
                       $ref: "#/components/schemas/UUID"
-                - $ref: "#/components/schemas/HealthReacord"
+                - $ref: "#/components/schemas/HealthRecord"
     ListInstitutionUsers:
       description: Patient's health records on the DB
       content:
@@ -1753,7 +1759,7 @@ components:
               allOf:
                 - type: object
                   properties:
-                    uuid:
+                    id:
                       $ref: "#/components/schemas/UUID"
                 - $ref: "#/components/schemas/InstitutionUser"
     ListDoctorEnrollmentRequests:
@@ -1766,7 +1772,7 @@ components:
               allOf:
                 - type: object
                   properties:
-                    uuid:
+                    id:
                       $ref: "#/components/schemas/UUID"
                 - $ref: "#/components/schemas/DoctorEnrollmentRequest"
     ListInstitutionEnrollmentRequests:
@@ -1779,7 +1785,7 @@ components:
               allOf:
                 - type: object
                   properties:
-                    uuid:
+                    id:
                       $ref: "#/components/schemas/UUID"
                 - $ref: "#/components/schemas/InstitutionEnrollmentRequest"
     ListInstitutions:
@@ -1792,7 +1798,7 @@ components:
               allOf:
                 - type: object
                   properties:
-                    uuid:
+                    id:
                       $ref: "#/components/schemas/UUID"
                 - $ref: "#/components/schemas/Institution"
     ListSpecialties:

@@ -9,8 +9,8 @@ import (
 func main() {
 	s, err := server.NewServer()
 	if err != nil {
-		slog.Error("could not create server", err)
+		slog.Error("could not create server", slog.Any("error", err))
 	}
 
-	s.Logger.Error("faltal error while running server", s.Start(":8080"))
+	s.Logger.Error("faltal error while running server", slog.Any("error", s.Start(":8080")))
 }
