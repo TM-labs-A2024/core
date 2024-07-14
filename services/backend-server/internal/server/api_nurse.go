@@ -70,8 +70,14 @@ func (s *Server) NursesLoginPost(ctx echo.Context) error {
 		return err
 	}
 
+	resp, err := models.NewNurseResponse(user)
+	if err != nil {
+		return err
+	}
+
 	return ctx.JSON(http.StatusOK, echo.Map{
 		"token": token,
+		"nurse": resp,
 	})
 }
 

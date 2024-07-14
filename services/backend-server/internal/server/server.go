@@ -128,7 +128,7 @@ func (s Server) AddRoutes() {
 	// restricted.POST("/institutions/enrollment-requests", s.InstitutionsEnrollmentRequestsPost)
 
 	// InstitutionsGet - List ALL institutions
-	restricted.GET("/institutions", s.InstitutionsGet)
+	unrestricted.GET("/institutions", s.InstitutionsGet)
 
 	// InstitutionsGovIdGet - Returns a single institution by govId
 	restricted.GET("/institutions/:govId", s.InstitutionsGovIdGet)
@@ -149,7 +149,7 @@ func (s Server) AddRoutes() {
 	restricted.GET("/institutions/:institutionId/users/:govId", s.InstitutionsInstitutionIDUsersGovIdGet)
 
 	// InstitutionsInstitutionIDUsersLoginPost -
-	unrestricted.POST("/institutions/:institutionId/users/login", s.InstitutionsInstitutionIDUsersLoginPost)
+	unrestricted.POST("/institutions/users/login", s.InstitutionsInstitutionIDUsersLoginPost)
 
 	// InstitutionsInstitutionIDUsersPost - Add a new institutions user to the system
 	unrestricted.POST("/institutions/users", s.InstitutionsInstitutionIDUsersPost)
@@ -230,5 +230,5 @@ func (s Server) AddRoutes() {
 	restricted.PUT("/patients", s.PatientsPut)
 
 	// SpecialtiesGet - Returns a list of specialties
-	restricted.GET("/specialties", s.SpecialtiesGet)
+	unrestricted.GET("/specialties", s.SpecialtiesGet)
 }

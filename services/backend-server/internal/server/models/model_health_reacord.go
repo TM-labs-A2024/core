@@ -6,14 +6,17 @@ import (
 )
 
 type HealthRecord struct {
-	Content       string    `json:"content,omitempty"`
-	Type          string    `json:"type,omitempty"`
-	Specialty     Specialty `json:"specialty,omitempty"`
-	ContentFormat string    `json:"content-format,omitempty"`
+	Content       string    `json:"content"`
+	Type          string    `json:"type"`
+	Specialty     Specialty `json:"specialty"`
+	ContentFormat string    `json:"content-format"`
+	Title         string    `json:"title"`
+	Description   string    `json:"description"`
+	Author        string    `json:"author"`
 }
 
 type HealthRecordResponse struct {
-	ID uuid.UUID `json:"id,omitempty"`
+	ID uuid.UUID `json:"id"`
 	HealthRecord
 }
 
@@ -27,6 +30,9 @@ func NewHealthRecordResponse(hr db.HealthRecord, spec db.Specialty) HealthRecord
 			Type:          string(hr.Type),
 			Specialty:     specialty,
 			ContentFormat: hr.ContentFormat,
+			Title:         hr.Title,
+			Description:   hr.Description,
+			Author:        hr.Author,
 		},
 	}
 }

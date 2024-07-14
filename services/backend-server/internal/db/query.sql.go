@@ -47,7 +47,8 @@ INSERT INTO doctor(
         password,
         email,
         phone_number,
-        credentials
+        credentials,
+        sex
     )
 VALUES (
         $1,
@@ -58,9 +59,10 @@ VALUES (
         crypt($6, gen_salt('bf')),
         $7,
         $8,
-        $9
+        $9,
+        $10
     )
-RETURNING created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, password, phone_number, credentials, pending, patient_pending
+RETURNING created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, sex, password, phone_number, credentials, pending, patient_pending
 `
 
 type CreateDoctorParams struct {
@@ -73,6 +75,7 @@ type CreateDoctorParams struct {
 	Email         string           `json:"email"`
 	PhoneNumber   string           `json:"phoneNumber"`
 	Credentials   string           `json:"credentials"`
+	Sex           string           `json:"sex"`
 }
 
 func (q *Queries) CreateDoctor(ctx context.Context, arg CreateDoctorParams) (Doctor, error) {
@@ -86,6 +89,7 @@ func (q *Queries) CreateDoctor(ctx context.Context, arg CreateDoctorParams) (Doc
 		arg.Email,
 		arg.PhoneNumber,
 		arg.Credentials,
+		arg.Sex,
 	)
 	var i Doctor
 	err := row.Scan(
@@ -98,6 +102,7 @@ func (q *Queries) CreateDoctor(ctx context.Context, arg CreateDoctorParams) (Doc
 		&i.GovID,
 		&i.Birthdate,
 		&i.Email,
+		&i.Sex,
 		&i.Password,
 		&i.PhoneNumber,
 		&i.Credentials,
@@ -158,19 +163,25 @@ INSERT INTO health_record (
         public_key,
         type,
         specialty_id,
-        content_format
+        content_format,
+        author,
+        title,
+        description
     )
-VALUES ($1, $2, $3, $4, $5, $6)
-RETURNING created_at, updated_at, id, patient_id, private_key, public_key, type, specialty_id, content_format
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+RETURNING created_at, updated_at, id, patient_id, author, title, description, private_key, public_key, type, specialty_id, content_format
 `
 
 type CreateHealthRecordParams struct {
-	PatientID     pgtype.UUID      `json:"patientId"`
-	PrivateKey    string           `json:"privateKey"`
-	PublicKey     string           `json:"publicKey"`
-	Type          HealthRecordType `json:"type"`
-	SpecialtyID   pgtype.UUID      `json:"specialtyId"`
-	ContentFormat string           `json:"contentFormat"`
+	PatientID     pgtype.UUID `json:"patientId"`
+	PrivateKey    string      `json:"privateKey"`
+	PublicKey     string      `json:"publicKey"`
+	Type          string      `json:"type"`
+	SpecialtyID   pgtype.UUID `json:"specialtyId"`
+	ContentFormat string      `json:"contentFormat"`
+	Author        string      `json:"author"`
+	Title         string      `json:"title"`
+	Description   string      `json:"description"`
 }
 
 func (q *Queries) CreateHealthRecord(ctx context.Context, arg CreateHealthRecordParams) (HealthRecord, error) {
@@ -181,6 +192,9 @@ func (q *Queries) CreateHealthRecord(ctx context.Context, arg CreateHealthRecord
 		arg.Type,
 		arg.SpecialtyID,
 		arg.ContentFormat,
+		arg.Author,
+		arg.Title,
+		arg.Description,
 	)
 	var i HealthRecord
 	err := row.Scan(
@@ -188,6 +202,9 @@ func (q *Queries) CreateHealthRecord(ctx context.Context, arg CreateHealthRecord
 		&i.UpdatedAt,
 		&i.ID,
 		&i.PatientID,
+		&i.Author,
+		&i.Title,
+		&i.Description,
 		&i.PrivateKey,
 		&i.PublicKey,
 		&i.Type,
@@ -210,11 +227,11 @@ RETURNING created_at, updated_at, id, name, address, credentials, type, gov_id, 
 `
 
 type CreateInstitutionParams struct {
-	Name        string          `json:"name"`
-	Address     string          `json:"address"`
-	Credentials string          `json:"credentials"`
-	Type        InstitutionType `json:"type"`
-	GovID       string          `json:"govId"`
+	Name        string `json:"name"`
+	Address     string `json:"address"`
+	Credentials string `json:"credentials"`
+	Type        string `json:"type"`
+	GovID       string `json:"govId"`
 }
 
 func (q *Queries) CreateInstitution(ctx context.Context, arg CreateInstitutionParams) (Institution, error) {
@@ -341,10 +358,11 @@ INSERT INTO nurse(
         phone_number,
         credentials,
         password,
-        pending
+        pending,
+        sex
     )
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, crypt($9, gen_salt('bf')), $10)
-RETURNING created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, password, phone_number, credentials, pending
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, crypt($9, gen_salt('bf')), $10, $11)
+RETURNING created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, sex, email, password, phone_number, credentials, pending
 `
 
 type CreateNurseParams struct {
@@ -358,6 +376,7 @@ type CreateNurseParams struct {
 	Credentials   string           `json:"credentials"`
 	Crypt         string           `json:"crypt"`
 	Pending       bool             `json:"pending"`
+	Sex           string           `json:"sex"`
 }
 
 func (q *Queries) CreateNurse(ctx context.Context, arg CreateNurseParams) (Nurse, error) {
@@ -372,6 +391,7 @@ func (q *Queries) CreateNurse(ctx context.Context, arg CreateNurseParams) (Nurse
 		arg.Credentials,
 		arg.Crypt,
 		arg.Pending,
+		arg.Sex,
 	)
 	var i Nurse
 	err := row.Scan(
@@ -383,6 +403,7 @@ func (q *Queries) CreateNurse(ctx context.Context, arg CreateNurseParams) (Nurse
 		&i.Lastname,
 		&i.GovID,
 		&i.Birthdate,
+		&i.Sex,
 		&i.Email,
 		&i.Password,
 		&i.PhoneNumber,
@@ -680,7 +701,7 @@ func (q *Queries) GetAccessRequestsByPatientAndDoctorID(ctx context.Context, arg
 }
 
 const getDoctorByID = `-- name: GetDoctorByID :one
-SELECT created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, password, phone_number, credentials, pending, patient_pending
+SELECT created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, sex, password, phone_number, credentials, pending, patient_pending
 FROM doctor
 WHERE id = $1
 `
@@ -698,6 +719,7 @@ func (q *Queries) GetDoctorByID(ctx context.Context, id pgtype.UUID) (Doctor, er
 		&i.GovID,
 		&i.Birthdate,
 		&i.Email,
+		&i.Sex,
 		&i.Password,
 		&i.PhoneNumber,
 		&i.Credentials,
@@ -708,7 +730,7 @@ func (q *Queries) GetDoctorByID(ctx context.Context, id pgtype.UUID) (Doctor, er
 }
 
 const getDoctorByLogin = `-- name: GetDoctorByLogin :one
-SELECT created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, password, phone_number, credentials, pending, patient_pending
+SELECT created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, sex, password, phone_number, credentials, pending, patient_pending
 FROM doctor
 WHERE email = $1 AND password = crypt($2, password)
 `
@@ -731,6 +753,7 @@ func (q *Queries) GetDoctorByLogin(ctx context.Context, arg GetDoctorByLoginPara
 		&i.GovID,
 		&i.Birthdate,
 		&i.Email,
+		&i.Sex,
 		&i.Password,
 		&i.PhoneNumber,
 		&i.Credentials,
@@ -813,7 +836,7 @@ func (q *Queries) GetGovernmentEnrollmentRequestByID(ctx context.Context, id pgt
 }
 
 const getHealthRecordByID = `-- name: GetHealthRecordByID :one
-SELECT created_at, updated_at, id, patient_id, private_key, public_key, type, specialty_id, content_format 
+SELECT created_at, updated_at, id, patient_id, author, title, description, private_key, public_key, type, specialty_id, content_format 
 FROM health_record
 WHERE id = $1
 `
@@ -826,6 +849,9 @@ func (q *Queries) GetHealthRecordByID(ctx context.Context, id pgtype.UUID) (Heal
 		&i.UpdatedAt,
 		&i.ID,
 		&i.PatientID,
+		&i.Author,
+		&i.Title,
+		&i.Description,
 		&i.PrivateKey,
 		&i.PublicKey,
 		&i.Type,
@@ -1009,7 +1035,7 @@ func (q *Queries) GetInstitutionUserByLogin(ctx context.Context, arg GetInstitut
 }
 
 const getNurseByID = `-- name: GetNurseByID :one
-SELECT created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, password, phone_number, credentials, pending
+SELECT created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, sex, email, password, phone_number, credentials, pending
 FROM nurse
 WHERE id = $1
 `
@@ -1030,6 +1056,7 @@ func (q *Queries) GetNurseByID(ctx context.Context, id pgtype.UUID) (Nurse, erro
 		&i.Lastname,
 		&i.GovID,
 		&i.Birthdate,
+		&i.Sex,
 		&i.Email,
 		&i.Password,
 		&i.PhoneNumber,
@@ -1040,7 +1067,7 @@ func (q *Queries) GetNurseByID(ctx context.Context, id pgtype.UUID) (Nurse, erro
 }
 
 const getNurseByLogin = `-- name: GetNurseByLogin :one
-SELECT created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, password, phone_number, credentials, pending
+SELECT created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, sex, email, password, phone_number, credentials, pending
 FROM nurse
 WHERE email = $1 AND password = crypt($2, password)
 `
@@ -1062,6 +1089,7 @@ func (q *Queries) GetNurseByLogin(ctx context.Context, arg GetNurseByLoginParams
 		&i.Lastname,
 		&i.GovID,
 		&i.Birthdate,
+		&i.Sex,
 		&i.Email,
 		&i.Password,
 		&i.PhoneNumber,
@@ -1325,7 +1353,7 @@ func (q *Queries) ListApprovedInstitutions(ctx context.Context) ([]Institution, 
 }
 
 const listDoctors = `-- name: ListDoctors :many
-SELECT created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, password, phone_number, credentials, pending, patient_pending
+SELECT created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, sex, password, phone_number, credentials, pending, patient_pending
 FROM doctor
 `
 
@@ -1348,6 +1376,7 @@ func (q *Queries) ListDoctors(ctx context.Context) ([]Doctor, error) {
 			&i.GovID,
 			&i.Birthdate,
 			&i.Email,
+			&i.Sex,
 			&i.Password,
 			&i.PhoneNumber,
 			&i.Credentials,
@@ -1365,7 +1394,7 @@ func (q *Queries) ListDoctors(ctx context.Context) ([]Doctor, error) {
 }
 
 const listDoctorsByInstitutionID = `-- name: ListDoctorsByInstitutionID :many
-SELECT created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, password, phone_number, credentials, pending, patient_pending
+SELECT created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, sex, password, phone_number, credentials, pending, patient_pending
 FROM doctor
 WHERE institution_id = $1
 `
@@ -1389,6 +1418,7 @@ func (q *Queries) ListDoctorsByInstitutionID(ctx context.Context, institutionID 
 			&i.GovID,
 			&i.Birthdate,
 			&i.Email,
+			&i.Sex,
 			&i.Password,
 			&i.PhoneNumber,
 			&i.Credentials,
@@ -1438,7 +1468,7 @@ func (q *Queries) ListGovernmentEnrollmentRequests(ctx context.Context) ([]Gover
 }
 
 const listHealthRecordsByPatientID = `-- name: ListHealthRecordsByPatientID :many
-SELECT created_at, updated_at, id, patient_id, private_key, public_key, type, specialty_id, content_format
+SELECT created_at, updated_at, id, patient_id, author, title, description, private_key, public_key, type, specialty_id, content_format
 FROM health_record
 WHERE patient_id = $1
 `
@@ -1457,6 +1487,9 @@ func (q *Queries) ListHealthRecordsByPatientID(ctx context.Context, patientID pg
 			&i.UpdatedAt,
 			&i.ID,
 			&i.PatientID,
+			&i.Author,
+			&i.Title,
+			&i.Description,
 			&i.PrivateKey,
 			&i.PublicKey,
 			&i.Type,
@@ -1474,7 +1507,7 @@ func (q *Queries) ListHealthRecordsByPatientID(ctx context.Context, patientID pg
 }
 
 const listHealthRecordsBySpecialtyAndPatientID = `-- name: ListHealthRecordsBySpecialtyAndPatientID :many
-SELECT created_at, updated_at, id, patient_id, private_key, public_key, type, specialty_id, content_format
+SELECT created_at, updated_at, id, patient_id, author, title, description, private_key, public_key, type, specialty_id, content_format
 FROM health_record
 WHERE specialty_id = $1
     AND patient_id = $2
@@ -1499,6 +1532,9 @@ func (q *Queries) ListHealthRecordsBySpecialtyAndPatientID(ctx context.Context, 
 			&i.UpdatedAt,
 			&i.ID,
 			&i.PatientID,
+			&i.Author,
+			&i.Title,
+			&i.Description,
 			&i.PrivateKey,
 			&i.PublicKey,
 			&i.Type,
@@ -1516,7 +1552,7 @@ func (q *Queries) ListHealthRecordsBySpecialtyAndPatientID(ctx context.Context, 
 }
 
 const listHealthRecordsBySpecialtyID = `-- name: ListHealthRecordsBySpecialtyID :many
-SELECT created_at, updated_at, id, patient_id, private_key, public_key, type, specialty_id, content_format
+SELECT created_at, updated_at, id, patient_id, author, title, description, private_key, public_key, type, specialty_id, content_format
 FROM health_record
 WHERE specialty_id = $1
 `
@@ -1535,6 +1571,9 @@ func (q *Queries) ListHealthRecordsBySpecialtyID(ctx context.Context, specialtyI
 			&i.UpdatedAt,
 			&i.ID,
 			&i.PatientID,
+			&i.Author,
+			&i.Title,
+			&i.Description,
 			&i.PrivateKey,
 			&i.PublicKey,
 			&i.Type,
@@ -1552,15 +1591,15 @@ func (q *Queries) ListHealthRecordsBySpecialtyID(ctx context.Context, specialtyI
 }
 
 const listHealthRecordsByTypeAndPatientID = `-- name: ListHealthRecordsByTypeAndPatientID :many
-SELECT created_at, updated_at, id, patient_id, private_key, public_key, type, specialty_id, content_format
+SELECT created_at, updated_at, id, patient_id, author, title, description, private_key, public_key, type, specialty_id, content_format
 FROM health_record
 WHERE type = $1
     AND patient_id = $2
 `
 
 type ListHealthRecordsByTypeAndPatientIDParams struct {
-	Type      HealthRecordType `json:"type"`
-	PatientID pgtype.UUID      `json:"patientId"`
+	Type      string      `json:"type"`
+	PatientID pgtype.UUID `json:"patientId"`
 }
 
 func (q *Queries) ListHealthRecordsByTypeAndPatientID(ctx context.Context, arg ListHealthRecordsByTypeAndPatientIDParams) ([]HealthRecord, error) {
@@ -1577,6 +1616,9 @@ func (q *Queries) ListHealthRecordsByTypeAndPatientID(ctx context.Context, arg L
 			&i.UpdatedAt,
 			&i.ID,
 			&i.PatientID,
+			&i.Author,
+			&i.Title,
+			&i.Description,
 			&i.PrivateKey,
 			&i.PublicKey,
 			&i.Type,
@@ -1773,7 +1815,7 @@ func (q *Queries) ListInstitutions(ctx context.Context) ([]Institution, error) {
 }
 
 const listNurses = `-- name: ListNurses :many
-SELECT created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, password, phone_number, credentials, pending
+SELECT created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, sex, email, password, phone_number, credentials, pending
 FROM nurse
 `
 
@@ -1795,6 +1837,7 @@ func (q *Queries) ListNurses(ctx context.Context) ([]Nurse, error) {
 			&i.Lastname,
 			&i.GovID,
 			&i.Birthdate,
+			&i.Sex,
 			&i.Email,
 			&i.Password,
 			&i.PhoneNumber,
@@ -1812,7 +1855,7 @@ func (q *Queries) ListNurses(ctx context.Context) ([]Nurse, error) {
 }
 
 const listNursesByInstitutionID = `-- name: ListNursesByInstitutionID :many
-SELECT created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, password, phone_number, credentials, pending
+SELECT created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, sex, email, password, phone_number, credentials, pending
 FROM nurse
 WHERE institution_id = $1
 `
@@ -1835,6 +1878,7 @@ func (q *Queries) ListNursesByInstitutionID(ctx context.Context, institutionID p
 			&i.Lastname,
 			&i.GovID,
 			&i.Birthdate,
+			&i.Sex,
 			&i.Email,
 			&i.Password,
 			&i.PhoneNumber,
@@ -2128,9 +2172,10 @@ SET institution_id = $1,
     phone_number = $8,
     credentials = $9,
     pending = $10,
-    patient_pending = $11
-WHERE id = $12
-RETURNING created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, password, phone_number, credentials, pending, patient_pending
+    patient_pending = $11,
+    sex = $12
+WHERE id = $13
+RETURNING created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, sex, password, phone_number, credentials, pending, patient_pending
 `
 
 type UpdateDoctorByIDParams struct {
@@ -2145,6 +2190,7 @@ type UpdateDoctorByIDParams struct {
 	Credentials    string           `json:"credentials"`
 	Pending        bool             `json:"pending"`
 	PatientPending bool             `json:"patientPending"`
+	Sex            string           `json:"sex"`
 	ID             pgtype.UUID      `json:"id"`
 }
 
@@ -2161,6 +2207,7 @@ func (q *Queries) UpdateDoctorByID(ctx context.Context, arg UpdateDoctorByIDPara
 		arg.Credentials,
 		arg.Pending,
 		arg.PatientPending,
+		arg.Sex,
 		arg.ID,
 	)
 	var i Doctor
@@ -2174,6 +2221,7 @@ func (q *Queries) UpdateDoctorByID(ctx context.Context, arg UpdateDoctorByIDPara
 		&i.GovID,
 		&i.Birthdate,
 		&i.Email,
+		&i.Sex,
 		&i.Password,
 		&i.PhoneNumber,
 		&i.Credentials,
@@ -2258,13 +2306,13 @@ RETURNING created_at, updated_at, id, name, address, credentials, type, gov_id, 
 `
 
 type UpdateInstitutionByIDParams struct {
-	Name        string          `json:"name"`
-	Address     string          `json:"address"`
-	Credentials string          `json:"credentials"`
-	Type        InstitutionType `json:"type"`
-	GovID       string          `json:"govId"`
-	Pending     bool            `json:"pending"`
-	ID          pgtype.UUID     `json:"id"`
+	Name        string      `json:"name"`
+	Address     string      `json:"address"`
+	Credentials string      `json:"credentials"`
+	Type        string      `json:"type"`
+	GovID       string      `json:"govId"`
+	Pending     bool        `json:"pending"`
+	ID          pgtype.UUID `json:"id"`
 }
 
 func (q *Queries) UpdateInstitutionByID(ctx context.Context, arg UpdateInstitutionByIDParams) (Institution, error) {
@@ -2401,9 +2449,10 @@ SET institution_id = $1,
     phone_number = $7,
     credentials = $8,
     password = crypt($9, gen_salt('bf')),
-    pending = $10
-WHERE id = $11
-RETURNING created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, password, phone_number, credentials, pending
+    pending = $10,
+    sex = $11
+WHERE id = $12
+RETURNING created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, sex, email, password, phone_number, credentials, pending
 `
 
 type UpdateNurseByIDParams struct {
@@ -2417,6 +2466,7 @@ type UpdateNurseByIDParams struct {
 	Credentials   string           `json:"credentials"`
 	Crypt         string           `json:"crypt"`
 	Pending       bool             `json:"pending"`
+	Sex           string           `json:"sex"`
 	ID            pgtype.UUID      `json:"id"`
 }
 
@@ -2432,6 +2482,7 @@ func (q *Queries) UpdateNurseByID(ctx context.Context, arg UpdateNurseByIDParams
 		arg.Credentials,
 		arg.Crypt,
 		arg.Pending,
+		arg.Sex,
 		arg.ID,
 	)
 	var i Nurse
@@ -2444,6 +2495,7 @@ func (q *Queries) UpdateNurseByID(ctx context.Context, arg UpdateNurseByIDParams
 		&i.Lastname,
 		&i.GovID,
 		&i.Birthdate,
+		&i.Sex,
 		&i.Email,
 		&i.Password,
 		&i.PhoneNumber,

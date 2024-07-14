@@ -23,7 +23,8 @@ INSERT INTO doctor(
         password,
         email,
         phone_number,
-        credentials
+        credentials,
+        sex
     )
 VALUES (
         $1,
@@ -34,7 +35,8 @@ VALUES (
         crypt($6, gen_salt('bf')),
         $7,
         $8,
-        $9
+        $9,
+        $10
     )
 RETURNING *;
 -- name: UpdateDoctorByID :one
@@ -49,8 +51,9 @@ SET institution_id = $1,
     phone_number = $8,
     credentials = $9,
     pending = $10,
-    patient_pending = $11
-WHERE id = $12
+    patient_pending = $11,
+    sex = $12
+WHERE id = $13
 RETURNING *;
 -- name: DeleteDoctorByID :exec
 DELETE FROM doctor
@@ -176,9 +179,12 @@ INSERT INTO health_record (
         public_key,
         type,
         specialty_id,
-        content_format
+        content_format,
+        author,
+        title,
+        description
     )
-VALUES ($1, $2, $3, $4, $5, $6)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 RETURNING *;
 -- name: DeleteHealthRecordByID :exec
 DELETE FROM health_record
@@ -249,7 +255,7 @@ WHERE id = $1;
 -- name: GetInstitutionUserByLogin :one
 SELECT *
 FROM institution_user
-WHERE email = $1 AND password = crypt($2, password);;
+WHERE email = $1 AND password = crypt($2, password);
 -- name: GetInstitutionUserByID :many
 SELECT *
 FROM institution_user
@@ -322,9 +328,10 @@ INSERT INTO nurse(
         phone_number,
         credentials,
         password,
-        pending
+        pending,
+        sex
     )
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, crypt($9, gen_salt('bf')), $10)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, crypt($9, gen_salt('bf')), $10, $11)
 RETURNING *;
 -- name: UpdateNurseByID :one
 UPDATE nurse
@@ -337,8 +344,9 @@ SET institution_id = $1,
     phone_number = $7,
     credentials = $8,
     password = crypt($9, gen_salt('bf')),
-    pending = $10
-WHERE id = $11
+    pending = $10,
+    sex = $11
+WHERE id = $12
 RETURNING *;
 -- name: DeleteNurseByID :exec
 DELETE FROM nurse

@@ -6,15 +6,15 @@ import (
 )
 
 type Government struct {
-	ID   string `json:"id,omitempty"`
-	Name string `json:"name,omitempty"`
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }
 
 type GovernmentEnrollmentRequest struct {
-	InstitutionId uuid.UUID `json:"institutionId,omitempty"`
-	ID            uuid.UUID `json:"id,omitempty"`
-	Pending       bool      `json:"pending,omitempty"`
-	Approved      bool      `json:"approved,omitempty"`
+	InstitutionId uuid.UUID `json:"institutionId"`
+	ID            uuid.UUID `json:"id"`
+	Pending       bool      `json:"pending"`
+	Approved      bool      `json:"approved"`
 }
 
 func NewGovernmentEnrollmentRequest(er db.GovernmentEnrollmentRequest) GovernmentEnrollmentRequest {

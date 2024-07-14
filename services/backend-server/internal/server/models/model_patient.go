@@ -7,28 +7,28 @@ import (
 )
 
 type Patient struct {
-	Firstname   string `json:"firstname,omitempty"`
-	Lastname    string `json:"lastname,omitempty"`
-	GovId       string `json:"govId,omitempty"`
-	Birthdate   string `json:"birthdate,omitempty"`
-	Email       string `json:"email,omitempty"`
-	PhoneNumber string `json:"phoneNumber,omitempty"`
-	Sex         string `json:"sex,omitempty"`
-	Pending     bool   `json:"pending,omitempty"`
+	Firstname   string `json:"firstname"`
+	Lastname    string `json:"lastname"`
+	GovId       string `json:"govId"`
+	Birthdate   string `json:"birthdate"`
+	Email       string `json:"email"`
+	PhoneNumber string `json:"phoneNumber"`
+	Sex         string `json:"sex"`
+	Pending     bool   `json:"pending"`
 }
 
 type PatientPostRequest struct {
 	Patient
-	Password string `json:"password,omitempty"`
+	Password string `json:"password"`
 }
 
 type PatientPutRequest struct {
-	ID uuid.UUID `json:"id,omitempty"`
+	ID uuid.UUID `json:"id"`
 	PatientPostRequest
 }
 
 type PatientResponse struct {
-	ID uuid.UUID `json:"id,omitempty"`
+	ID uuid.UUID `json:"id"`
 	Patient
 }
 
@@ -54,11 +54,11 @@ func NewPatientResponse(patient db.Patient) (PatientResponse, error) {
 }
 
 type PatientsHealthRecordsResponse struct {
-	UUID          uuid.UUID `json:"id,omitempty"`
-	Content       string    `json:"content,omitempty"`
-	Type          string    `json:"type,omitempty"`
-	Specialty     Specialty `json:"specialty,omitempty"`
-	ContentFormat string    `json:"contentFormat,omitempty"`
+	UUID          uuid.UUID `json:"id"`
+	Content       string    `json:"content"`
+	Type          string    `json:"type"`
+	Specialty     Specialty `json:"specialty"`
+	ContentFormat string    `json:"contentFormat"`
 }
 
 func NewPatientsHealthRecordsResponse(hr db.HealthRecord, content string, specialty db.Specialty) (PatientsHealthRecordsResponse, error) {

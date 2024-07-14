@@ -8,6 +8,7 @@ import (
 
 	"github.com/TM-labs-A2024/core/services/backend-server/internal/controller"
 	"github.com/TM-labs-A2024/core/services/backend-server/internal/server/models"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/h2non/filetype"
 	"github.com/labstack/echo/v4"
@@ -67,6 +68,17 @@ func (s *Server) HealthRecordPost(ctx echo.Context) error {
 		return ctx.String(http.StatusBadRequest, err.Error())
 	}
 
+	title := ctx.FormValue("title")
+	description := ctx.FormValue("description")
+
+	user := ctx.Get("user").(*jwt.Token)
+	claims := user.Claims.(*controller.JWTCustomClaims)
+
+	doctor, err := s.Controller.GetDoctorByID(claims.UserID)
+	if err != nil {
+		return err
+	}
+
 	file, err := ctx.FormFile("payload")
 	if err != nil {
 		return err
@@ -92,6 +104,9 @@ func (s *Server) HealthRecordPost(ctx echo.Context) error {
 		SpecialtyId:   specialtyId,
 		PatientId:     patientId,
 		ContentFormat: kind.Extension,
+		Title:         title,
+		Description:   description,
+		Author:        doctor.Firstname + " " + doctor.Lastname,
 	})
 	if err != nil {
 		return err

@@ -36,6 +36,9 @@ type CreateHealthRecordArgs struct {
 	SpecialtyId   uuid.UUID
 	PatientId     uuid.UUID
 	ContentFormat string
+	Title         string
+	Description   string
+	Author        string
 }
 
 func (c Controller) CreateHealthRecord(args CreateHealthRecordArgs) (db.HealthRecord, error) {
@@ -53,12 +56,15 @@ func (c Controller) CreateHealthRecord(args CreateHealthRecordArgs) (db.HealthRe
 		},
 		PrivateKey: privateKey,
 		PublicKey:  publicKey,
-		Type:       db.HealthRecordType(args.Type),
+		Type:       args.Type,
 		SpecialtyID: pgtype.UUID{
 			Valid: true,
 			Bytes: args.SpecialtyId,
 		},
 		ContentFormat: args.ContentFormat,
+		Title:         args.Title,
+		Description:   args.Description,
+		Author:        args.Author,
 	})
 }
 

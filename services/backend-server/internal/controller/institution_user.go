@@ -30,12 +30,12 @@ func (c Controller) ListInstitutionUsersByInstitutionID(institutiondID uuid.UUID
 }
 
 func (c Controller) CreateInstitutionUser(user models.InstitutionUserPostRequest) (db.InstitutionUser, error) {
-	switch models.InstitutionUserRole(user.Role) {
-	case models.ADMIN, models.VIEWER:
-		break
-	default:
-		return db.InstitutionUser{}, fmt.Errorf("invalid institution user role")
-	}
+	// switch models.InstitutionUserRole(user.Role) {
+	// case models.ADMIN, models.VIEWER:
+	// 	break
+	// default:
+	// 	return db.InstitutionUser{}, fmt.Errorf("invalid institution user role")
+	// }
 
 	birthdate, err := time.Parse(constants.ISOLayout, user.Birthdate)
 	if err != nil {

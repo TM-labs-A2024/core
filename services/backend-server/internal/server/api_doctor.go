@@ -62,7 +62,7 @@ func (s *Server) DoctorsDoctorIDGet(ctx echo.Context) error {
 		Doctor:         doctor,
 		Specialties:    specialties,
 		PatientPending: len(accessRequests) != 0,
-		Pending:        enrollmentRequests.ID.Valid,
+		Pending:        enrollmentRequests.Pending,
 	})
 	if err != nil {
 		return err
@@ -127,7 +127,7 @@ func (s *Server) DoctorsGet(ctx echo.Context) error {
 			Doctor:         doctor,
 			Specialties:    speciaties,
 			PatientPending: len(accessRequests) != 0,
-			Pending:        enrollmentRequests.ID.Valid,
+			Pending:        enrollmentRequests.Pending,
 		})
 		if err != nil {
 			return err
@@ -176,7 +176,7 @@ func (s *Server) DoctorsInstitutionIDGet(ctx echo.Context) error {
 			Doctor:         doctor,
 			Specialties:    speciaties,
 			PatientPending: len(accessRequests) != 0,
-			Pending:        enrollmentRequests.ID.Valid,
+			Pending:        enrollmentRequests.Pending,
 		})
 		if err != nil {
 			return err
@@ -195,18 +195,47 @@ func (s *Server) DoctorsLoginPost(ctx echo.Context) error {
 		return err
 	}
 
-	user, err := s.Controller.GetDoctorByLogin(request.Email, request.Password)
+	doctor, err := s.Controller.GetDoctorByLogin(request.Email, request.Password)
 	if err != nil {
 		return err
 	}
 
-	token, err := controller.NewClaim(user.ID.Bytes, user.InstitutionID.Bytes)
+	speciaties, err := s.Controller.ListSpecialtiesByDoctorID(doctor.ID.Bytes)
+	if err != nil {
+		return err
+	}
+
+	accessRequests, err := s.Controller.ListAccessRequestsByDoctorID(doctor.ID.Bytes)
+	if err != nil && err != pgx.ErrNoRows {
+		return err
+	}
+
+	enrollmentRequests, err := s.Controller.GetInstitutionEnrollmentRequestByDoctorIDAndInstitutionID(
+		doctor.ID.Bytes,
+		doctor.InstitutionID.Bytes,
+	)
+	if err != nil && err != pgx.ErrNoRows {
+		return err
+	}
+
+	token, err := controller.NewClaim(doctor.ID.Bytes, doctor.InstitutionID.Bytes)
+	if err != nil {
+		return err
+	}
+
+	resp, err := models.NewDoctorResponse(models.NewDoctorResponseArgs{
+		Doctor:         doctor,
+		Specialties:    speciaties,
+		PatientPending: len(accessRequests) != 0,
+		Pending:        enrollmentRequests.Pending,
+	})
 	if err != nil {
 		return err
 	}
 
 	return ctx.JSON(http.StatusOK, echo.Map{
-		"token": token,
+		"token":  token,
+		"doctor": resp,
 	})
 }
 
@@ -318,7 +347,7 @@ func (s *Server) DoctorsSpecialtyIdGet(ctx echo.Context) error {
 			Doctor:         doctor,
 			Specialties:    speciaties,
 			PatientPending: len(accessRequests) != 0,
-			Pending:        enrollmentRequests.ID.Valid,
+			Pending:        enrollmentRequests.Pending,
 		})
 		if err != nil {
 			return err

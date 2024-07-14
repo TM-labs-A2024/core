@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/TM-labs-A2024/core/services/backend-server/internal/controller"
+	"github.com/TM-labs-A2024/core/services/backend-server/internal/db"
 	"github.com/TM-labs-A2024/core/services/backend-server/internal/server/models"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -215,7 +216,7 @@ func (s *Server) PatientsGovIdHealthRecordsGet(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, resps)
 }
 
-// PatientsGovIdHealthRecordsSpecialtiesGet - List health records by patient and specialty Id
+// PatientsGovIdHealthRecordsSpecialtiesGet - List health records specialty ids by patient id
 func (s *Server) PatientsGovIdHealthRecordsSpecialtiesGet(ctx echo.Context) error {
 	govId := ctx.Param("govId")
 
@@ -224,17 +225,17 @@ func (s *Server) PatientsGovIdHealthRecordsSpecialtiesGet(ctx echo.Context) erro
 		return err
 	}
 
-	resps := map[uuid.UUID][]models.HealthRecordResponse{}
+	specialties := []db.Specialty{}
 	for _, healthRecord := range healthRecords {
 		specialty, err := s.Controller.GetSpecialtyByID(healthRecord.SpecialtyID.Bytes)
 		if err != nil {
 			return err
 		}
 
-		resp := models.NewHealthRecordResponse(healthRecord, specialty)
-
-		resps[specialty.ID.Bytes] = append(resps[specialty.ID.Bytes], resp)
+		specialties = append(specialties, specialty)
 	}
+
+	resps := models.NewSpecialtiesResponse(specialties)
 
 	return ctx.JSON(http.StatusOK, resps)
 }
@@ -313,8 +314,14 @@ func (s *Server) PatientsLoginPost(ctx echo.Context) error {
 		return err
 	}
 
+	resp, err := models.NewPatientResponse(user)
+	if err != nil {
+		return err
+	}
+
 	return ctx.JSON(http.StatusOK, echo.Map{
-		"token": token,
+		"token":   token,
+		"patient": resp,
 	})
 }
 

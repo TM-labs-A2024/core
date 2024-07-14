@@ -49,8 +49,14 @@ func (s *Server) InstitutionsInstitutionIDUsersLoginPost(ctx echo.Context) error
 		return err
 	}
 
+	resp, err := models.NewInstitutionUserResponse(user)
+	if err != nil {
+		return err
+	}
+
 	return ctx.JSON(http.StatusOK, echo.Map{
 		"token": token,
+		"user":  resp,
 	})
 }
 

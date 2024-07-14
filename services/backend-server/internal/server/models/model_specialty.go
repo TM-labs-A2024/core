@@ -6,9 +6,9 @@ import (
 )
 
 type Specialty struct {
-	ID          uuid.UUID     `json:"id,omitempty"`
-	Description string        `json:"description,omitempty"`
-	Name        SpecialtyName `json:"name,omitempty"`
+	ID          uuid.UUID     `json:"id"`
+	Description string        `json:"description"`
+	Name        SpecialtyName `json:"name"`
 }
 
 func NewSpecialtyResponse(specialty db.Specialty) Specialty {

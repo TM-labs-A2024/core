@@ -62,6 +62,7 @@ func (c Controller) CreateNurse(req models.NursePostRequest) (db.Nurse, error) {
 		PhoneNumber: req.PhoneNumber,
 		Credentials: req.Credentials,
 		Crypt:       req.Password,
+		Sex:         req.Sex,
 	})
 	if err != nil {
 		return db.Nurse{}, err
@@ -95,6 +96,7 @@ func (c Controller) UpdateNurse(req models.NursesPutRequest) (db.Nurse, error) {
 			Valid: true,
 			Bytes: req.ID,
 		},
+		Sex: req.Sex,
 	})
 	if err != nil {
 		return db.Nurse{}, err

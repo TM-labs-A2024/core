@@ -7,30 +7,31 @@ import (
 )
 
 type Doctor struct {
-	InstitutionID uuid.UUID `json:"institutionId,omitempty"`
-	Firstname     string    `json:"firstname,omitempty"`
-	Lastname      string    `json:"lastname,omitempty"`
-	GovId         string    `json:"govId,omitempty"`
-	Birthdate     string    `json:"birthdate,omitempty"`
-	Email         string    `json:"email,omitempty"`
-	PhoneNumber   string    `json:"phoneNumber,omitempty"`
-	Credentials   string    `json:"credentials,omitempty"`
+	InstitutionID uuid.UUID `json:"institutionId"`
+	Firstname     string    `json:"firstname"`
+	Lastname      string    `json:"lastname"`
+	GovId         string    `json:"govId"`
+	Birthdate     string    `json:"birthdate"`
+	Email         string    `json:"email"`
+	PhoneNumber   string    `json:"phoneNumber"`
+	Credentials   string    `json:"credentials"`
+	Sex           string    `json:"sex"`
 }
 
 // DoctorEnrollmentRequest <= NOT USED ON API, ONLY db
 // type DoctorEnrollmentRequest struct {
-// 	InstitutionUUID  uuid.UUID `json:"institutionId,omitempty"`
-// 	DoctorUUID       uuid.UUID `json:"doctorId,omitempty"`
-// 	Pending          bool   `json:"pending,omitempty"`
-// 	Approved         bool   `json:"approved,omitempty"`
-// 	ProfessionalType string `json:"professional-type,omitempty"`
+// 	InstitutionUUID  uuid.UUID `json:"institutionId"`
+// 	DoctorUUID       uuid.UUID `json:"doctorId"`
+// 	Pending          bool   `json:"pending"`
+// 	Approved         bool   `json:"approved"`
+// 	ProfessionalType string `json:"professional-type"`
 // }
 
 type DoctorAccessRequest struct {
-	PatientID uuid.UUID `json:"patientId,omitempty"`
-	DoctorID  uuid.UUID `json:"doctorId,omitempty"`
-	Pending   bool      `json:"pending,omitempty"`
-	Approved  bool      `json:"approved,omitempty"`
+	PatientID uuid.UUID `json:"patientId"`
+	DoctorID  uuid.UUID `json:"doctorId"`
+	Pending   bool      `json:"pending"`
+	Approved  bool      `json:"approved"`
 }
 
 type DoctorPutAccessRequest struct {
@@ -69,22 +70,22 @@ func NewDoctorAccessResponse(dar db.DoctorAccessRequest) (DoctorAccessResponse, 
 
 type DoctorsPostRequest struct {
 	Doctor
-	Password    string      `json:"password,omitempty"`
-	Specialties []uuid.UUID `json:"specialties,omitempty"`
+	Password    string      `json:"password"`
+	Specialties []uuid.UUID `json:"specialties"`
 }
 
 type DoctorsPutRequest struct {
-	ID uuid.UUID `json:"id,omitempty"`
+	ID uuid.UUID `json:"id"`
 	DoctorsPostRequest
-	Approved bool `json:"approved,omitempty"`
+	Approved bool `json:"approved"`
 }
 
 type DoctorsResponse struct {
-	ID uuid.UUID `json:"id,omitempty"`
+	ID uuid.UUID `json:"id"`
 	Doctor
-	Specialities   []Specialty `json:"specialities,omitempty"`
-	Pending        bool        `json:"pending,omitempty"`
-	PatientPending bool        `json:"patientPending,omitempty"`
+	Specialities   []Specialty `json:"specialities"`
+	Pending        bool        `json:"pending"`
+	PatientPending bool        `json:"patientPending"`
 }
 
 type NewDoctorResponseArgs struct {
@@ -126,6 +127,7 @@ func NewDoctorResponse(args NewDoctorResponseArgs) (DoctorsResponse, error) {
 			Email:         args.Doctor.Email,
 			PhoneNumber:   args.Doctor.PhoneNumber,
 			Credentials:   args.Doctor.Credentials,
+			Sex:           args.Doctor.Sex,
 		},
 		Specialities:   specialties,
 		Pending:        args.Doctor.Pending,

@@ -7,36 +7,36 @@ import (
 )
 
 type Institution struct {
-	Name        string `json:"name,omitempty"`
-	GovId       string `json:"govId,omitempty"`
-	Credentials string `json:"credentials,omitempty"`
-	Type        string `json:"type,omitempty"`
-	Address     string `json:"address,omitempty"`
+	Name        string `json:"name"`
+	GovId       string `json:"govId"`
+	Credentials string `json:"credentials"`
+	Type        string `json:"type"`
+	Address     string `json:"address"`
 }
 
 type CreateInstitutionRequest struct {
-	Name            string          `json:"name,omitempty"`
-	GovId           string          `json:"govId,omitempty"`
-	Credentials     string          `json:"credentials,omitempty"`
-	Type            string          `json:"type,omitempty"`
-	Address         string          `json:"address,omitempty"`
-	InstitutionUser InstitutionUser `json:"institutionUser,omitempty"`
+	Name            string          `json:"name"`
+	GovId           string          `json:"govId"`
+	Credentials     string          `json:"credentials"`
+	Type            string          `json:"type"`
+	Address         string          `json:"address"`
+	InstitutionUser InstitutionUser `json:"institutionUser"`
 }
 
 type InstitutionWithID struct {
-	ID uuid.UUID `json:"id,omitempty"`
+	ID uuid.UUID `json:"id"`
 	Institution
-	Pending bool `json:"pending,omitempty"`
+	Pending bool `json:"pending"`
 }
 
 type InstitutionWithUserRequest struct {
 	InstitutionWithID
-	InstitutionUser InstitutionUserPostRequest `json:"institutionUser,omitempty"`
+	InstitutionUser InstitutionUserPostRequest `json:"institutionUser"`
 }
 
 type InstitutionWithUserResponse struct {
 	InstitutionWithID
-	InstitutionUser InstitutionUserResponse `json:"institutionUser,omitempty"`
+	InstitutionUser InstitutionUserResponse `json:"institutionUser"`
 }
 
 func NewInstitutionResponse(institution db.Institution, user db.InstitutionUser) (InstitutionWithUserResponse, error) {
@@ -71,12 +71,12 @@ func NewInstitutionResponse(institution db.Institution, user db.InstitutionUser)
 }
 
 type InstitutionsEnrollmentRequestsResponse struct {
-	UUID          uuid.UUID  `json:"id,omitempty"`
-	InstitutionID uuid.UUID  `json:"institutionId,omitempty"`
-	DoctorID      *uuid.UUID `json:"doctorId,omitempty"`
-	NurseID       *uuid.UUID `json:"nurseId,omitempty"`
-	Pending       bool       `json:"pending,omitempty"`
-	Approved      bool       `json:"approved,omitempty"`
+	UUID          uuid.UUID  `json:"id"`
+	InstitutionID uuid.UUID  `json:"institutionId"`
+	DoctorID      *uuid.UUID `json:"doctorId"`
+	NurseID       *uuid.UUID `json:"nurseId"`
+	Pending       bool       `json:"pending"`
+	Approved      bool       `json:"approved"`
 }
 
 func NewInstitutionsEnrollmentRequestsResponse(ier db.InstitutionEnrollmentRequest) (InstitutionsEnrollmentRequestsResponse, error) {
@@ -129,14 +129,14 @@ func NewGovernmentEnrollmentRequestsResponse(ger db.GovernmentEnrollmentRequest)
 }
 
 type GovernmentEnrollmentRequestsResponse struct {
-	UUID            uuid.UUID `json:"id,omitempty"`
-	InstitutionUUID uuid.UUID `json:"institutionId,omitempty"`
-	Pending         bool      `json:"pending,omitempty"`
-	Approved        bool      `json:"approved,omitempty"`
+	UUID            uuid.UUID `json:"id"`
+	InstitutionUUID uuid.UUID `json:"institutionId"`
+	Pending         bool      `json:"pending"`
+	Approved        bool      `json:"approved"`
 }
 
 type InstitutionEnrollmentRequest struct {
-	InstitutionUUID uuid.UUID `json:"institutionId,omitempty"`
-	Pending         bool      `json:"pending,omitempty"`
-	Approved        bool      `json:"approved,omitempty"`
+	InstitutionUUID uuid.UUID `json:"institutionId"`
+	Pending         bool      `json:"pending"`
+	Approved        bool      `json:"approved"`
 }

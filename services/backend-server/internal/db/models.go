@@ -11,92 +11,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-type HealthRecordType string
-
-const (
-	HealthRecordTypeStudy     HealthRecordType = "study"
-	HealthRecordTypeReport    HealthRecordType = "report"
-	HealthRecordTypeEvolution HealthRecordType = "evolution"
-	HealthRecordTypeOrder     HealthRecordType = "order"
-)
-
-func (e *HealthRecordType) Scan(src interface{}) error {
-	switch s := src.(type) {
-	case []byte:
-		*e = HealthRecordType(s)
-	case string:
-		*e = HealthRecordType(s)
-	default:
-		return fmt.Errorf("unsupported scan type for HealthRecordType: %T", src)
-	}
-	return nil
-}
-
-type NullHealthRecordType struct {
-	HealthRecordType HealthRecordType `json:"healthRecordType"`
-	Valid            bool             `json:"valid"` // Valid is true if HealthRecordType is not NULL
-}
-
-// Scan implements the Scanner interface.
-func (ns *NullHealthRecordType) Scan(value interface{}) error {
-	if value == nil {
-		ns.HealthRecordType, ns.Valid = "", false
-		return nil
-	}
-	ns.Valid = true
-	return ns.HealthRecordType.Scan(value)
-}
-
-// Value implements the driver Valuer interface.
-func (ns NullHealthRecordType) Value() (driver.Value, error) {
-	if !ns.Valid {
-		return nil, nil
-	}
-	return string(ns.HealthRecordType), nil
-}
-
-type InstitutionType string
-
-const (
-	InstitutionTypeClinic   InstitutionType = "clinic"
-	InstitutionTypeHospital InstitutionType = "hospital"
-)
-
-func (e *InstitutionType) Scan(src interface{}) error {
-	switch s := src.(type) {
-	case []byte:
-		*e = InstitutionType(s)
-	case string:
-		*e = InstitutionType(s)
-	default:
-		return fmt.Errorf("unsupported scan type for InstitutionType: %T", src)
-	}
-	return nil
-}
-
-type NullInstitutionType struct {
-	InstitutionType InstitutionType `json:"institutionType"`
-	Valid           bool            `json:"valid"` // Valid is true if InstitutionType is not NULL
-}
-
-// Scan implements the Scanner interface.
-func (ns *NullInstitutionType) Scan(value interface{}) error {
-	if value == nil {
-		ns.InstitutionType, ns.Valid = "", false
-		return nil
-	}
-	ns.Valid = true
-	return ns.InstitutionType.Scan(value)
-}
-
-// Value implements the driver Valuer interface.
-func (ns NullInstitutionType) Value() (driver.Value, error) {
-	if !ns.Valid {
-		return nil, nil
-	}
-	return string(ns.InstitutionType), nil
-}
-
 type SpecialtyName string
 
 const (
@@ -167,6 +81,7 @@ type Doctor struct {
 	GovID          string             `json:"govId"`
 	Birthdate      pgtype.Timestamp   `json:"birthdate"`
 	Email          string             `json:"email"`
+	Sex            string             `json:"sex"`
 	Password       string             `json:"password"`
 	PhoneNumber    string             `json:"phoneNumber"`
 	Credentials    string             `json:"credentials"`
@@ -211,9 +126,12 @@ type HealthRecord struct {
 	UpdatedAt     pgtype.Timestamptz `json:"updatedAt"`
 	ID            pgtype.UUID        `json:"id"`
 	PatientID     pgtype.UUID        `json:"patientId"`
+	Author        string             `json:"author"`
+	Title         string             `json:"title"`
+	Description   string             `json:"description"`
 	PrivateKey    string             `json:"privateKey"`
 	PublicKey     string             `json:"publicKey"`
-	Type          HealthRecordType   `json:"type"`
+	Type          string             `json:"type"`
 	SpecialtyID   pgtype.UUID        `json:"specialtyId"`
 	ContentFormat string             `json:"contentFormat"`
 }
@@ -225,7 +143,7 @@ type Institution struct {
 	Name        string             `json:"name"`
 	Address     string             `json:"address"`
 	Credentials string             `json:"credentials"`
-	Type        InstitutionType    `json:"type"`
+	Type        string             `json:"type"`
 	GovID       string             `json:"govId"`
 	Pending     bool               `json:"pending"`
 }
@@ -265,6 +183,7 @@ type Nurse struct {
 	Lastname      string             `json:"lastname"`
 	GovID         string             `json:"govId"`
 	Birthdate     pgtype.Timestamp   `json:"birthdate"`
+	Sex           string             `json:"sex"`
 	Email         string             `json:"email"`
 	Password      string             `json:"password"`
 	PhoneNumber   string             `json:"phoneNumber"`

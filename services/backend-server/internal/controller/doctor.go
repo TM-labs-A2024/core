@@ -118,6 +118,7 @@ func (c Controller) CreateDoctor(req models.DoctorsPostRequest) (db.Doctor, erro
 			Email:       req.Email,
 			PhoneNumber: req.PhoneNumber,
 			Credentials: req.Credentials,
+			Sex:         req.Sex,
 		})
 	if err != nil {
 		return db.Doctor{}, err
@@ -144,7 +145,7 @@ func (c Controller) CreateDoctor(req models.DoctorsPostRequest) (db.Doctor, erro
 }
 
 func (c Controller) UpdateDoctorByID(req models.DoctorsPutRequest) (db.Doctor, error) {
-	tx, err := c.conn.BeginTx(context.Background(), pgx.TxOptions{})
+	tx, err := c.pool.BeginTx(context.Background(), pgx.TxOptions{})
 	if err != nil {
 		c.logger.Debug("error message1:", slog.String("err", err.Error()))
 		return db.Doctor{}, err
@@ -221,6 +222,7 @@ func (c Controller) UpdateDoctorByID(req models.DoctorsPutRequest) (db.Doctor, e
 			Email:       req.Email,
 			PhoneNumber: req.PhoneNumber,
 			Credentials: req.Credentials,
+			Sex:         req.Sex,
 		})
 	if err != nil {
 		c.logger.Debug("error message5:", slog.String("err", err.Error()))

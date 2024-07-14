@@ -7,32 +7,33 @@ import (
 )
 
 type Nurse struct {
-	InstitutionID uuid.UUID `json:"institutionId,omitempty"`
-	Firstname     string    `json:"firstname,omitempty"`
-	Lastname      string    `json:"lastname,omitempty"`
-	GovId         string    `json:"govId,omitempty"`
-	Birthdate     string    `json:"birthdate,omitempty"`
-	Email         string    `json:"email,omitempty"`
-	PhoneNumber   string    `json:"phoneNumber,omitempty"`
-	Credentials   string    `json:"credentials,omitempty"`
+	InstitutionID uuid.UUID `json:"institutionId"`
+	Firstname     string    `json:"firstname"`
+	Lastname      string    `json:"lastname"`
+	GovId         string    `json:"govId"`
+	Birthdate     string    `json:"birthdate"`
+	Email         string    `json:"email"`
+	PhoneNumber   string    `json:"phoneNumber"`
+	Credentials   string    `json:"credentials"`
+	Sex           string    `json:"sex"`
 }
 
 type NursesPutRequest struct {
-	ID uuid.UUID `json:"id,omitempty"`
+	ID uuid.UUID `json:"id"`
 	Nurse
-	Password string `json:"password,omitempty"`
-	Pending  bool   `json:"pending,omitempty"`
+	Password string `json:"password"`
+	Pending  bool   `json:"pending"`
 }
 
 type NursePostRequest struct {
 	Nurse
-	Password string `json:"password,omitempty"`
+	Password string `json:"password"`
 }
 
 type NursesResponse struct {
-	UUID uuid.UUID `json:"id,omitempty"`
+	UUID uuid.UUID `json:"id"`
 	Nurse
-	Pending bool `json:"pending,omitempty"`
+	Pending bool `json:"pending"`
 }
 
 func NewNurseResponse(nurse db.Nurse) (NursesResponse, error) {
@@ -57,6 +58,7 @@ func NewNurseResponse(nurse db.Nurse) (NursesResponse, error) {
 			Email:         nurse.Email,
 			PhoneNumber:   nurse.PhoneNumber,
 			Credentials:   nurse.Credentials,
+			Sex:           nurse.Sex,
 		},
 		Pending: nurse.Pending,
 	}, nil

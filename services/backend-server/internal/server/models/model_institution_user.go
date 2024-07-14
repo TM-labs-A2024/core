@@ -15,29 +15,29 @@ const (
 )
 
 type InstitutionUser struct {
-	Firstname     string              `json:"firstname,omitempty"`
-	Lastname      string              `json:"lastname,omitempty"`
-	GovId         string              `json:"govId,omitempty"`
-	Birthdate     string              `json:"birthdate,omitempty"`
-	Email         string              `json:"email,omitempty"`
-	PhoneNumber   string              `json:"phoneNumber,omitempty"`
-	Role          InstitutionUserRole `json:"role,omitempty"`
-	InstitutionID uuid.UUID           `json:"institutionId,omitempty"`
+	Firstname     string              `json:"firstname"`
+	Lastname      string              `json:"lastname"`
+	GovId         string              `json:"govId"`
+	Birthdate     string              `json:"birthdate"`
+	Email         string              `json:"email"`
+	PhoneNumber   string              `json:"phoneNumber"`
+	Role          InstitutionUserRole `json:"role"`
+	InstitutionID uuid.UUID           `json:"institutionId"`
 }
 
 type InstitutionUserPostRequest struct {
 	InstitutionUser
-	Password string `json:"password,omitempty"`
+	Password string `json:"password"`
 }
 
 type InstitutionUserPutRequest struct {
 	ID uuid.UUID `json:"id"`
 	InstitutionUser
-	Password string `json:"password,omitempty"`
+	Password string `json:"password"`
 }
 
 type InstitutionUserResponse struct {
-	ID uuid.UUID `json:"id,omitempty"`
+	ID uuid.UUID `json:"id"`
 	InstitutionUser
 }
 

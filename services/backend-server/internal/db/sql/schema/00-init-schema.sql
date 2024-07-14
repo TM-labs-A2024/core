@@ -1,7 +1,5 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
-CREATE TYPE INSTITUTION_TYPE AS ENUM ('clinic', 'hospital');
-CREATE TYPE HEALTH_RECORD_TYPE AS ENUM ('study', 'report', 'evolution', 'order');
 CREATE TYPE SPECIALTY_NAME AS ENUM (
     'Allergy and immunology',
     'Anesthesiology',
@@ -31,7 +29,7 @@ CREATE TABLE IF NOT EXISTS institution (
     name TEXT NOT NULL,
     address TEXT NOT NULL,
     credentials TEXT NOT NULL,
-    type INSTITUTION_TYPE NOT NULL,
+    type TEXT NOT NULL,
     gov_id TEXT NOT NULL UNIQUE,
     pending BOOLEAN NOT NULL DEFAULT true,
     PRIMARY KEY(id)
@@ -53,6 +51,7 @@ CREATE TABLE IF NOT EXISTS nurse (
     lastname TEXT NOT NULL,
     gov_id TEXT NOT NULL UNIQUE,
     birthdate TIMESTAMP NOT NULL,
+    sex TEXT NOT NULL,
     email TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL,
     phone_number TEXT NOT NULL,
@@ -90,6 +89,7 @@ CREATE TABLE IF NOT EXISTS doctor (
     gov_id TEXT NOT NULL UNIQUE,
     birthdate TIMESTAMP NOT NULL,
     email TEXT NOT NULL UNIQUE,
+    sex TEXT NOT NULL,
     password TEXT NOT NULL,
     phone_number TEXT NOT NULL,
     credentials TEXT NOT NULL,
@@ -141,9 +141,12 @@ CREATE TABLE IF NOT EXISTS health_record (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     id UUID NOT NULL UNIQUE DEFAULT uuid_generate_v4(),
     patient_id UUID NOT NULL,
+    author TEXT NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
     private_key TEXT NOT NULL,
     public_key TEXT NOT NULL,
-    type HEALTH_RECORD_TYPE NOT NULL,
+    type TEXT NOT NULL,
     specialty_id UUID NOT NULL,
     content_format TEXT NOT NULL,
     PRIMARY KEY(id),
