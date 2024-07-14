@@ -9,10 +9,10 @@ import (
 type Patient struct {
 	Firstname   string `json:"firstname,omitempty"`
 	Lastname    string `json:"lastname,omitempty"`
-	GovId       string `json:"gov_id,omitempty"`
+	GovId       string `json:"govId,omitempty"`
 	Birthdate   string `json:"birthdate,omitempty"`
 	Email       string `json:"email,omitempty"`
-	PhoneNumber string `json:"phone_number,omitempty"`
+	PhoneNumber string `json:"phoneNumber,omitempty"`
 	Sex         string `json:"sex,omitempty"`
 	Pending     bool   `json:"pending,omitempty"`
 }
@@ -58,7 +58,7 @@ type PatientsHealthRecordsResponse struct {
 	Content       string    `json:"content,omitempty"`
 	Type          string    `json:"type,omitempty"`
 	Specialty     Specialty `json:"specialty,omitempty"`
-	ContentFormat string    `json:"content-format,omitempty"`
+	ContentFormat string    `json:"contentFormat,omitempty"`
 }
 
 func NewPatientsHealthRecordsResponse(hr db.HealthRecord, content string, specialty db.Specialty) (PatientsHealthRecordsResponse, error) {

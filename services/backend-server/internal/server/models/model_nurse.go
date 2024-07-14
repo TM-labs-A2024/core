@@ -10,10 +10,10 @@ type Nurse struct {
 	InstitutionID uuid.UUID `json:"institutionId,omitempty"`
 	Firstname     string    `json:"firstname,omitempty"`
 	Lastname      string    `json:"lastname,omitempty"`
-	GovId         string    `json:"gov_id,omitempty"`
+	GovId         string    `json:"govId,omitempty"`
 	Birthdate     string    `json:"birthdate,omitempty"`
 	Email         string    `json:"email,omitempty"`
-	PhoneNumber   string    `json:"phone_number,omitempty"`
+	PhoneNumber   string    `json:"phoneNumber,omitempty"`
 	Credentials   string    `json:"credentials,omitempty"`
 }
 
