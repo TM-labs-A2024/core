@@ -167,6 +167,7 @@ type Doctor struct {
 	GovID          string             `json:"govId"`
 	Birthdate      pgtype.Timestamp   `json:"birthdate"`
 	Email          string             `json:"email"`
+	Sex            string             `json:"sex"`
 	Password       string             `json:"password"`
 	PhoneNumber    string             `json:"phoneNumber"`
 	Credentials    string             `json:"credentials"`
@@ -265,6 +266,7 @@ type Nurse struct {
 	Lastname      string             `json:"lastname"`
 	GovID         string             `json:"govId"`
 	Birthdate     pgtype.Timestamp   `json:"birthdate"`
+	Sex           string             `json:"sex"`
 	Email         string             `json:"email"`
 	Password      string             `json:"password"`
 	PhoneNumber   string             `json:"phoneNumber"`

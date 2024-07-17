@@ -128,7 +128,7 @@ func (s Server) AddRoutes() {
 	// restricted.POST("/institutions/enrollment-requests", s.InstitutionsEnrollmentRequestsPost)
 
 	// InstitutionsGet - List ALL institutions
-	restricted.GET("/institutions", s.InstitutionsGet)
+	unrestricted.GET("/institutions", s.InstitutionsGet)
 
 	// InstitutionsGovIdGet - Returns a single institution by govId
 	restricted.GET("/institutions/:govId", s.InstitutionsGovIdGet)

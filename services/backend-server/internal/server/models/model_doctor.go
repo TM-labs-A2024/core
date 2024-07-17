@@ -15,6 +15,7 @@ type Doctor struct {
 	Email         string    `json:"email,omitempty"`
 	PhoneNumber   string    `json:"phoneNumber,omitempty"`
 	Credentials   string    `json:"credentials,omitempty"`
+	Sex           string    `json:"sex,omitempty"`
 }
 
 // DoctorEnrollmentRequest <= NOT USED ON API, ONLY db
@@ -126,6 +127,7 @@ func NewDoctorResponse(args NewDoctorResponseArgs) (DoctorsResponse, error) {
 			Email:         args.Doctor.Email,
 			PhoneNumber:   args.Doctor.PhoneNumber,
 			Credentials:   args.Doctor.Credentials,
+			Sex:           args.Doctor.Sex,
 		},
 		Specialities:   specialties,
 		Pending:        args.Doctor.Pending,

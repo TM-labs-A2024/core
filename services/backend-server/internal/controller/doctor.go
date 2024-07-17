@@ -118,6 +118,7 @@ func (c Controller) CreateDoctor(req models.DoctorsPostRequest) (db.Doctor, erro
 			Email:       req.Email,
 			PhoneNumber: req.PhoneNumber,
 			Credentials: req.Credentials,
+			Sex:         req.Sex,
 		})
 	if err != nil {
 		return db.Doctor{}, err

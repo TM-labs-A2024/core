@@ -15,6 +15,7 @@ type Nurse struct {
 	Email         string    `json:"email,omitempty"`
 	PhoneNumber   string    `json:"phoneNumber,omitempty"`
 	Credentials   string    `json:"credentials,omitempty"`
+	Sex           string    `json:"sex,omitempty"`
 }
 
 type NursesPutRequest struct {
@@ -57,6 +58,7 @@ func NewNurseResponse(nurse db.Nurse) (NursesResponse, error) {
 			Email:         nurse.Email,
 			PhoneNumber:   nurse.PhoneNumber,
 			Credentials:   nurse.Credentials,
+			Sex:           nurse.Sex,
 		},
 		Pending: nurse.Pending,
 	}, nil
