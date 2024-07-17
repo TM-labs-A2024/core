@@ -222,6 +222,7 @@ func (c Controller) UpdateDoctorByID(req models.DoctorsPutRequest) (db.Doctor, e
 			Email:       req.Email,
 			PhoneNumber: req.PhoneNumber,
 			Credentials: req.Credentials,
+			Sex:         req.Sex,
 		})
 	if err != nil {
 		c.logger.Debug("error message5:", slog.String("err", err.Error()))
