@@ -230,5 +230,5 @@ func (s Server) AddRoutes() {
 	restricted.PUT("/patients", s.PatientsPut)
 
 	// SpecialtiesGet - Returns a list of specialties
-	restricted.GET("/specialties", s.SpecialtiesGet)
+	unrestricted.GET("/specialties", s.SpecialtiesGet)
 }
