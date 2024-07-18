@@ -145,7 +145,7 @@ func (c Controller) CreateDoctor(req models.DoctorsPostRequest) (db.Doctor, erro
 }
 
 func (c Controller) UpdateDoctorByID(req models.DoctorsPutRequest) (db.Doctor, error) {
-	tx, err := c.conn.BeginTx(context.Background(), pgx.TxOptions{})
+	tx, err := c.pool.BeginTx(context.Background(), pgx.TxOptions{})
 	if err != nil {
 		c.logger.Debug("error message1:", slog.String("err", err.Error()))
 		return db.Doctor{}, err

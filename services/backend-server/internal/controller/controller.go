@@ -5,11 +5,11 @@ import (
 	"log/slog"
 
 	"github.com/TM-labs-A2024/core/services/backend-server/internal/db"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Controller struct {
-	conn    *pgx.Conn
+	pool    *pgxpool.Pool
 	queries *db.Queries
 	logger  *slog.Logger
 }
@@ -17,17 +17,17 @@ type Controller struct {
 func NewController(dbUrl string, logger *slog.Logger) (*Controller, error) {
 	ctx := context.Background()
 
-	conn, err := pgx.Connect(ctx, dbUrl)
+	pool, err := pgxpool.New(ctx, dbUrl)
 	if err != nil {
 		return nil, err
 	}
 
-	queries := db.New(conn)
+	queries := db.New(pool)
 
 	controller := &Controller{
 		queries: queries,
 		logger:  logger,
-		conn:    conn,
+		pool:    pool,
 	}
 
 	return controller, nil
