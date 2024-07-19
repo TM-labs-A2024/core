@@ -170,12 +170,12 @@ RETURNING created_at, updated_at, id, patient_id, private_key, public_key, type,
 `
 
 type CreateHealthRecordParams struct {
-	PatientID     pgtype.UUID      `json:"patientId"`
-	PrivateKey    string           `json:"privateKey"`
-	PublicKey     string           `json:"publicKey"`
-	Type          HealthRecordType `json:"type"`
-	SpecialtyID   pgtype.UUID      `json:"specialtyId"`
-	ContentFormat string           `json:"contentFormat"`
+	PatientID     pgtype.UUID `json:"patientId"`
+	PrivateKey    string      `json:"privateKey"`
+	PublicKey     string      `json:"publicKey"`
+	Type          string      `json:"type"`
+	SpecialtyID   pgtype.UUID `json:"specialtyId"`
+	ContentFormat string      `json:"contentFormat"`
 }
 
 func (q *Queries) CreateHealthRecord(ctx context.Context, arg CreateHealthRecordParams) (HealthRecord, error) {
@@ -215,11 +215,11 @@ RETURNING created_at, updated_at, id, name, address, credentials, type, gov_id, 
 `
 
 type CreateInstitutionParams struct {
-	Name        string          `json:"name"`
-	Address     string          `json:"address"`
-	Credentials string          `json:"credentials"`
-	Type        InstitutionType `json:"type"`
-	GovID       string          `json:"govId"`
+	Name        string `json:"name"`
+	Address     string `json:"address"`
+	Credentials string `json:"credentials"`
+	Type        string `json:"type"`
+	GovID       string `json:"govId"`
 }
 
 func (q *Queries) CreateInstitution(ctx context.Context, arg CreateInstitutionParams) (Institution, error) {
@@ -1574,8 +1574,8 @@ WHERE type = $1
 `
 
 type ListHealthRecordsByTypeAndPatientIDParams struct {
-	Type      HealthRecordType `json:"type"`
-	PatientID pgtype.UUID      `json:"patientId"`
+	Type      string      `json:"type"`
+	PatientID pgtype.UUID `json:"patientId"`
 }
 
 func (q *Queries) ListHealthRecordsByTypeAndPatientID(ctx context.Context, arg ListHealthRecordsByTypeAndPatientIDParams) ([]HealthRecord, error) {
@@ -2279,13 +2279,13 @@ RETURNING created_at, updated_at, id, name, address, credentials, type, gov_id, 
 `
 
 type UpdateInstitutionByIDParams struct {
-	Name        string          `json:"name"`
-	Address     string          `json:"address"`
-	Credentials string          `json:"credentials"`
-	Type        InstitutionType `json:"type"`
-	GovID       string          `json:"govId"`
-	Pending     bool            `json:"pending"`
-	ID          pgtype.UUID     `json:"id"`
+	Name        string      `json:"name"`
+	Address     string      `json:"address"`
+	Credentials string      `json:"credentials"`
+	Type        string      `json:"type"`
+	GovID       string      `json:"govId"`
+	Pending     bool        `json:"pending"`
+	ID          pgtype.UUID `json:"id"`
 }
 
 func (q *Queries) UpdateInstitutionByID(ctx context.Context, arg UpdateInstitutionByIDParams) (Institution, error) {

@@ -2,7 +2,6 @@ package controller
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/TM-labs-A2024/core/services/backend-server/internal/db"
 	"github.com/TM-labs-A2024/core/services/backend-server/internal/server/models"
@@ -52,7 +51,7 @@ func (c Controller) CreateInstitutionEnrollmentRequestNurse(nurseId, instId uuid
 				Valid: true,
 				Bytes: instId,
 			},
-			NurseID:  pgtype.UUID{
+			NurseID: pgtype.UUID{
 				Valid: true,
 				Bytes: nurseId,
 			},
@@ -173,18 +172,18 @@ func (c Controller) DeleteInstitutionByID(id uuid.UUID) error {
 
 func (c Controller) CreateInstitution(institution models.Institution) (db.Institution, error) {
 	c.logger.Debug("CreateInstitution")
-	switch db.InstitutionType(institution.Type) {
-	case db.InstitutionTypeClinic, db.InstitutionTypeHospital:
-		break
-	default:
-		return db.Institution{}, fmt.Errorf("invalid intitution type: %s", institution.Type)
-	}
+	// switch institution.Type){
+	// case db.InstitutionTypeClinic, db.InstitutionTypeHospital:
+	// 	break
+	// default:
+	// 	return db.Institution{}, fmt.Errorf("invalid intitution type: %s", institution.Type)
+	// }
 
 	inst, err := c.queries.CreateInstitution(context.Background(), db.CreateInstitutionParams{
 		Name:        institution.Name,
 		Address:     institution.Address,
 		Credentials: institution.Credentials,
-		Type:        db.InstitutionType(institution.Type),
+		Type:        institution.Type,
 		GovID:       institution.GovId,
 	})
 	if err != nil {
@@ -201,18 +200,18 @@ func (c Controller) CreateInstitution(institution models.Institution) (db.Instit
 
 func (c Controller) UpdateInstitution(institution models.Institution, id uuid.UUID) (db.Institution, error) {
 	c.logger.Debug("UpdateInstitution")
-	switch db.InstitutionType(institution.Type) {
-	case db.InstitutionTypeClinic, db.InstitutionTypeHospital:
-		break
-	default:
-		return db.Institution{}, fmt.Errorf("invalid intitution type: %s", institution.Type)
-	}
+	// switch institution.Type){
+	// case db.InstitutionTypeClinic, db.InstitutionTypeHospital:
+	// 	break
+	// default:
+	// 	return db.Institution{}, fmt.Errorf("invalid intitution type: %s", institution.Type)
+	// }
 
 	return c.queries.UpdateInstitutionByID(context.Background(), db.UpdateInstitutionByIDParams{
 		Name:        institution.Name,
 		Address:     institution.Address,
 		Credentials: institution.Credentials,
-		Type:        db.InstitutionType(institution.Type),
+		Type:        institution.Type,
 		GovID:       institution.GovId,
 		Pending:     false,
 		ID: pgtype.UUID{

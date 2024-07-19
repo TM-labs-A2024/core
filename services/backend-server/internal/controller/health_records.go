@@ -53,7 +53,7 @@ func (c Controller) CreateHealthRecord(args CreateHealthRecordArgs) (db.HealthRe
 		},
 		PrivateKey: privateKey,
 		PublicKey:  publicKey,
-		Type:       db.HealthRecordType(args.Type),
+		Type:       args.Type,
 		SpecialtyID: pgtype.UUID{
 			Valid: true,
 			Bytes: args.SpecialtyId,
