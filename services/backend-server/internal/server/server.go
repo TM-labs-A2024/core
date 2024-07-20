@@ -149,7 +149,7 @@ func (s Server) AddRoutes() {
 	restricted.GET("/institutions/:institutionId/users/:govId", s.InstitutionsInstitutionIDUsersGovIdGet)
 
 	// InstitutionsInstitutionIDUsersLoginPost -
-	unrestricted.POST("/institutions/:institutionId/users/login", s.InstitutionsInstitutionIDUsersLoginPost)
+	unrestricted.POST("/institutions/users/login", s.InstitutionsInstitutionIDUsersLoginPost)
 
 	// InstitutionsInstitutionIDUsersPost - Add a new institutions user to the system
 	unrestricted.POST("/institutions/users", s.InstitutionsInstitutionIDUsersPost)

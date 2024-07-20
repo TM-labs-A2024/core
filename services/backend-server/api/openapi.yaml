@@ -940,17 +940,10 @@ paths:
           $ref: "#/components/responses/ErrorMessage"
         "500":
           $ref: "#/components/responses/ErrorMessage"
-  /institutions/{institutionId}/users/login:
+  /institutions/users/login:
     post:
       tags:
         - institution-user
-      parameters:
-        - name: institutionId
-          in: path
-          description: Institution id to delete
-          required: true
-          schema:
-            $ref: "#/components/schemas/UUID"
       requestBody:
         required: true
         $ref: "#/components/requestBodies/Login"
