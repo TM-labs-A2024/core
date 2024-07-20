@@ -11,6 +11,8 @@ services:
       DATABASE_URL: postgres://postgres:postgres@db:5432/postgres
     volumes:
       - ./records:/records
+    networks:
+      - tm-network
   db:
     image: postgres:latest
     restart: always
@@ -28,3 +30,9 @@ services:
       interval: 30s
       timeout: 1m
       retries: 50
+    networks:
+      - tm-network
+
+networks:
+  tm-network:
+    name: tm-network
