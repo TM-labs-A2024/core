@@ -252,7 +252,7 @@ WHERE id = $1;
 -- name: GetInstitutionUserByLogin :one
 SELECT *
 FROM institution_user
-WHERE email = $1 AND password = crypt($2, password);;
+WHERE email = $1 AND password = crypt($2, password);
 -- name: GetInstitutionUserByID :many
 SELECT *
 FROM institution_user

@@ -9,7 +9,7 @@ import (
 )
 
 func (c Controller) GetGovernmentByLogin(email, crypt string) (db.Government, error) {
-	institutionUser, err := c.queries.GetGovernmentByLogin(
+	goverment, err := c.queries.GetGovernmentByLogin(
 		context.Background(),
 		db.GetGovernmentByLoginParams{
 			Email: email,
@@ -20,7 +20,7 @@ func (c Controller) GetGovernmentByLogin(email, crypt string) (db.Government, er
 		return db.Government{}, err
 	}
 
-	return institutionUser, nil
+	return goverment, nil
 }
 
 func (c Controller) CreateGovernmentEnrollmentRequest(institutionId uuid.UUID) (db.GovernmentEnrollmentRequest, error) {
@@ -30,7 +30,7 @@ func (c Controller) CreateGovernmentEnrollmentRequest(institutionId uuid.UUID) (
 			Valid: true,
 			Bytes: institutionId,
 		},
-	)
+	)	
 	if err != nil {
 		return db.GovernmentEnrollmentRequest{}, err
 	}

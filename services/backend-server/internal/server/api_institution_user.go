@@ -51,6 +51,7 @@ func (s *Server) InstitutionsInstitutionIDUsersLoginPost(ctx echo.Context) error
 
 	return ctx.JSON(http.StatusOK, echo.Map{
 		"token": token,
+		"id":    user.ID,
 	})
 }
 
