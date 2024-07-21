@@ -1,11 +1,20 @@
+volumes:
+  orderer.tmlabs.com:
+  peer0.main.tmlabs.com:
+  peer0.aux.tmlabs.com:
+
+networks:
+  tm-network:
+    name: tm-network
+
 services:
-  backend-server:
+  backend.tmlabs.com:
     build:
       dockerfile: ./services/backend-server/Dockerfile
     ports:
       - 8080:8080
     depends_on:
-      db:
+      db.tmlabs.com:
         condition: service_healthy
     environment:
       DATABASE_URL: postgres://postgres:postgres@db:5432/postgres
@@ -13,7 +22,8 @@ services:
       - ./records:/records
     networks:
       - tm-network
-  db:
+  
+  db.tmlabs.com:
     image: postgres:latest
     restart: always
     environment:
@@ -25,6 +35,10 @@ services:
       - ./services/backend-server/internal/db/sql/schema:/docker-entrypoint-initdb.d
     ports:
       - 5432:5432
+    depends_on:
+      - orderer.tmlabs.com
+      - peer0.main.tmlabs.com
+      - peer0.aux.tmlabs.com
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
       interval: 30s
@@ -33,6 +47,17 @@ services:
     networks:
       - tm-network
 
-networks:
-  tm-network:
-    name: tm-network
+  orderer.tmlabs.com:
+    extends:
+      file: ./services/hyperledger/compose-hyperledger.yaml
+      service: orderer.tmlabs.com
+  
+  peer0.main.tmlabs.com:
+    extends:
+      file: ./services/hyperledger/compose-hyperledger.yaml
+      service: peer0.main.tmlabs.com
+
+  peer0.aux.tmlabs.com:
+    extends:
+      file: ./services/hyperledger/compose-hyperledger.yaml
+      service: peer0.aux.tmlabs.com

@@ -6,12 +6,14 @@ SOCK="${DOCKER_HOST:-/var/run/docker.sock}"
 DOCKER_SOCK="${SOCK##unix://}"
 CMD=$1
 
+echo "$(pwd)"
+
 compose-up() {
-    DOCKER_SOCK="${DOCKER_SOCK}" ${DOCKER_COMPOSE}  -f ./docker-compose.yaml -f ./services/hyperledger/docker-compose.yaml up
+    DOCKER_SOCK="${DOCKER_SOCK}" ${DOCKER_COMPOSE}  -f ./docker-compose.yaml up
 }
 
 compose-build() {
-    DOCKER_SOCK="${DOCKER_SOCK}" ${DOCKER_COMPOSE}  -f ./docker-compose.yaml -f ./services/hyperledger/docker-compose.yaml build
+    DOCKER_SOCK="${DOCKER_SOCK}" ${DOCKER_COMPOSE}  -f ./docker-compose.yaml build
 }
 
 case $CMD in
