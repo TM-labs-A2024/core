@@ -1,28 +1,21 @@
 #!/bin/bash
 
 # imports  
-. scripts/utils.sh
+. scripts/envVar.sh
 
 CHANNEL_NAME=$1
 DELAY="3"
 MAX_RETRY="5"
 VERBOSE="false"
 BFT=0
-
-CONTAINER_CLI:="docker"
-if command -v ${CONTAINER_CLI}-compose > /dev/null 2>&1; then
-    : ${CONTAINER_CLI_COMPOSE:="${CONTAINER_CLI}-compose"}
-else
-    : ${CONTAINER_CLI_COMPOSE:="${CONTAINER_CLI} compose"}
-fi
-infoln "Using ${CONTAINER_CLI} and ${CONTAINER_CLI_COMPOSE}"
+export FABRIC_CFG_PATH=${PWD}/configtx
 
 if [ ! -d "channel-artifacts" ]; then
 	mkdir channel-artifacts
 fi
 
 createChannelGenesisBlock() {
-  setGlobals 1
+  setGlobals "main"
 	local bft_true=$1
 	set -x
 
