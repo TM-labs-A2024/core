@@ -11,7 +11,7 @@ type Government struct {
 }
 
 type GovernmentEnrollmentRequest struct {
-	InstitutionId uuid.UUID `json:"institutionId"`
+	InstitutionID uuid.UUID `json:"institutionId"`
 	ID            uuid.UUID `json:"id"`
 	Pending       bool      `json:"pending"`
 	Approved      bool      `json:"approved"`
@@ -19,7 +19,7 @@ type GovernmentEnrollmentRequest struct {
 
 func NewGovernmentEnrollmentRequest(er db.GovernmentEnrollmentRequest) GovernmentEnrollmentRequest {
 	return GovernmentEnrollmentRequest{
-		InstitutionId: er.InstitutionID.Bytes,
+		InstitutionID: er.InstitutionID.Bytes,
 		ID:            er.ID.Bytes,
 		Pending:       er.Pending,
 		Approved:      er.Approved,

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/TM-labs-A2024/core/services/backend-server/internal/controller"
@@ -35,12 +36,12 @@ func (s *Server) GovermentLoginPost(ctx echo.Context) error {
 // GovernmentEnrollmentInstitutionIDRevokePost - Deny institution into the system
 func (s *Server) GovernmentEnrollmentInstitutionIDRevokePost(ctx echo.Context) error {
 	uuidStr := ctx.Param("institutionId")
-	instId, err := uuid.Parse(uuidStr)
+	instID, err := uuid.Parse(uuidStr)
 	if err != nil {
 		return ctx.String(http.StatusBadRequest, err.Error())
 	}
 
-	if err := s.Controller.DeleteInstitutionByID(instId); err != nil {
+	if err := s.Controller.DeleteGovernmentEnrollmentRequestByInsitutionID(instID); err != nil {
 		return err
 	}
 
@@ -50,12 +51,13 @@ func (s *Server) GovernmentEnrollmentInstitutionIDRevokePost(ctx echo.Context) e
 // GovernmentEnrollmentRequestsEnrollmentRequestIDApprovePost - Approve institution into the system
 func (s *Server) GovernmentEnrollmentRequestsEnrollmentRequestIDApprovePost(ctx echo.Context) error {
 	uuidStr := ctx.Param("enrollmentRequestId")
-	erId, err := uuid.Parse(uuidStr)
+	log.Println(uuidStr)
+	erID, err := uuid.Parse(uuidStr)
 	if err != nil {
 		return ctx.String(http.StatusBadRequest, err.Error())
 	}
 
-	er, err := s.Controller.ApproveGovernmentEnrollmentRequest(erId)
+	er, err := s.Controller.ApproveGovernmentEnrollmentRequest(erID)
 	if err != nil {
 		return err
 	}
@@ -66,12 +68,12 @@ func (s *Server) GovernmentEnrollmentRequestsEnrollmentRequestIDApprovePost(ctx 
 // GovernmentEnrollmentRequestsEnrollmentRequestIDDenyPost - Deny institution into the system
 func (s *Server) GovernmentEnrollmentRequestsEnrollmentRequestIDDenyPost(ctx echo.Context) error {
 	uuidStr := ctx.Param("enrollmentRequestId")
-	erId, err := uuid.Parse(uuidStr)
+	erID, err := uuid.Parse(uuidStr)
 	if err != nil {
 		return ctx.String(http.StatusBadRequest, err.Error())
 	}
 
-	er, err := s.Controller.DenyGovernmentEnrollmentRequest(erId)
+	er, err := s.Controller.DenyGovernmentEnrollmentRequest(erID)
 	if err != nil {
 		return err
 	}

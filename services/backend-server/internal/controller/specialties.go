@@ -60,16 +60,16 @@ func (c Controller) ListSpecialties() ([]db.Specialty, error) {
 	return specialties, nil
 }
 
-func (c Controller) LinkDoctorToSpecialty(docId, specId uuid.UUID) error {
+func (c Controller) LinkDoctorToSpecialty(docID, specID uuid.UUID) error {
 	if _, err := c.queries.CreateSpecialtyDoctorJunction(context.Background(),
 		db.CreateSpecialtyDoctorJunctionParams{
 			DoctorID: pgtype.UUID{
 				Valid: true,
-				Bytes: docId,
+				Bytes: docID,
 			},
 			SpecialtyID: pgtype.UUID{
 				Valid: true,
-				Bytes: specId,
+				Bytes: specID,
 			},
 		},
 	); err != nil {
@@ -79,16 +79,16 @@ func (c Controller) LinkDoctorToSpecialty(docId, specId uuid.UUID) error {
 	return nil
 }
 
-func (c Controller) UnlinkDoctorToSpecialty(docId, specId uuid.UUID) error {
+func (c Controller) UnlinkDoctorToSpecialty(docID, specID uuid.UUID) error {
 	if err := c.queries.DeleteSpecialtyDoctorJunction(context.Background(),
 		db.DeleteSpecialtyDoctorJunctionParams{
 			DoctorID: pgtype.UUID{
 				Valid: true,
-				Bytes: docId,
+				Bytes: docID,
 			},
 			SpecialtyID: pgtype.UUID{
 				Valid: true,
-				Bytes: specId,
+				Bytes: specID,
 			},
 		},
 	); err != nil {

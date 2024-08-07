@@ -31,12 +31,12 @@ func (s *Server) NursesGet(ctx echo.Context) error {
 // NursesInstitutionIDGet - List ALL nurses in an institution
 func (s *Server) NursesInstitutionIDGet(ctx echo.Context) error {
 	uuidStr := ctx.Param("institutionId")
-	institutionId, err := uuid.Parse(uuidStr)
+	institutionID, err := uuid.Parse(uuidStr)
 	if err != nil {
 		return ctx.String(http.StatusBadRequest, err.Error())
 	}
 
-	nurses, err := s.Controller.ListNursesByInstitutionID(institutionId)
+	nurses, err := s.Controller.ListNursesByInstitutionID(institutionID)
 	if err != nil {
 		return err
 	}
@@ -84,12 +84,12 @@ func (s *Server) NursesLoginPost(ctx echo.Context) error {
 // NursesNurseIDDelete - Deletes a nurse
 func (s *Server) NursesNurseIDDelete(ctx echo.Context) error {
 	uuidStr := ctx.Param("nurseId")
-	nurseId, err := uuid.Parse(uuidStr)
+	nurseID, err := uuid.Parse(uuidStr)
 	if err != nil {
 		return ctx.String(http.StatusBadRequest, err.Error())
 	}
 
-	if err := s.Controller.DeleteNurseByID(nurseId); err != nil {
+	if err := s.Controller.DeleteNurseByID(nurseID); err != nil {
 		return err
 	}
 
@@ -99,12 +99,12 @@ func (s *Server) NursesNurseIDDelete(ctx echo.Context) error {
 // NursesNurseIDGet - Find nurse by ID
 func (s *Server) NursesNurseIDGet(ctx echo.Context) error {
 	uuidStr := ctx.Param("nurseId")
-	nurseId, err := uuid.Parse(uuidStr)
+	nurseID, err := uuid.Parse(uuidStr)
 	if err != nil {
 		return ctx.String(http.StatusBadRequest, err.Error())
 	}
 
-	nurse, err := s.Controller.GetNurseByID(nurseId)
+	nurse, err := s.Controller.GetNurseByID(nurseID)
 	if err != nil {
 		return err
 	}

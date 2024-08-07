@@ -1,13 +1,20 @@
 package main
 
 import (
+	"fmt"
 	"log/slog"
 
+	"github.com/TM-labs-A2024/core/services/backend-server/config"
 	"github.com/TM-labs-A2024/core/services/backend-server/internal/server"
 )
 
 func main() {
-	s, err := server.NewServer()
+	config, err := config.LoadConfig()
+	if err != nil {
+		panic(fmt.Errorf("could not load config %w", err))
+	}
+
+	s, err := server.NewServer(config)
 	if err != nil {
 		slog.Error("could not create server", slog.Any("error", err))
 	}

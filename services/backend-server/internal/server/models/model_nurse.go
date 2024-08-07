@@ -10,7 +10,7 @@ type Nurse struct {
 	InstitutionID uuid.UUID `json:"institutionId"`
 	Firstname     string    `json:"firstname"`
 	Lastname      string    `json:"lastname"`
-	GovId         string    `json:"govId"`
+	GovID         string    `json:"govId"`
 	Birthdate     string    `json:"birthdate"`
 	Email         string    `json:"email"`
 	PhoneNumber   string    `json:"phoneNumber"`
@@ -53,7 +53,7 @@ func NewNurseResponse(nurse db.Nurse) (NursesResponse, error) {
 			InstitutionID: institutionUUID,
 			Firstname:     nurse.Firstname,
 			Lastname:      nurse.Lastname,
-			GovId:         nurse.GovID,
+			GovID:         nurse.GovID,
 			Birthdate:     nurse.Birthdate.Time.Format(constants.ISOLayout),
 			Email:         nurse.Email,
 			PhoneNumber:   nurse.PhoneNumber,

@@ -143,12 +143,12 @@ func (s *Server) DoctorsGet(ctx echo.Context) error {
 func (s *Server) DoctorsInstitutionIDGet(ctx echo.Context) error {
 	resps := []models.DoctorsResponse{}
 	uuidStr := ctx.Param("institutionId")
-	institutionId, err := uuid.Parse((uuidStr))
+	institutionID, err := uuid.Parse((uuidStr))
 	if err != nil {
 		return ctx.String(http.StatusBadRequest, err.Error())
 	}
 
-	doctors, err := s.Controller.ListDoctorsByInstitutionID(institutionId)
+	doctors, err := s.Controller.ListDoctorsByInstitutionID(institutionID)
 	if err != nil {
 		return err
 	}
@@ -253,11 +253,6 @@ func (s *Server) DoctorsPost(ctx echo.Context) error {
 
 	specialties := []db.Specialty{}
 	for _, specialty := range req.Specialties {
-		err := s.Controller.LinkDoctorToSpecialty(doctor.ID.Bytes, specialty)
-		if err != nil {
-			return err
-		}
-
 		specialty, err := s.Controller.GetSpecialtyByID(specialty)
 		if err != nil {
 			return err
@@ -277,7 +272,7 @@ func (s *Server) DoctorsPost(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, resp)
 }
 
-// DoctorsPut - Update an existing doctor by Id
+// DoctorsPut - Update an existing doctor by ID
 func (s *Server) DoctorsPut(ctx echo.Context) error {
 	req := models.DoctorsPutRequest{}
 	if err := ctx.Bind(&req); err != nil {
@@ -305,16 +300,16 @@ func (s *Server) DoctorsPut(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, resp)
 }
 
-// DoctorsSpecialtyIdGet - Returns a list of doctors by specialty
-func (s *Server) DoctorsSpecialtyIdGet(ctx echo.Context) error {
+// DoctorsSpecialtyIDGet - Returns a list of doctors by specialty
+func (s *Server) DoctorsSpecialtyIDGet(ctx echo.Context) error {
 	resps := []models.DoctorsResponse{}
 	uuidStr := ctx.Param("specialtyId")
-	specialtyId, err := uuid.Parse(uuidStr)
+	specialtyID, err := uuid.Parse(uuidStr)
 	if err != nil {
 		return ctx.String(http.StatusBadRequest, err.Error())
 	}
 
-	specialtyDoctorJunctions, err := s.Controller.ListDoctorsBySpecialtyID(specialtyId)
+	specialtyDoctorJunctions, err := s.Controller.ListDoctorsBySpecialtyID(specialtyID)
 	if err != nil {
 		return err
 	}
@@ -359,10 +354,10 @@ func (s *Server) DoctorsSpecialtyIdGet(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, resps)
 }
 
-// DoctorsSpecialtyIdPatientsGet - Returns a list of patients that have at least one record for a given  specialty that are treated by a doctor
-func (s *Server) DoctorsSpecialtyIdPatientsGet(ctx echo.Context) error {
+// DoctorsSpecialtyIDPatientsGet - Returns a list of patients that have at least one record for a given  specialty that are treated by a doctor
+func (s *Server) DoctorsSpecialtyIDPatientsGet(ctx echo.Context) error {
 	uuidStr := ctx.Param("specialtyId")
-	specialtyId, err := uuid.Parse(uuidStr)
+	specialtyID, err := uuid.Parse(uuidStr)
 	if err != nil {
 		return ctx.String(http.StatusBadRequest, err.Error())
 	}
@@ -370,7 +365,7 @@ func (s *Server) DoctorsSpecialtyIdPatientsGet(ctx echo.Context) error {
 	user := ctx.Get("user").(*jwt.Token)
 	claims := user.Claims.(*controller.JWTCustomClaims)
 
-	patients, err := s.Controller.ListPatientsTreatedByDoctorIDWithHealthRecordOfSpecialtyID(claims.UserID, specialtyId)
+	patients, err := s.Controller.ListPatientsTreatedByDoctorIDWithHealthRecordOfSpecialtyID(claims.UserID, specialtyID)
 	if err != nil {
 		return err
 	}

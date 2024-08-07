@@ -2,22 +2,40 @@ package controller
 
 import (
 	"context"
+	"io"
 	"log/slog"
+	"net/url"
 
+	"github.com/TM-labs-A2024/core/services/backend-server/config"
 	"github.com/TM-labs-A2024/core/services/backend-server/internal/db"
+	"github.com/TM-labs-A2024/core/services/backend-server/internal/storage/dropbox"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type Controller struct {
-	pool    *pgxpool.Pool
-	queries *db.Queries
-	logger  *slog.Logger
+type StorageClient interface {
+	UploadFile(uuid.UUID, io.Reader) (string, error)
+	GenerateURL(string) (*url.URL, error)
+	DeleteFile(string) error
 }
 
-func NewController(dbUrl string, logger *slog.Logger) (*Controller, error) {
+type Controller struct {
+	pool            *pgxpool.Pool
+	queries         *db.Queries
+	storage         StorageClient
+	logger          *slog.Logger
+	ivEncryptionKey string
+}
+
+func NewController(conf config.Config, logger *slog.Logger) (*Controller, error) {
 	ctx := context.Background()
 
-	pool, err := pgxpool.New(ctx, dbUrl)
+	storage, err := dropbox.New(conf.StorageAPIKey)
+	if err != nil {
+		return nil, err
+	}
+
+	pool, err := pgxpool.New(ctx, conf.DatabaseURL)
 	if err != nil {
 		return nil, err
 	}
@@ -25,9 +43,11 @@ func NewController(dbUrl string, logger *slog.Logger) (*Controller, error) {
 	queries := db.New(pool)
 
 	controller := &Controller{
-		queries: queries,
-		logger:  logger,
-		pool:    pool,
+		queries:         queries,
+		logger:          logger,
+		pool:            pool,
+		storage:         storage,
+		ivEncryptionKey: conf.IVEncryptionKey,
 	}
 
 	return controller, nil

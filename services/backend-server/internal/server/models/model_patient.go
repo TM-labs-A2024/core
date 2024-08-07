@@ -7,14 +7,17 @@ import (
 )
 
 type Patient struct {
-	Firstname   string `json:"firstname"`
-	Lastname    string `json:"lastname"`
-	GovId       string `json:"govId"`
-	Birthdate   string `json:"birthdate"`
-	Email       string `json:"email"`
-	PhoneNumber string `json:"phoneNumber"`
-	Sex         string `json:"sex"`
-	Pending     bool   `json:"pending"`
+	InstitutionID uuid.UUID `json:"institution_id"`
+	Firstname     string    `json:"firstname"`
+	Lastname      string    `json:"lastname"`
+	GovID         string    `json:"govId"`
+	Birthdate     string    `json:"birthdate"`
+	Email         string    `json:"email"`
+	PhoneNumber   string    `json:"phoneNumber"`
+	Sex           string    `json:"sex"`
+	Status        string    `json:"status"`
+	Bed           string    `json:"bed"`
+	Pending       bool      `json:"pending"`
 }
 
 type PatientPostRequest struct {
@@ -33,22 +36,20 @@ type PatientResponse struct {
 }
 
 func NewPatientResponse(patient db.Patient) (PatientResponse, error) {
-	patientID, err := uuid.FromBytes(patient.ID.Bytes[:])
-	if err != nil {
-		return PatientResponse{}, err
-	}
-
 	return PatientResponse{
-		ID: patientID,
+		ID: patient.ID.Bytes,
 		Patient: Patient{
-			Firstname:   patient.Firstname,
-			Lastname:    patient.Lastname,
-			GovId:       patient.GovID,
-			Birthdate:   patient.Birthdate.Time.Format(constants.ISOLayout),
-			Email:       patient.Email,
-			PhoneNumber: patient.PhoneNumber,
-			Sex:         patient.Sex,
-			Pending:     patient.Pending,
+			Firstname:     patient.Firstname,
+			Lastname:      patient.Lastname,
+			GovID:         patient.GovID,
+			Birthdate:     patient.Birthdate.Time.Format(constants.ISOLayout),
+			Email:         patient.Email,
+			PhoneNumber:   patient.PhoneNumber,
+			Sex:           patient.Sex,
+			Pending:       patient.Pending,
+			Status:        string(patient.Status),
+			Bed:           patient.Bed,
+			InstitutionID: patient.InstitutionID.Bytes,
 		},
 	}, nil
 }

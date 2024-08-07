@@ -2,36 +2,73 @@ package controller
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"github.com/TM-labs-A2024/core/services/backend-server/internal/constants"
 	"github.com/TM-labs-A2024/core/services/backend-server/internal/db"
 	"github.com/TM-labs-A2024/core/services/backend-server/internal/server/models"
+	"github.com/TM-labs-A2024/core/services/backend-server/internal/utils"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 func (c Controller) CreatePatient(req models.PatientPostRequest) (db.Patient, error) {
+	tx, err := c.pool.BeginTx(context.Background(), pgx.TxOptions{})
+	if err != nil {
+		c.logger.Debug("error message1:", slog.String("err", err.Error()))
+		return db.Patient{}, err
+	}
+
+	defer tx.Rollback(context.Background())
+	txQuery := c.queries.WithTx(tx)
+
 	birthdate, err := time.Parse(constants.ISOLayout, req.Birthdate)
 	if err != nil {
 		return db.Patient{}, err
 	}
 
-	patient, err := c.queries.CreatePatient(context.Background(), db.CreatePatientParams{
-		Firstname: req.Firstname,
-		Lastname:  req.Lastname,
-		GovID:     req.GovId,
-		Birthdate: pgtype.Timestamp{
-			Valid: true,
-			Time:  birthdate,
-		},
+	patient, err := txQuery.CreatePatient(context.Background(), db.CreatePatientParams{
+		Firstname:   req.Firstname,
+		Lastname:    req.Lastname,
+		GovID:       req.GovID,
+		Birthdate:   pgtype.Timestamp{Valid: true, Time: birthdate},
 		Email:       req.Email,
 		Crypt:       req.Password,
 		PhoneNumber: req.PhoneNumber,
 		Sex:         req.Sex,
 		Pending:     req.Pending,
+		Status:      db.PatientStatus(req.Status),
+		Bed:         req.Bed,
 	})
 	if err != nil {
+		return db.Patient{}, err
+	}
+
+	address, err := utils.GenerateKey(patient.ID.Bytes, c.ivEncryptionKey)
+	if err != nil {
+		return db.Patient{}, err
+	}
+
+	privKey, err := utils.GenerateKey(patient.ID.Bytes, c.ivEncryptionKey)
+	if err != nil {
+		return db.Patient{}, err
+	}
+
+	patient, err = txQuery.SetPatientAddressAndPrivateKey(
+		context.Background(),
+		db.SetPatientAddressAndPrivateKeyParams{
+			BlockchainAddress: address,
+			PrivateKey:        privKey,
+			ID:                patient.ID,
+		},
+	)
+	if err != nil {
+		return db.Patient{}, err
+	}
+
+	if err := tx.Commit(context.Background()); err != nil {
 		return db.Patient{}, err
 	}
 
@@ -51,13 +88,12 @@ func (c Controller) UpdatePatientByID(req models.PatientPutRequest) (db.Patient,
 		},
 		Firstname: req.Firstname,
 		Lastname:  req.Lastname,
-		GovID:     req.GovId,
+		GovID:     req.GovID,
 		Birthdate: pgtype.Timestamp{
 			Valid: true,
 			Time:  birthdate,
 		},
 		Email:       req.Email,
-		Crypt:       req.Password,
 		PhoneNumber: req.PhoneNumber,
 		Sex:         req.Sex,
 		Pending:     req.Pending,
@@ -81,7 +117,7 @@ func (c Controller) DeletePatientByID(id uuid.UUID) error {
 }
 
 func (c Controller) GetPatientByLogin(email, crypt string) (db.Patient, error) {
-	nurse, err := c.queries.GetPatientByLogin(
+	patient, err := c.queries.GetPatientByLogin(
 		context.Background(),
 		db.GetPatientByLoginParams{
 			Email: email,
@@ -92,16 +128,28 @@ func (c Controller) GetPatientByLogin(email, crypt string) (db.Patient, error) {
 		return db.Patient{}, err
 	}
 
-	return nurse, nil
+	return patient, nil
 }
 
-func (c Controller) GetPatientByGovID(govId string) (db.Patient, error) {
-	nurse, err := c.queries.GetPatientByGovID(context.Background(), govId)
+func (c Controller) GetPatientByGovID(govID string) (db.Patient, error) {
+	patient, err := c.queries.GetPatientByGovID(context.Background(), govID)
 	if err != nil {
 		return db.Patient{}, err
 	}
 
-	return nurse, nil
+	return patient, nil
+}
+
+func (c Controller) GetPatientByID(id uuid.UUID) (db.Patient, error) {
+	patient, err := c.queries.GetPatientByID(context.Background(), pgtype.UUID{
+		Bytes: id,
+		Valid: true,
+	})
+	if err != nil {
+		return db.Patient{}, err
+	}
+
+	return patient, nil
 }
 
 func (c Controller) ListPatients() ([]db.Patient, error) {
@@ -113,8 +161,8 @@ func (c Controller) ListPatients() ([]db.Patient, error) {
 	return patients, nil
 }
 
-func (c Controller) ListHealthRecordPatientsGovID(govId string) ([]db.HealthRecord, error) {
-	patient, err := c.queries.GetPatientByGovID(context.Background(), govId)
+func (c Controller) ListHealthRecordPatientsGovID(govID string) ([]db.HealthRecord, error) {
+	patient, err := c.queries.GetPatientByGovID(context.Background(), govID)
 	if err != nil {
 		return nil, err
 	}
@@ -130,10 +178,10 @@ func (c Controller) ListHealthRecordPatientsGovID(govId string) ([]db.HealthReco
 	return healthRecords, nil
 }
 
-func (c Controller) ListPatientApprovedDoctors(govId string) ([]db.Doctor, error) {
+func (c Controller) ListPatientApprovedDoctorsByGovID(govID string) ([]db.Doctor, error) {
 	patient, err := c.queries.GetPatientByGovID(
 		context.Background(),
-		govId,
+		govID,
 	)
 	if err != nil {
 		return nil, err
@@ -163,17 +211,17 @@ func (c Controller) ListPatientApprovedDoctors(govId string) ([]db.Doctor, error
 	return doctors, nil
 }
 
-func (c Controller) CreateAccessRequestWithDoctorAndPatientID(doctorId, patientId uuid.UUID) (db.DoctorAccessRequest, error) {
+func (c Controller) CreateAccessRequestWithDoctorAndPatientID(doctorID, patientID uuid.UUID) (db.DoctorAccessRequest, error) {
 	ar, err := c.queries.CreateAccessRequest(
 		context.Background(),
 		db.CreateAccessRequestParams{
 			PatientID: pgtype.UUID{
 				Valid: true,
-				Bytes: patientId,
+				Bytes: patientID,
 			},
 			DoctorID: pgtype.UUID{
 				Valid: true,
-				Bytes: doctorId,
+				Bytes: doctorID,
 			},
 		},
 	)
@@ -184,12 +232,12 @@ func (c Controller) CreateAccessRequestWithDoctorAndPatientID(doctorId, patientI
 	return ar, nil
 }
 
-func (c Controller) ListAccessRequestsByPatientId(patientId uuid.UUID) ([]db.DoctorAccessRequest, error) {
+func (c Controller) ListAccessRequestsByPatientID(patientID uuid.UUID) ([]db.DoctorAccessRequest, error) {
 	ars, err := c.queries.ListAccessRequestsByPatientID(
 		context.Background(),
 		pgtype.UUID{
 			Valid: true,
-			Bytes: patientId,
+			Bytes: patientID,
 		},
 	)
 	if err != nil {
@@ -214,17 +262,17 @@ func (c Controller) GetAccessRequestByID(id uuid.UUID) (db.DoctorAccessRequest, 
 	return ar, nil
 }
 
-func (c Controller) GetAccessRequestByPatientAndDoctorID(doctorId, patientId uuid.UUID) (db.DoctorAccessRequest, error) {
+func (c Controller) GetAccessRequestByPatientAndDoctorID(doctorID, patientID uuid.UUID) (db.DoctorAccessRequest, error) {
 	ar, err := c.queries.GetAccessRequestsByPatientAndDoctorID(
 		context.Background(),
 		db.GetAccessRequestsByPatientAndDoctorIDParams{
 			PatientID: pgtype.UUID{
 				Valid: true,
-				Bytes: patientId,
+				Bytes: patientID,
 			},
 			DoctorID: pgtype.UUID{
 				Valid: true,
-				Bytes: doctorId,
+				Bytes: doctorID,
 			},
 		},
 	)
@@ -250,32 +298,30 @@ func (c Controller) DeleteAccessRequestsByID(id uuid.UUID) error {
 }
 
 func (c Controller) DenyAccessRequestsByID(ar db.DoctorAccessRequest) (db.DoctorAccessRequest, error) {
-	ar, err := c.queries.UpdateAccessRequestByID(
-		context.Background(),
-		db.UpdateAccessRequestByIDParams{
-			PatientID: ar.PatientID,
-			DoctorID:  ar.DoctorID,
-			Pending:   false,
-			Approved:  false,
-			ID:        ar.ID,
-		},
-	)
-	if err != nil {
-		return db.DoctorAccessRequest{}, err
-	}
-
-	return ar, nil
+	return c.updateAccessRequestByID(ar, false)
 }
 
 func (c Controller) ApproveAccessRequestsByID(ar db.DoctorAccessRequest) (db.DoctorAccessRequest, error) {
-	var err error
-	ar, err = c.queries.UpdateAccessRequestByID(
+	return c.updateAccessRequestByID(ar, true)
+}
+
+func (c Controller) updateAccessRequestByID(ar db.DoctorAccessRequest, approve bool) (db.DoctorAccessRequest, error) {
+	tx, err := c.pool.BeginTx(context.Background(), pgx.TxOptions{})
+	if err != nil {
+		c.logger.Debug("error message1:", slog.String("err", err.Error()))
+		return db.DoctorAccessRequest{}, err
+	}
+
+	defer tx.Rollback(context.Background())
+	txQuery := c.queries.WithTx(tx)
+
+	ar, err = txQuery.UpdateAccessRequestByID(
 		context.Background(),
 		db.UpdateAccessRequestByIDParams{
 			PatientID: ar.PatientID,
 			DoctorID:  ar.DoctorID,
 			Pending:   false,
-			Approved:  true,
+			Approved:  approve,
 			ID:        ar.ID,
 		},
 	)
@@ -283,11 +329,46 @@ func (c Controller) ApproveAccessRequestsByID(ar db.DoctorAccessRequest) (db.Doc
 		return db.DoctorAccessRequest{}, err
 	}
 
+	doctor, err := txQuery.GetDoctorByID(context.Background(), ar.DoctorID)
+	if err != nil {
+		return db.DoctorAccessRequest{}, err
+	}
+
+	count, err := txQuery.CountPendingAccessRequestsByDoctorID(context.Background(), doctor.ID)
+	if err != nil {
+		return db.DoctorAccessRequest{}, err
+	}
+
+	doctor.PatientPending = count > 0
+	if _, err = txQuery.UpdateDoctorByID(
+		context.Background(),
+		db.UpdateDoctorByIDParams{
+			InstitutionID:  doctor.InstitutionID,
+			Firstname:      doctor.Firstname,
+			Lastname:       doctor.Lastname,
+			GovID:          doctor.GovID,
+			Birthdate:      doctor.Birthdate,
+			Email:          doctor.Email,
+			PhoneNumber:    doctor.PhoneNumber,
+			Credentials:    doctor.Credentials,
+			Pending:        doctor.Pending,
+			PatientPending: doctor.PatientPending,
+			Sex:            doctor.Sex,
+			ID:             doctor.ID,
+		},
+	); err != nil {
+		return db.DoctorAccessRequest{}, err
+	}
+
+	if err := tx.Commit(context.Background()); err != nil {
+		return db.DoctorAccessRequest{}, err
+	}
+
 	return ar, nil
 }
 
-func (c Controller) ListHealthRecordByPatientsGovAndSpecialtyID(govId string, specialtyId uuid.UUID) ([]db.HealthRecord, error) {
-	patient, err := c.queries.GetPatientByGovID(context.Background(), govId)
+func (c Controller) ListHealthRecordByPatientsGovAndSpecialtyID(govID string, specialtyID uuid.UUID) ([]db.HealthRecord, error) {
+	patient, err := c.queries.GetPatientByGovID(context.Background(), govID)
 	if err != nil {
 		return nil, err
 	}
@@ -298,7 +379,7 @@ func (c Controller) ListHealthRecordByPatientsGovAndSpecialtyID(govId string, sp
 			PatientID: patient.ID,
 			SpecialtyID: pgtype.UUID{
 				Valid: true,
-				Bytes: specialtyId,
+				Bytes: specialtyID,
 			},
 		},
 	)
@@ -309,8 +390,8 @@ func (c Controller) ListHealthRecordByPatientsGovAndSpecialtyID(govId string, sp
 	return healthRecords, nil
 }
 
-func (c Controller) ListOrdersByPatientGovID(govId string) ([]db.HealthRecord, error) {
-	patient, err := c.queries.GetPatientByGovID(context.Background(), govId)
+func (c Controller) ListOrdersByPatientGovID(govID string) ([]db.HealthRecord, error) {
+	patient, err := c.queries.GetPatientByGovID(context.Background(), govID)
 	if err != nil {
 		return nil, err
 	}

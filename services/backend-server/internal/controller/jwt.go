@@ -26,8 +26,8 @@ func init() {
 }
 
 type JWTCustomClaims struct {
-	InstitutionID uuid.UUID `json:"institutionID"`
-	UserID        uuid.UUID `json:"userID"`
+	InstitutionID uuid.UUID `json:"institutionId"`
+	UserID        uuid.UUID `json:"userId"`
 	jwt.RegisteredClaims
 }
 

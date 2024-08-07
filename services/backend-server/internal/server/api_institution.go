@@ -7,14 +7,12 @@ import (
 	"github.com/TM-labs-A2024/core/services/backend-server/internal/server/models"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/labstack/echo/v4"
 )
 
 // InstitutionsApprovedGet - List ALL approved institutions
 func (s *Server) InstitutionsApprovedGet(ctx echo.Context) error {
-	approvedInstitutions, err := s.Controller.ListApprovedInstitutions()
+	approvedInstitutions, err := s.Controller.ListInstitutions(true)
 	if err != nil {
 		return err
 	}
@@ -45,31 +43,8 @@ func (s *Server) InstitutionsEnrollmentDoctorIDRevokePost(ctx echo.Context) erro
 		return ctx.String(http.StatusBadRequest, err.Error())
 	}
 
-	idToDelete := pgtype.UUID{}
-	doctor, err := s.Controller.GetDoctorByID(profID)
-	if err == pgx.ErrNoRows {
-		nurse, err := s.Controller.GetNurseByID(profID)
-		if err != nil {
-			s.Logger.Debug(
-				"cannot find doctor or nurse by ID",
-				"err", err,
-				"id", idToDelete,
-			)
-			return err
-		}
-		idToDelete = nurse.ID
-	} else if err != nil {
-		return err
-	}
-
-	if doctor.ID.Valid {
-		if err := s.Controller.DeleteDoctorByID(idToDelete.Bytes); err != nil {
-			return err
-		}
-	} else {
-		if err := s.Controller.DeleteNurseByID(idToDelete.Bytes); err != nil {
-			return err
-		}
+	if err := s.Controller.DeleteInstitutionEnrollmentRequestsByProfID(profID); err != nil {
+		return ctx.String(http.StatusBadRequest, err.Error())
 	}
 
 	return ctx.NoContent(http.StatusNoContent)
@@ -159,25 +134,53 @@ func (s *Server) InstitutionsEnrollmentRequestsGet(ctx echo.Context) error {
 
 // InstitutionsGet - List ALL institutions
 func (s *Server) InstitutionsGet(ctx echo.Context) error {
-	institutions, err := s.Controller.ListInstitutions()
+	institutions, err := s.Controller.ListInstitutions(false)
 	if err != nil {
 		return err
 	}
 
-	return ctx.JSON(http.StatusOK, institutions)
+	resp := []models.InstitutionWithUserResponse{}
+	for _, institution := range institutions {
+		user, err := s.Controller.GetFirstInstitutionUser(institution.ID.Bytes)
+		if err != nil {
+			return err
+		}
+
+		instResp, err := models.NewInstitutionResponse(institution, user)
+		if err != nil {
+			return err
+		}
+
+		resp = append(resp, instResp)
+	}
+
+	return ctx.JSON(http.StatusOK, resp)
 }
 
-// InstitutionsGovIdGet - Returns a single institution by gov_id
-func (s *Server) InstitutionsGovIdGet(ctx echo.Context) error {
-	govID := ctx.Param("govId")
-	s.Logger.Debug(govID)
+// InstitutionsIDGet - Returns a single institution by _id
+func (s *Server) InstitutionsIDGet(ctx echo.Context) error {
+	uuidStr := ctx.Param("institutionId")
+	institutionID, err := uuid.Parse(uuidStr)
+	if err != nil {
+		return ctx.String(http.StatusBadRequest, err.Error())
+	}
 
-	institution, err := s.Controller.GetInstitutionByGovID(govID)
+	institution, err := s.Controller.GetInstitutionByID(institutionID)
 	if err != nil {
 		return err
 	}
 
-	return ctx.JSON(http.StatusOK, institution)
+	user, err := s.Controller.GetFirstInstitutionUser(institutionID)
+	if err != nil {
+		return err
+	}
+
+	resp, err := models.NewInstitutionResponse(institution, user)
+	if err != nil {
+		return err
+	}
+
+	return ctx.JSON(http.StatusOK, resp)
 }
 
 // InstitutionsInstitutionIDDelete - Delete an institution
@@ -228,14 +231,10 @@ func (s *Server) InstitutionsPost(ctx echo.Context) error {
 		return err
 	}
 
-	institution, err := s.Controller.CreateInstitution(req.Institution)
-	if err != nil {
-		return err
-	}
-
-	req.InstitutionUser.InstitutionID = institution.ID.Bytes
-
-	user, err := s.Controller.CreateInstitutionUser(req.InstitutionUser)
+	institution, user, err := s.Controller.CreateInstitution(
+		req.Institution,
+		req.InstitutionUser,
+	)
 	if err != nil {
 		return err
 	}
@@ -248,7 +247,7 @@ func (s *Server) InstitutionsPost(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, resp)
 }
 
-// InstitutionsPut - Update an existing institutions by Id
+// InstitutionsPut - Update an existing institutions by ID
 func (s *Server) InstitutionsPut(ctx echo.Context) error {
 	req := models.InstitutionWithID{}
 	if err := ctx.Bind(&req); err != nil {

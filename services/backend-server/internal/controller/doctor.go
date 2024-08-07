@@ -79,11 +79,11 @@ func (c Controller) ListDoctorsBySpecialtyID(id uuid.UUID) ([]db.DoctorSpecialty
 	return specialtyDoctorJunctions, nil
 }
 
-func (c Controller) ListAccessRequestsByDoctorID(doctorId uuid.UUID) ([]db.DoctorAccessRequest, error) {
+func (c Controller) ListAccessRequestsByDoctorID(doctorID uuid.UUID) ([]db.DoctorAccessRequest, error) {
 	accessRequests, err := c.queries.ListAccessRequestsByDoctorID(
 		context.Background(),
 		pgtype.UUID{
-			Bytes: doctorId,
+			Bytes: doctorID,
 			Valid: true,
 		},
 	)
@@ -95,12 +95,21 @@ func (c Controller) ListAccessRequestsByDoctorID(doctorId uuid.UUID) ([]db.Docto
 }
 
 func (c Controller) CreateDoctor(req models.DoctorsPostRequest) (db.Doctor, error) {
+	tx, err := c.pool.BeginTx(context.Background(), pgx.TxOptions{})
+	if err != nil {
+		c.logger.Debug("error message1:", slog.String("err", err.Error()))
+		return db.Doctor{}, err
+	}
+
+	defer tx.Rollback(context.Background())
+	txQuery := c.queries.WithTx(tx)
+
 	birthdate, err := time.Parse(constants.ISOLayout, req.Birthdate)
 	if err != nil {
 		return db.Doctor{}, err
 	}
 
-	doctor, err := c.queries.CreateDoctor(
+	doctor, err := txQuery.CreateDoctor(
 		context.Background(),
 		db.CreateDoctorParams{
 			InstitutionID: pgtype.UUID{
@@ -109,7 +118,7 @@ func (c Controller) CreateDoctor(req models.DoctorsPostRequest) (db.Doctor, erro
 			},
 			Firstname: req.Firstname,
 			Lastname:  req.Lastname,
-			GovID:     req.GovId,
+			GovID:     req.GovID,
 			Birthdate: pgtype.Timestamp{
 				Time:  birthdate,
 				Valid: true,
@@ -124,7 +133,7 @@ func (c Controller) CreateDoctor(req models.DoctorsPostRequest) (db.Doctor, erro
 		return db.Doctor{}, err
 	}
 
-	_, err = c.queries.CreateInstitutionEnrollmentRequest(
+	_, err = txQuery.CreateInstitutionEnrollmentRequest(
 		context.Background(),
 		db.CreateInstitutionEnrollmentRequestParams{
 			DoctorID: pgtype.UUID{
@@ -138,6 +147,24 @@ func (c Controller) CreateDoctor(req models.DoctorsPostRequest) (db.Doctor, erro
 		},
 	)
 	if err != nil {
+		return db.Doctor{}, err
+	}
+
+	for _, specialty := range req.Specialties {
+		if _, err := txQuery.CreateSpecialtyDoctorJunction(context.Background(),
+			db.CreateSpecialtyDoctorJunctionParams{
+				DoctorID: doctor.ID,
+				SpecialtyID: pgtype.UUID{
+					Valid: true,
+					Bytes: specialty,
+				},
+			},
+		); err != nil {
+			return db.Doctor{}, err
+		}
+	}
+
+	if err := tx.Commit(context.Background()); err != nil {
 		return db.Doctor{}, err
 	}
 
@@ -213,12 +240,11 @@ func (c Controller) UpdateDoctorByID(req models.DoctorsPutRequest) (db.Doctor, e
 			},
 			Firstname: req.Firstname,
 			Lastname:  req.Lastname,
-			GovID:     req.GovId,
+			GovID:     req.GovID,
 			Birthdate: pgtype.Timestamp{
 				Time:  birthdate,
 				Valid: true,
 			},
-			Crypt:       req.Password,
 			Email:       req.Email,
 			PhoneNumber: req.PhoneNumber,
 			Credentials: req.Credentials,
@@ -249,17 +275,17 @@ func (c Controller) ListPatientsTreatedByDoctorID(id uuid.UUID) ([]db.Patient, e
 	return patients, nil
 }
 
-func (c Controller) ListPatientsTreatedByDoctorIDWithHealthRecordOfSpecialtyID(doctorId, specialtyId uuid.UUID) ([]db.Patient, error) {
+func (c Controller) ListPatientsTreatedByDoctorIDWithHealthRecordOfSpecialtyID(doctorID, specialtyID uuid.UUID) ([]db.Patient, error) {
 	patients, err := c.queries.ListPatientsTreatedByDoctorIDWithHealthRecordOfSpecialtyID(
 		context.Background(),
 		db.ListPatientsTreatedByDoctorIDWithHealthRecordOfSpecialtyIDParams{
 			DoctorID: pgtype.UUID{
 				Valid: true,
-				Bytes: doctorId,
+				Bytes: doctorID,
 			},
 			SpecialtyID: pgtype.UUID{
 				Valid: true,
-				Bytes: specialtyId,
+				Bytes: specialtyID,
 			},
 		},
 	)

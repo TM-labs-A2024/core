@@ -10,14 +10,14 @@ type InstitutionUserRole string
 
 // List of InstitutionUserRole
 const (
-	VIEWER InstitutionUserRole = "viewer"
-	ADMIN  InstitutionUserRole = "admin"
+	InstitutionUserRoleObservador    InstitutionUserRole = "observador"
+	InstitutionUserRoleAdministrador InstitutionUserRole = "administrador"
 )
 
 type InstitutionUser struct {
 	Firstname     string              `json:"firstname"`
 	Lastname      string              `json:"lastname"`
-	GovId         string              `json:"govId"`
+	GovID         string              `json:"govId"`
 	Birthdate     string              `json:"birthdate"`
 	Email         string              `json:"email"`
 	PhoneNumber   string              `json:"phoneNumber"`
@@ -47,7 +47,7 @@ func NewInstitutionUserResponse(user db.InstitutionUser) (InstitutionUserRespons
 		InstitutionUser: InstitutionUser{
 			Firstname:     user.Firstname,
 			Lastname:      user.Lastname,
-			GovId:         user.GovID,
+			GovID:         user.GovID,
 			Birthdate:     user.Birthdate.Time.Format(constants.ISOLayout),
 			Email:         user.Email,
 			PhoneNumber:   user.PhoneNumber,

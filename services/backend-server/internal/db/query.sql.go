@@ -11,6 +11,62 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countPendingAccessRequestsByDoctorID = `-- name: CountPendingAccessRequestsByDoctorID :one
+SELECT COUNT (*)
+FROM doctor_access_request
+WHERE doctor_id = $1
+    AND pending = TRUE
+`
+
+func (q *Queries) CountPendingAccessRequestsByDoctorID(ctx context.Context, doctorID pgtype.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countPendingAccessRequestsByDoctorID, doctorID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countPendingGovernmentEnrollmentRequestsByInstitutionID = `-- name: CountPendingGovernmentEnrollmentRequestsByInstitutionID :one
+SELECT COUNT (*)
+FROM government_enrollment_request
+WHERE institution_id = $1
+    AND pending = TRUE
+`
+
+func (q *Queries) CountPendingGovernmentEnrollmentRequestsByInstitutionID(ctx context.Context, institutionID pgtype.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countPendingGovernmentEnrollmentRequestsByInstitutionID, institutionID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countPendingInstitutionEnrollmentRequestByDoctorID = `-- name: CountPendingInstitutionEnrollmentRequestByDoctorID :one
+SELECT COUNT (*)
+FROM institution_enrollment_request
+WHERE doctor_id = $1
+    AND pending = TRUE
+`
+
+func (q *Queries) CountPendingInstitutionEnrollmentRequestByDoctorID(ctx context.Context, doctorID pgtype.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countPendingInstitutionEnrollmentRequestByDoctorID, doctorID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countPendingInstitutionEnrollmentRequestByNurseID = `-- name: CountPendingInstitutionEnrollmentRequestByNurseID :one
+SELECT COUNT(*)
+FROM institution_enrollment_request
+WHERE nurse_id = $1
+    AND pending = TRUE
+`
+
+func (q *Queries) CountPendingInstitutionEnrollmentRequestByNurseID(ctx context.Context, nurseID pgtype.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countPendingInstitutionEnrollmentRequestByNurseID, nurseID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createAccessRequest = `-- name: CreateAccessRequest :one
 INSERT INTO doctor_access_request(patient_id, doctor_id)
 VALUES ($1, $2)
@@ -18,8 +74,8 @@ RETURNING created_at, updated_at, id, patient_id, doctor_id, pending, approved
 `
 
 type CreateAccessRequestParams struct {
-	PatientID pgtype.UUID `json:"patientId"`
-	DoctorID  pgtype.UUID `json:"doctorId"`
+	PatientID pgtype.UUID
+	DoctorID  pgtype.UUID
 }
 
 func (q *Queries) CreateAccessRequest(ctx context.Context, arg CreateAccessRequestParams) (DoctorAccessRequest, error) {
@@ -44,11 +100,11 @@ INSERT INTO doctor(
         lastname,
         gov_id,
         birthdate,
-        password,
         email,
+        sex,
+        password,
         phone_number,
-        credentials,
-        sex
+        credentials
     )
 VALUES (
         $1,
@@ -56,9 +112,9 @@ VALUES (
         $3,
         $4,
         $5,
-        crypt($6, gen_salt('bf')),
+        $6,
         $7,
-        $8,
+        crypt($8, gen_salt('bf')),
         $9,
         $10
     )
@@ -66,16 +122,16 @@ RETURNING created_at, updated_at, id, institution_id, firstname, lastname, gov_i
 `
 
 type CreateDoctorParams struct {
-	InstitutionID pgtype.UUID      `json:"institutionId"`
-	Firstname     string           `json:"firstname"`
-	Lastname      string           `json:"lastname"`
-	GovID         string           `json:"govId"`
-	Birthdate     pgtype.Timestamp `json:"birthdate"`
-	Crypt         string           `json:"crypt"`
-	Email         string           `json:"email"`
-	PhoneNumber   string           `json:"phoneNumber"`
-	Credentials   string           `json:"credentials"`
-	Sex           string           `json:"sex"`
+	InstitutionID pgtype.UUID
+	Firstname     string
+	Lastname      string
+	GovID         string
+	Birthdate     pgtype.Timestamp
+	Email         string
+	Sex           string
+	Crypt         string
+	PhoneNumber   string
+	Credentials   string
 }
 
 func (q *Queries) CreateDoctor(ctx context.Context, arg CreateDoctorParams) (Doctor, error) {
@@ -85,11 +141,11 @@ func (q *Queries) CreateDoctor(ctx context.Context, arg CreateDoctorParams) (Doc
 		arg.Lastname,
 		arg.GovID,
 		arg.Birthdate,
-		arg.Crypt,
 		arg.Email,
+		arg.Sex,
+		arg.Crypt,
 		arg.PhoneNumber,
 		arg.Credentials,
-		arg.Sex,
 	)
 	var i Doctor
 	err := row.Scan(
@@ -119,8 +175,8 @@ RETURNING created_at, updated_at, id, email, password
 `
 
 type CreateGovernmentParams struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Email    string
+	Password string
 }
 
 func (q *Queries) CreateGovernment(ctx context.Context, arg CreateGovernmentParams) (Government, error) {
@@ -137,19 +193,25 @@ func (q *Queries) CreateGovernment(ctx context.Context, arg CreateGovernmentPara
 }
 
 const createGovernmentEnrollmentRequests = `-- name: CreateGovernmentEnrollmentRequests :one
-INSERT INTO government_enrollment_request (institution_id)
-VALUES ($1)
-RETURNING created_at, updated_at, id, institution_id, pending, approved
+INSERT INTO government_enrollment_request (institution_id, government_id)
+VALUES ($1, $2)
+RETURNING created_at, updated_at, id, institution_id, government_id, pending, approved
 `
 
-func (q *Queries) CreateGovernmentEnrollmentRequests(ctx context.Context, institutionID pgtype.UUID) (GovernmentEnrollmentRequest, error) {
-	row := q.db.QueryRow(ctx, createGovernmentEnrollmentRequests, institutionID)
+type CreateGovernmentEnrollmentRequestsParams struct {
+	InstitutionID pgtype.UUID
+	GovernmentID  pgtype.UUID
+}
+
+func (q *Queries) CreateGovernmentEnrollmentRequests(ctx context.Context, arg CreateGovernmentEnrollmentRequestsParams) (GovernmentEnrollmentRequest, error) {
+	row := q.db.QueryRow(ctx, createGovernmentEnrollmentRequests, arg.InstitutionID, arg.GovernmentID)
 	var i GovernmentEnrollmentRequest
 	err := row.Scan(
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.ID,
 		&i.InstitutionID,
+		&i.GovernmentID,
 		&i.Pending,
 		&i.Approved,
 	)
@@ -159,42 +221,39 @@ func (q *Queries) CreateGovernmentEnrollmentRequests(ctx context.Context, instit
 const createHealthRecord = `-- name: CreateHealthRecord :one
 INSERT INTO health_record (
         patient_id,
-        private_key,
+        author,
+        title,
+        description,
         public_key,
         type,
         specialty_id,
-        content_format,
-        author,
-        title,
-        description
+        content_format
     )
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-RETURNING created_at, updated_at, id, patient_id, author, title, description, private_key, public_key, type, specialty_id, content_format
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+RETURNING created_at, updated_at, id, patient_id, author, title, description, public_key, type, specialty_id, content_format
 `
 
 type CreateHealthRecordParams struct {
-	PatientID     pgtype.UUID `json:"patientId"`
-	PrivateKey    string      `json:"privateKey"`
-	PublicKey     string      `json:"publicKey"`
-	Type          string      `json:"type"`
-	SpecialtyID   pgtype.UUID `json:"specialtyId"`
-	ContentFormat string      `json:"contentFormat"`
-	Author        string      `json:"author"`
-	Title         string      `json:"title"`
-	Description   string      `json:"description"`
+	PatientID     pgtype.UUID
+	Author        string
+	Title         string
+	Description   string
+	PublicKey     string
+	Type          HealthRecordType
+	SpecialtyID   pgtype.UUID
+	ContentFormat string
 }
 
 func (q *Queries) CreateHealthRecord(ctx context.Context, arg CreateHealthRecordParams) (HealthRecord, error) {
 	row := q.db.QueryRow(ctx, createHealthRecord,
 		arg.PatientID,
-		arg.PrivateKey,
+		arg.Author,
+		arg.Title,
+		arg.Description,
 		arg.PublicKey,
 		arg.Type,
 		arg.SpecialtyID,
 		arg.ContentFormat,
-		arg.Author,
-		arg.Title,
-		arg.Description,
 	)
 	var i HealthRecord
 	err := row.Scan(
@@ -205,7 +264,6 @@ func (q *Queries) CreateHealthRecord(ctx context.Context, arg CreateHealthRecord
 		&i.Author,
 		&i.Title,
 		&i.Description,
-		&i.PrivateKey,
 		&i.PublicKey,
 		&i.Type,
 		&i.SpecialtyID,
@@ -216,26 +274,29 @@ func (q *Queries) CreateHealthRecord(ctx context.Context, arg CreateHealthRecord
 
 const createInstitution = `-- name: CreateInstitution :one
 INSERT INTO institution (
+        government_id,
         name,
         address,
         credentials,
         type,
         gov_id
     )
-VALUES ($1, $2, $3, $4, $5)
-RETURNING created_at, updated_at, id, name, address, credentials, type, gov_id, pending
+VALUES ($1, $2, $3, $4, $5, $6)
+RETURNING created_at, updated_at, id, government_id, name, address, credentials, type, gov_id, pending
 `
 
 type CreateInstitutionParams struct {
-	Name        string `json:"name"`
-	Address     string `json:"address"`
-	Credentials string `json:"credentials"`
-	Type        string `json:"type"`
-	GovID       string `json:"govId"`
+	GovernmentID pgtype.UUID
+	Name         string
+	Address      string
+	Credentials  string
+	Type         InstitutionType
+	GovID        string
 }
 
 func (q *Queries) CreateInstitution(ctx context.Context, arg CreateInstitutionParams) (Institution, error) {
 	row := q.db.QueryRow(ctx, createInstitution,
+		arg.GovernmentID,
 		arg.Name,
 		arg.Address,
 		arg.Credentials,
@@ -247,6 +308,7 @@ func (q *Queries) CreateInstitution(ctx context.Context, arg CreateInstitutionPa
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.ID,
+		&i.GovernmentID,
 		&i.Name,
 		&i.Address,
 		&i.Credentials,
@@ -268,9 +330,9 @@ RETURNING created_at, updated_at, id, institution_id, doctor_id, nurse_id, pendi
 `
 
 type CreateInstitutionEnrollmentRequestParams struct {
-	InstitutionID pgtype.UUID `json:"institutionId"`
-	DoctorID      pgtype.UUID `json:"doctorId"`
-	NurseID       pgtype.UUID `json:"nurseId"`
+	InstitutionID pgtype.UUID
+	DoctorID      pgtype.UUID
+	NurseID       pgtype.UUID
 }
 
 func (q *Queries) CreateInstitutionEnrollmentRequest(ctx context.Context, arg CreateInstitutionEnrollmentRequestParams) (InstitutionEnrollmentRequest, error) {
@@ -301,20 +363,30 @@ INSERT INTO institution_user(
         phone_number,
         role
     )
-VALUES ($1, $2, $3, $4, $5, $6, crypt($7, gen_salt('bf')), $8, $9)
+VALUES (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6,
+        crypt($7, gen_salt('bf')),
+        $8,
+        $9
+    )
 RETURNING created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, password, phone_number, role
 `
 
 type CreateInstitutionUserParams struct {
-	InstitutionID pgtype.UUID      `json:"institutionId"`
-	Firstname     string           `json:"firstname"`
-	Lastname      string           `json:"lastname"`
-	GovID         string           `json:"govId"`
-	Birthdate     pgtype.Timestamp `json:"birthdate"`
-	Email         string           `json:"email"`
-	Crypt         string           `json:"crypt"`
-	PhoneNumber   string           `json:"phoneNumber"`
-	Role          string           `json:"role"`
+	InstitutionID pgtype.UUID
+	Firstname     string
+	Lastname      string
+	GovID         string
+	Birthdate     pgtype.Timestamp
+	Email         string
+	Crypt         string
+	PhoneNumber   string
+	Role          InstitutionUserRole
 }
 
 func (q *Queries) CreateInstitutionUser(ctx context.Context, arg CreateInstitutionUserParams) (InstitutionUser, error) {
@@ -361,22 +433,34 @@ INSERT INTO nurse(
         pending,
         sex
     )
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, crypt($9, gen_salt('bf')), $10, $11)
+VALUES (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6,
+        $7,
+        $8,
+        crypt($9, gen_salt('bf')),
+        $10,
+        $11
+    )
 RETURNING created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, sex, email, password, phone_number, credentials, pending
 `
 
 type CreateNurseParams struct {
-	InstitutionID pgtype.UUID      `json:"institutionId"`
-	Firstname     string           `json:"firstname"`
-	Lastname      string           `json:"lastname"`
-	GovID         string           `json:"govId"`
-	Birthdate     pgtype.Timestamp `json:"birthdate"`
-	Email         string           `json:"email"`
-	PhoneNumber   string           `json:"phoneNumber"`
-	Credentials   string           `json:"credentials"`
-	Crypt         string           `json:"crypt"`
-	Pending       bool             `json:"pending"`
-	Sex           string           `json:"sex"`
+	InstitutionID pgtype.UUID
+	Firstname     string
+	Lastname      string
+	GovID         string
+	Birthdate     pgtype.Timestamp
+	Email         string
+	PhoneNumber   string
+	Credentials   string
+	Crypt         string
+	Pending       bool
+	Sex           string
 }
 
 func (q *Queries) CreateNurse(ctx context.Context, arg CreateNurseParams) (Nurse, error) {
@@ -425,24 +509,40 @@ INSERT INTO patient(
         sex,
         pending,
         status,
-        bed
+        bed,
+        private_key,
+        blockchain_address
     )
-VALUES ($1, $2, $3, $4, $5, crypt($6, gen_salt('bf')), $7, $8, $9, $10, $11)
-RETURNING created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, password, phone_number, sex, pending, status, bed
+VALUES (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        crypt($6, gen_salt('bf')),
+        $7,
+        $8,
+        $9,
+        $10,
+        $11,
+        '',
+        ''
+    )
+RETURNING created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, password, phone_number, sex, pending, status, bed, private_key, blockchain_address
 `
 
 type CreatePatientParams struct {
-	Firstname   string           `json:"firstname"`
-	Lastname    string           `json:"lastname"`
-	GovID       string           `json:"govId"`
-	Birthdate   pgtype.Timestamp `json:"birthdate"`
-	Email       string           `json:"email"`
-	Crypt       string           `json:"crypt"`
-	PhoneNumber string           `json:"phoneNumber"`
-	Sex         string           `json:"sex"`
-	Pending     bool             `json:"pending"`
-	Status      string           `json:"status"`
-	Bed         string           `json:"bed"`
+	Firstname   string
+	Lastname    string
+	GovID       string
+	Birthdate   pgtype.Timestamp
+	Email       string
+	Crypt       string
+	PhoneNumber string
+	Sex         string
+	Pending     bool
+	Status      PatientStatus
+	Bed         string
 }
 
 func (q *Queries) CreatePatient(ctx context.Context, arg CreatePatientParams) (Patient, error) {
@@ -476,6 +576,8 @@ func (q *Queries) CreatePatient(ctx context.Context, arg CreatePatientParams) (P
 		&i.Pending,
 		&i.Status,
 		&i.Bed,
+		&i.PrivateKey,
+		&i.BlockchainAddress,
 	)
 	return i, err
 }
@@ -487,8 +589,8 @@ RETURNING created_at, updated_at, id, description, name
 `
 
 type CreateSpecialtyParams struct {
-	Description string        `json:"description"`
-	Name        SpecialtyName `json:"name"`
+	Description string
+	Name        string
 }
 
 func (q *Queries) CreateSpecialty(ctx context.Context, arg CreateSpecialtyParams) (Specialty, error) {
@@ -511,8 +613,8 @@ RETURNING doctor_id, specialty_id
 `
 
 type CreateSpecialtyDoctorJunctionParams struct {
-	DoctorID    pgtype.UUID `json:"doctorId"`
-	SpecialtyID pgtype.UUID `json:"specialtyId"`
+	DoctorID    pgtype.UUID
+	SpecialtyID pgtype.UUID
 }
 
 func (q *Queries) CreateSpecialtyDoctorJunction(ctx context.Context, arg CreateSpecialtyDoctorJunctionParams) (DoctorSpecialty, error) {
@@ -542,23 +644,13 @@ func (q *Queries) DeleteDoctorByID(ctx context.Context, id pgtype.UUID) error {
 	return err
 }
 
-const deleteGovernmentByID = `-- name: DeleteGovernmentByID :exec
-DELETE FROM government
-WHERE id = $1
-`
-
-func (q *Queries) DeleteGovernmentByID(ctx context.Context, id pgtype.UUID) error {
-	_, err := q.db.Exec(ctx, deleteGovernmentByID, id)
-	return err
-}
-
-const deleteGovernmentEnrollmentRequestByID = `-- name: DeleteGovernmentEnrollmentRequestByID :exec
+const deleteGovernmentEnrollmentRequestByInsitutionID = `-- name: DeleteGovernmentEnrollmentRequestByInsitutionID :exec
 DELETE FROM government_enrollment_request
-WHERE id = $1
+WHERE institution_id = $1
 `
 
-func (q *Queries) DeleteGovernmentEnrollmentRequestByID(ctx context.Context, id pgtype.UUID) error {
-	_, err := q.db.Exec(ctx, deleteGovernmentEnrollmentRequestByID, id)
+func (q *Queries) DeleteGovernmentEnrollmentRequestByInsitutionID(ctx context.Context, institutionID pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, deleteGovernmentEnrollmentRequestByInsitutionID, institutionID)
 	return err
 }
 
@@ -592,14 +684,26 @@ func (q *Queries) DeleteInstitutionEnrollmentRequestByID(ctx context.Context, id
 	return err
 }
 
+const deleteInstitutionEnrollmentRequestByProfID = `-- name: DeleteInstitutionEnrollmentRequestByProfID :exec
+DELETE FROM institution_enrollment_request
+WHERE nurse_id = $1
+    OR doctor_id = $1
+`
+
+func (q *Queries) DeleteInstitutionEnrollmentRequestByProfID(ctx context.Context, nurseID pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, deleteInstitutionEnrollmentRequestByProfID, nurseID)
+	return err
+}
+
 const deleteInstitutionUserByInsitutionAndUserID = `-- name: DeleteInstitutionUserByInsitutionAndUserID :exec
 DELETE FROM institution_user
-WHERE id = $1 AND institution_id = $2
+WHERE id = $1
+    AND institution_id = $2
 `
 
 type DeleteInstitutionUserByInsitutionAndUserIDParams struct {
-	ID            pgtype.UUID `json:"id"`
-	InstitutionID pgtype.UUID `json:"institutionId"`
+	ID            pgtype.UUID
+	InstitutionID pgtype.UUID
 }
 
 func (q *Queries) DeleteInstitutionUserByInsitutionAndUserID(ctx context.Context, arg DeleteInstitutionUserByInsitutionAndUserIDParams) error {
@@ -644,8 +748,8 @@ WHERE doctor_id = $1
 `
 
 type DeleteSpecialtyDoctorJunctionParams struct {
-	DoctorID    pgtype.UUID `json:"doctorId"`
-	SpecialtyID pgtype.UUID `json:"specialtyId"`
+	DoctorID    pgtype.UUID
+	SpecialtyID pgtype.UUID
 }
 
 func (q *Queries) DeleteSpecialtyDoctorJunction(ctx context.Context, arg DeleteSpecialtyDoctorJunctionParams) error {
@@ -659,6 +763,8 @@ FROM doctor_access_request
 WHERE id = $1
 `
 
+// ------------------------------------------------------------------------------
+// ----------------------------- DOC ACCESS REQUEST -----------------------------
 func (q *Queries) GetAccessRequestsByID(ctx context.Context, id pgtype.UUID) (DoctorAccessRequest, error) {
 	row := q.db.QueryRow(ctx, getAccessRequestsByID, id)
 	var i DoctorAccessRequest
@@ -677,12 +783,13 @@ func (q *Queries) GetAccessRequestsByID(ctx context.Context, id pgtype.UUID) (Do
 const getAccessRequestsByPatientAndDoctorID = `-- name: GetAccessRequestsByPatientAndDoctorID :one
 SELECT created_at, updated_at, id, patient_id, doctor_id, pending, approved
 FROM doctor_access_request
-WHERE patient_id = $1 AND doctor_id = $2
+WHERE patient_id = $1
+    AND doctor_id = $2
 `
 
 type GetAccessRequestsByPatientAndDoctorIDParams struct {
-	PatientID pgtype.UUID `json:"patientId"`
-	DoctorID  pgtype.UUID `json:"doctorId"`
+	PatientID pgtype.UUID
+	DoctorID  pgtype.UUID
 }
 
 func (q *Queries) GetAccessRequestsByPatientAndDoctorID(ctx context.Context, arg GetAccessRequestsByPatientAndDoctorIDParams) (DoctorAccessRequest, error) {
@@ -706,6 +813,7 @@ FROM doctor
 WHERE id = $1
 `
 
+// ----------------------------------- DOCTOR -----------------------------------
 func (q *Queries) GetDoctorByID(ctx context.Context, id pgtype.UUID) (Doctor, error) {
 	row := q.db.QueryRow(ctx, getDoctorByID, id)
 	var i Doctor
@@ -730,14 +838,18 @@ func (q *Queries) GetDoctorByID(ctx context.Context, id pgtype.UUID) (Doctor, er
 }
 
 const getDoctorByLogin = `-- name: GetDoctorByLogin :one
-SELECT created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, sex, password, phone_number, credentials, pending, patient_pending
-FROM doctor
-WHERE email = $1 AND password = crypt($2, password)
+SELECT d.created_at, d.updated_at, d.id, d.institution_id, d.firstname, d.lastname, d.gov_id, d.birthdate, d.email, d.sex, d.password, d.phone_number, d.credentials, d.pending, d.patient_pending
+FROM doctor d
+    JOIN institution_enrollment_request er ON er.doctor_id = d.id
+WHERE email = $1
+    AND password = crypt($2, password)
+    AND er.pending = FALSE
+    AND er.approved = TRUE
 `
 
 type GetDoctorByLoginParams struct {
-	Email string `json:"email"`
-	Crypt string `json:"crypt"`
+	Email string
+	Crypt string
 }
 
 func (q *Queries) GetDoctorByLogin(ctx context.Context, arg GetDoctorByLoginParams) (Doctor, error) {
@@ -791,17 +903,38 @@ func (q *Queries) GetFirstInstitutionUserByInstitutionID(ctx context.Context, in
 	return i, err
 }
 
+const getGovernment = `-- name: GetGovernment :one
+SELECT created_at, updated_at, id, email, password
+FROM government
+LIMIT 1
+`
+
+func (q *Queries) GetGovernment(ctx context.Context) (Government, error) {
+	row := q.db.QueryRow(ctx, getGovernment)
+	var i Government
+	err := row.Scan(
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.ID,
+		&i.Email,
+		&i.Password,
+	)
+	return i, err
+}
+
 const getGovernmentByLogin = `-- name: GetGovernmentByLogin :one
 SELECT created_at, updated_at, id, email, password
 FROM government
-WHERE email = $1 AND password = crypt($2, password)
+WHERE email = $1
+    AND password = crypt($2, password)
 `
 
 type GetGovernmentByLoginParams struct {
-	Email string `json:"email"`
-	Crypt string `json:"crypt"`
+	Email string
+	Crypt string
 }
 
+// ----------------------------------------- GOVERNMENT -------------------------
 func (q *Queries) GetGovernmentByLogin(ctx context.Context, arg GetGovernmentByLoginParams) (Government, error) {
 	row := q.db.QueryRow(ctx, getGovernmentByLogin, arg.Email, arg.Crypt)
 	var i Government
@@ -816,9 +949,10 @@ func (q *Queries) GetGovernmentByLogin(ctx context.Context, arg GetGovernmentByL
 }
 
 const getGovernmentEnrollmentRequestByID = `-- name: GetGovernmentEnrollmentRequestByID :one
-SELECT created_at, updated_at, id, institution_id, pending, approved
+SELECT created_at, updated_at, id, institution_id, government_id, pending, approved
 FROM government_enrollment_request
 WHERE id = $1
+    AND pending = TRUE
 `
 
 func (q *Queries) GetGovernmentEnrollmentRequestByID(ctx context.Context, id pgtype.UUID) (GovernmentEnrollmentRequest, error) {
@@ -829,6 +963,7 @@ func (q *Queries) GetGovernmentEnrollmentRequestByID(ctx context.Context, id pgt
 		&i.UpdatedAt,
 		&i.ID,
 		&i.InstitutionID,
+		&i.GovernmentID,
 		&i.Pending,
 		&i.Approved,
 	)
@@ -836,7 +971,7 @@ func (q *Queries) GetGovernmentEnrollmentRequestByID(ctx context.Context, id pgt
 }
 
 const getHealthRecordByID = `-- name: GetHealthRecordByID :one
-SELECT created_at, updated_at, id, patient_id, author, title, description, private_key, public_key, type, specialty_id, content_format 
+SELECT created_at, updated_at, id, patient_id, author, title, description, public_key, type, specialty_id, content_format
 FROM health_record
 WHERE id = $1
 `
@@ -852,7 +987,6 @@ func (q *Queries) GetHealthRecordByID(ctx context.Context, id pgtype.UUID) (Heal
 		&i.Author,
 		&i.Title,
 		&i.Description,
-		&i.PrivateKey,
 		&i.PublicKey,
 		&i.Type,
 		&i.SpecialtyID,
@@ -861,19 +995,21 @@ func (q *Queries) GetHealthRecordByID(ctx context.Context, id pgtype.UUID) (Heal
 	return i, err
 }
 
-const getInstitutionByGovID = `-- name: GetInstitutionByGovID :one
-SELECT created_at, updated_at, id, name, address, credentials, type, gov_id, pending
+const getInstitutionByID = `-- name: GetInstitutionByID :one
+SELECT created_at, updated_at, id, government_id, name, address, credentials, type, gov_id, pending
 FROM institution
-WHERE gov_id = $1
+WHERE id = $1
 `
 
-func (q *Queries) GetInstitutionByGovID(ctx context.Context, govID string) (Institution, error) {
-	row := q.db.QueryRow(ctx, getInstitutionByGovID, govID)
+// ---------------------------------------- INSTITUTION -------------------------
+func (q *Queries) GetInstitutionByID(ctx context.Context, id pgtype.UUID) (Institution, error) {
+	row := q.db.QueryRow(ctx, getInstitutionByID, id)
 	var i Institution
 	err := row.Scan(
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.ID,
+		&i.GovernmentID,
 		&i.Name,
 		&i.Address,
 		&i.Credentials,
@@ -887,12 +1023,13 @@ func (q *Queries) GetInstitutionByGovID(ctx context.Context, govID string) (Inst
 const getInstitutionEnrollmentRequestByDoctorIDAndInstitutionID = `-- name: GetInstitutionEnrollmentRequestByDoctorIDAndInstitutionID :one
 SELECT created_at, updated_at, id, institution_id, doctor_id, nurse_id, pending, approved
 FROM institution_enrollment_request
-WHERE doctor_id = $1 AND institution_id = $2
+WHERE doctor_id = $1
+    AND institution_id = $2
 `
 
 type GetInstitutionEnrollmentRequestByDoctorIDAndInstitutionIDParams struct {
-	DoctorID      pgtype.UUID `json:"doctorId"`
-	InstitutionID pgtype.UUID `json:"institutionId"`
+	DoctorID      pgtype.UUID
+	InstitutionID pgtype.UUID
 }
 
 func (q *Queries) GetInstitutionEnrollmentRequestByDoctorIDAndInstitutionID(ctx context.Context, arg GetInstitutionEnrollmentRequestByDoctorIDAndInstitutionIDParams) (InstitutionEnrollmentRequest, error) {
@@ -936,12 +1073,13 @@ func (q *Queries) GetInstitutionEnrollmentRequestsByID(ctx context.Context, id p
 const getInstitutionUserByGovAndInstitutionID = `-- name: GetInstitutionUserByGovAndInstitutionID :one
 SELECT created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, password, phone_number, role
 FROM institution_user
-WHERE gov_id = $1 AND institution_id = $2
+WHERE gov_id = $1
+    AND institution_id = $2
 `
 
 type GetInstitutionUserByGovAndInstitutionIDParams struct {
-	GovID         string      `json:"govId"`
-	InstitutionID pgtype.UUID `json:"institutionId"`
+	GovID         string
+	InstitutionID pgtype.UUID
 }
 
 func (q *Queries) GetInstitutionUserByGovAndInstitutionID(ctx context.Context, arg GetInstitutionUserByGovAndInstitutionIDParams) (InstitutionUser, error) {
@@ -1004,16 +1142,21 @@ func (q *Queries) GetInstitutionUserByID(ctx context.Context, id pgtype.UUID) ([
 }
 
 const getInstitutionUserByLogin = `-- name: GetInstitutionUserByLogin :one
-SELECT created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, password, phone_number, role
-FROM institution_user
-WHERE email = $1 AND password = crypt($2, password)
+SELECT iu.created_at, iu.updated_at, iu.id, iu.institution_id, iu.firstname, iu.lastname, iu.gov_id, iu.birthdate, iu.email, iu.password, iu.phone_number, iu.role
+FROM institution_user iu
+    JOIN government_enrollment_request er ON er.institution_id = iu.institution_id
+WHERE email = $1
+    AND password = crypt($2, password)
+    AND er.pending = FALSE
+    AND er.approved = TRUE
 `
 
 type GetInstitutionUserByLoginParams struct {
-	Email string `json:"email"`
-	Crypt string `json:"crypt"`
+	Email string
+	Crypt string
 }
 
+// ---------------------------- INSTITUTION USER --------------------------------
 func (q *Queries) GetInstitutionUserByLogin(ctx context.Context, arg GetInstitutionUserByLoginParams) (InstitutionUser, error) {
 	row := q.db.QueryRow(ctx, getInstitutionUserByLogin, arg.Email, arg.Crypt)
 	var i InstitutionUser
@@ -1040,10 +1183,7 @@ FROM nurse
 WHERE id = $1
 `
 
-// SELECT  FROM InstitutionUserRole WHERE 1;
-// INSERT INTO InstitutionUserRole() VALUES ();
-// UPDATE InstitutionUserRole SET  WHERE 1;
-// DELETE FROM institution_user_role WHERE id = $1;
+// --------------------------------- NURSE --------------------------------------
 func (q *Queries) GetNurseByID(ctx context.Context, id pgtype.UUID) (Nurse, error) {
 	row := q.db.QueryRow(ctx, getNurseByID, id)
 	var i Nurse
@@ -1067,14 +1207,18 @@ func (q *Queries) GetNurseByID(ctx context.Context, id pgtype.UUID) (Nurse, erro
 }
 
 const getNurseByLogin = `-- name: GetNurseByLogin :one
-SELECT created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, sex, email, password, phone_number, credentials, pending
-FROM nurse
-WHERE email = $1 AND password = crypt($2, password)
+SELECT n.created_at, n.updated_at, n.id, n.institution_id, n.firstname, n.lastname, n.gov_id, n.birthdate, n.sex, n.email, n.password, n.phone_number, n.credentials, n.pending
+FROM nurse n
+    JOIN institution_enrollment_request er ON er.nurse_id = n.id
+WHERE email = $1
+    AND password = crypt($2, password)
+    AND er.pending = FALSE
+    AND er.approved = TRUE
 `
 
 type GetNurseByLoginParams struct {
-	Email string `json:"email"`
-	Crypt string `json:"crypt"`
+	Email string
+	Crypt string
 }
 
 func (q *Queries) GetNurseByLogin(ctx context.Context, arg GetNurseByLoginParams) (Nurse, error) {
@@ -1100,7 +1244,7 @@ func (q *Queries) GetNurseByLogin(ctx context.Context, arg GetNurseByLoginParams
 }
 
 const getPatientByGovID = `-- name: GetPatientByGovID :one
-SELECT created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, password, phone_number, sex, pending, status, bed
+SELECT created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, password, phone_number, sex, pending, status, bed, private_key, blockchain_address
 FROM patient
 WHERE gov_id = $1
 `
@@ -1124,16 +1268,19 @@ func (q *Queries) GetPatientByGovID(ctx context.Context, govID string) (Patient,
 		&i.Pending,
 		&i.Status,
 		&i.Bed,
+		&i.PrivateKey,
+		&i.BlockchainAddress,
 	)
 	return i, err
 }
 
 const getPatientByID = `-- name: GetPatientByID :one
-SELECT created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, password, phone_number, sex, pending, status, bed
+SELECT created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, password, phone_number, sex, pending, status, bed, private_key, blockchain_address
 FROM patient
 WHERE id = $1
 `
 
+// ------------------------------- PATIENT --------------------------------------
 func (q *Queries) GetPatientByID(ctx context.Context, id pgtype.UUID) (Patient, error) {
 	row := q.db.QueryRow(ctx, getPatientByID, id)
 	var i Patient
@@ -1153,19 +1300,22 @@ func (q *Queries) GetPatientByID(ctx context.Context, id pgtype.UUID) (Patient, 
 		&i.Pending,
 		&i.Status,
 		&i.Bed,
+		&i.PrivateKey,
+		&i.BlockchainAddress,
 	)
 	return i, err
 }
 
 const getPatientByLogin = `-- name: GetPatientByLogin :one
-SELECT created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, password, phone_number, sex, pending, status, bed
+SELECT created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, password, phone_number, sex, pending, status, bed, private_key, blockchain_address
 FROM patient
-WHERE email = $1 AND password = crypt($2, password)
+WHERE email = $1
+    AND password = crypt($2, password)
 `
 
 type GetPatientByLoginParams struct {
-	Email string `json:"email"`
-	Crypt string `json:"crypt"`
+	Email string
+	Crypt string
 }
 
 func (q *Queries) GetPatientByLogin(ctx context.Context, arg GetPatientByLoginParams) (Patient, error) {
@@ -1187,6 +1337,8 @@ func (q *Queries) GetPatientByLogin(ctx context.Context, arg GetPatientByLoginPa
 		&i.Pending,
 		&i.Status,
 		&i.Bed,
+		&i.PrivateKey,
+		&i.BlockchainAddress,
 	)
 	return i, err
 }
@@ -1197,6 +1349,7 @@ FROM specialty
 WHERE id = $1
 `
 
+// ----------------------------- SPECIALTIES ------------------------------------
 func (q *Queries) GetSpecialtyByID(ctx context.Context, id pgtype.UUID) (Specialty, error) {
 	row := q.db.QueryRow(ctx, getSpecialtyByID, id)
 	var i Specialty
@@ -1281,7 +1434,9 @@ func (q *Queries) ListAccessRequestsByPatientID(ctx context.Context, patientID p
 const listApprovedAccessRequestsByPatientID = `-- name: ListApprovedAccessRequestsByPatientID :many
 SELECT created_at, updated_at, id, patient_id, doctor_id, pending, approved
 FROM doctor_access_request
-WHERE patient_id = $1 AND approved = TRUE
+WHERE patient_id = $1
+    AND approved = TRUE
+    AND pending = FALSE
 `
 
 func (q *Queries) ListApprovedAccessRequestsByPatientID(ctx context.Context, patientID pgtype.UUID) ([]DoctorAccessRequest, error) {
@@ -1313,12 +1468,13 @@ func (q *Queries) ListApprovedAccessRequestsByPatientID(ctx context.Context, pat
 }
 
 const listApprovedInstitutions = `-- name: ListApprovedInstitutions :many
-SELECT created_at, updated_at, id, name, address, credentials, type, gov_id, pending
+SELECT created_at, updated_at, id, government_id, name, address, credentials, type, gov_id, pending
 FROM institution
 WHERE id IN (
         SELECT institution_id
         FROM government_enrollment_request
         WHERE approved = TRUE
+            AND pending = FALSE
     )
 `
 
@@ -1335,6 +1491,7 @@ func (q *Queries) ListApprovedInstitutions(ctx context.Context) ([]Institution, 
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.ID,
+			&i.GovernmentID,
 			&i.Name,
 			&i.Address,
 			&i.Credentials,
@@ -1436,10 +1593,11 @@ func (q *Queries) ListDoctorsByInstitutionID(ctx context.Context, institutionID 
 }
 
 const listGovernmentEnrollmentRequests = `-- name: ListGovernmentEnrollmentRequests :many
-SELECT created_at, updated_at, id, institution_id, pending, approved
+SELECT created_at, updated_at, id, institution_id, government_id, pending, approved
 FROM government_enrollment_request
 `
 
+// ----------------------------- GOV ENROLLMENT ---------------------------------
 func (q *Queries) ListGovernmentEnrollmentRequests(ctx context.Context) ([]GovernmentEnrollmentRequest, error) {
 	rows, err := q.db.Query(ctx, listGovernmentEnrollmentRequests)
 	if err != nil {
@@ -1454,6 +1612,7 @@ func (q *Queries) ListGovernmentEnrollmentRequests(ctx context.Context) ([]Gover
 			&i.UpdatedAt,
 			&i.ID,
 			&i.InstitutionID,
+			&i.GovernmentID,
 			&i.Pending,
 			&i.Approved,
 		); err != nil {
@@ -1468,7 +1627,7 @@ func (q *Queries) ListGovernmentEnrollmentRequests(ctx context.Context) ([]Gover
 }
 
 const listHealthRecordsByPatientID = `-- name: ListHealthRecordsByPatientID :many
-SELECT created_at, updated_at, id, patient_id, author, title, description, private_key, public_key, type, specialty_id, content_format
+SELECT created_at, updated_at, id, patient_id, author, title, description, public_key, type, specialty_id, content_format
 FROM health_record
 WHERE patient_id = $1
 `
@@ -1490,7 +1649,6 @@ func (q *Queries) ListHealthRecordsByPatientID(ctx context.Context, patientID pg
 			&i.Author,
 			&i.Title,
 			&i.Description,
-			&i.PrivateKey,
 			&i.PublicKey,
 			&i.Type,
 			&i.SpecialtyID,
@@ -1507,15 +1665,15 @@ func (q *Queries) ListHealthRecordsByPatientID(ctx context.Context, patientID pg
 }
 
 const listHealthRecordsBySpecialtyAndPatientID = `-- name: ListHealthRecordsBySpecialtyAndPatientID :many
-SELECT created_at, updated_at, id, patient_id, author, title, description, private_key, public_key, type, specialty_id, content_format
+SELECT created_at, updated_at, id, patient_id, author, title, description, public_key, type, specialty_id, content_format
 FROM health_record
 WHERE specialty_id = $1
     AND patient_id = $2
 `
 
 type ListHealthRecordsBySpecialtyAndPatientIDParams struct {
-	SpecialtyID pgtype.UUID `json:"specialtyId"`
-	PatientID   pgtype.UUID `json:"patientId"`
+	SpecialtyID pgtype.UUID
+	PatientID   pgtype.UUID
 }
 
 func (q *Queries) ListHealthRecordsBySpecialtyAndPatientID(ctx context.Context, arg ListHealthRecordsBySpecialtyAndPatientIDParams) ([]HealthRecord, error) {
@@ -1535,7 +1693,6 @@ func (q *Queries) ListHealthRecordsBySpecialtyAndPatientID(ctx context.Context, 
 			&i.Author,
 			&i.Title,
 			&i.Description,
-			&i.PrivateKey,
 			&i.PublicKey,
 			&i.Type,
 			&i.SpecialtyID,
@@ -1552,11 +1709,12 @@ func (q *Queries) ListHealthRecordsBySpecialtyAndPatientID(ctx context.Context, 
 }
 
 const listHealthRecordsBySpecialtyID = `-- name: ListHealthRecordsBySpecialtyID :many
-SELECT created_at, updated_at, id, patient_id, author, title, description, private_key, public_key, type, specialty_id, content_format
+SELECT created_at, updated_at, id, patient_id, author, title, description, public_key, type, specialty_id, content_format
 FROM health_record
 WHERE specialty_id = $1
 `
 
+// ------------------------------ HEALTH RECORD ---------------------------------
 func (q *Queries) ListHealthRecordsBySpecialtyID(ctx context.Context, specialtyID pgtype.UUID) ([]HealthRecord, error) {
 	rows, err := q.db.Query(ctx, listHealthRecordsBySpecialtyID, specialtyID)
 	if err != nil {
@@ -1574,7 +1732,6 @@ func (q *Queries) ListHealthRecordsBySpecialtyID(ctx context.Context, specialtyI
 			&i.Author,
 			&i.Title,
 			&i.Description,
-			&i.PrivateKey,
 			&i.PublicKey,
 			&i.Type,
 			&i.SpecialtyID,
@@ -1591,15 +1748,15 @@ func (q *Queries) ListHealthRecordsBySpecialtyID(ctx context.Context, specialtyI
 }
 
 const listHealthRecordsByTypeAndPatientID = `-- name: ListHealthRecordsByTypeAndPatientID :many
-SELECT created_at, updated_at, id, patient_id, author, title, description, private_key, public_key, type, specialty_id, content_format
+SELECT created_at, updated_at, id, patient_id, author, title, description, public_key, type, specialty_id, content_format
 FROM health_record
 WHERE type = $1
     AND patient_id = $2
 `
 
 type ListHealthRecordsByTypeAndPatientIDParams struct {
-	Type      string      `json:"type"`
-	PatientID pgtype.UUID `json:"patientId"`
+	Type      HealthRecordType
+	PatientID pgtype.UUID
 }
 
 func (q *Queries) ListHealthRecordsByTypeAndPatientID(ctx context.Context, arg ListHealthRecordsByTypeAndPatientIDParams) ([]HealthRecord, error) {
@@ -1619,7 +1776,6 @@ func (q *Queries) ListHealthRecordsByTypeAndPatientID(ctx context.Context, arg L
 			&i.Author,
 			&i.Title,
 			&i.Description,
-			&i.PrivateKey,
 			&i.PublicKey,
 			&i.Type,
 			&i.SpecialtyID,
@@ -1711,6 +1867,7 @@ FROM institution_enrollment_request
 WHERE institution_id = $1
 `
 
+// ------------------------- INSTITUTION ENROLLMENT -----------------------------
 func (q *Queries) ListInstitutionEnrollmentRequestsByInstitutionID(ctx context.Context, institutionID pgtype.UUID) ([]InstitutionEnrollmentRequest, error) {
 	rows, err := q.db.Query(ctx, listInstitutionEnrollmentRequestsByInstitutionID, institutionID)
 	if err != nil {
@@ -1780,7 +1937,7 @@ func (q *Queries) ListInstitutionUserByInstitutionID(ctx context.Context, instit
 }
 
 const listInstitutions = `-- name: ListInstitutions :many
-SELECT created_at, updated_at, id, name, address, credentials, type, gov_id, pending
+SELECT created_at, updated_at, id, government_id, name, address, credentials, type, gov_id, pending
 FROM institution
 `
 
@@ -1797,6 +1954,7 @@ func (q *Queries) ListInstitutions(ctx context.Context) ([]Institution, error) {
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.ID,
+			&i.GovernmentID,
 			&i.Name,
 			&i.Address,
 			&i.Credentials,
@@ -1896,7 +2054,7 @@ func (q *Queries) ListNursesByInstitutionID(ctx context.Context, institutionID p
 }
 
 const listPatients = `-- name: ListPatients :many
-SELECT created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, password, phone_number, sex, pending, status, bed
+SELECT created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, password, phone_number, sex, pending, status, bed, private_key, blockchain_address
 FROM patient
 `
 
@@ -1925,6 +2083,8 @@ func (q *Queries) ListPatients(ctx context.Context) ([]Patient, error) {
 			&i.Pending,
 			&i.Status,
 			&i.Bed,
+			&i.PrivateKey,
+			&i.BlockchainAddress,
 		); err != nil {
 			return nil, err
 		}
@@ -1937,13 +2097,12 @@ func (q *Queries) ListPatients(ctx context.Context) ([]Patient, error) {
 }
 
 const listPatientsTreatedByDoctorID = `-- name: ListPatientsTreatedByDoctorID :many
-SELECT created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, password, phone_number, sex, pending, status, bed
-FROM patient
-WHERE id = ANY(
-    SELECT patient_id 
-    FROM doctor_access_request 
-    WHERE doctor_id = $1
-)
+SELECT p.created_at, p.updated_at, p.id, p.institution_id, p.firstname, p.lastname, p.gov_id, p.birthdate, p.email, p.password, p.phone_number, p.sex, p.pending, p.status, p.bed, p.private_key, p.blockchain_address
+FROM patient p
+    JOIN doctor_access_request dar ON p.id = dar.patient_id
+WHERE dar.doctor_id = $1
+    AND dar.pending = FALSE
+    and dar.approved = TRUE
 `
 
 func (q *Queries) ListPatientsTreatedByDoctorID(ctx context.Context, doctorID pgtype.UUID) ([]Patient, error) {
@@ -1971,6 +2130,8 @@ func (q *Queries) ListPatientsTreatedByDoctorID(ctx context.Context, doctorID pg
 			&i.Pending,
 			&i.Status,
 			&i.Bed,
+			&i.PrivateKey,
+			&i.BlockchainAddress,
 		); err != nil {
 			return nil, err
 		}
@@ -1983,23 +2144,23 @@ func (q *Queries) ListPatientsTreatedByDoctorID(ctx context.Context, doctorID pg
 }
 
 const listPatientsTreatedByDoctorIDWithHealthRecordOfSpecialtyID = `-- name: ListPatientsTreatedByDoctorIDWithHealthRecordOfSpecialtyID :many
-SELECT created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, password, phone_number, sex, pending, status, bed
+SELECT created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, password, phone_number, sex, pending, status, bed, private_key, blockchain_address
 FROM patient
 WHERE id = ANY(
-    SELECT patient_id 
-    FROM doctor_access_request 
-    WHERE doctor_id = $1
-) AND
-(
-    SELECT COUNT(*) 
-    FROM health_record 
-    WHERE specialty_id = $2
-) > 0
+        SELECT patient_id
+        FROM doctor_access_request
+        WHERE doctor_id = $1
+    )
+    AND (
+        SELECT COUNT(*)
+        FROM health_record
+        WHERE specialty_id = $2
+    ) > 0
 `
 
 type ListPatientsTreatedByDoctorIDWithHealthRecordOfSpecialtyIDParams struct {
-	DoctorID    pgtype.UUID `json:"doctorId"`
-	SpecialtyID pgtype.UUID `json:"specialtyId"`
+	DoctorID    pgtype.UUID
+	SpecialtyID pgtype.UUID
 }
 
 func (q *Queries) ListPatientsTreatedByDoctorIDWithHealthRecordOfSpecialtyID(ctx context.Context, arg ListPatientsTreatedByDoctorIDWithHealthRecordOfSpecialtyIDParams) ([]Patient, error) {
@@ -2027,6 +2188,8 @@ func (q *Queries) ListPatientsTreatedByDoctorIDWithHealthRecordOfSpecialtyID(ctx
 			&i.Pending,
 			&i.Status,
 			&i.Bed,
+			&i.PrivateKey,
+			&i.BlockchainAddress,
 		); err != nil {
 			return nil, err
 		}
@@ -2121,6 +2284,45 @@ func (q *Queries) ListSpecialtyDoctorJunctionsBySpecialtyID(ctx context.Context,
 	return items, nil
 }
 
+const setPatientAddressAndPrivateKey = `-- name: SetPatientAddressAndPrivateKey :one
+UPDATE patient
+SET blockchain_address = $1,
+    private_key = $2
+WHERE id = $3
+RETURNING created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, password, phone_number, sex, pending, status, bed, private_key, blockchain_address
+`
+
+type SetPatientAddressAndPrivateKeyParams struct {
+	BlockchainAddress string
+	PrivateKey        string
+	ID                pgtype.UUID
+}
+
+func (q *Queries) SetPatientAddressAndPrivateKey(ctx context.Context, arg SetPatientAddressAndPrivateKeyParams) (Patient, error) {
+	row := q.db.QueryRow(ctx, setPatientAddressAndPrivateKey, arg.BlockchainAddress, arg.PrivateKey, arg.ID)
+	var i Patient
+	err := row.Scan(
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.ID,
+		&i.InstitutionID,
+		&i.Firstname,
+		&i.Lastname,
+		&i.GovID,
+		&i.Birthdate,
+		&i.Email,
+		&i.Password,
+		&i.PhoneNumber,
+		&i.Sex,
+		&i.Pending,
+		&i.Status,
+		&i.Bed,
+		&i.PrivateKey,
+		&i.BlockchainAddress,
+	)
+	return i, err
+}
+
 const updateAccessRequestByID = `-- name: UpdateAccessRequestByID :one
 UPDATE doctor_access_request
 SET patient_id = $1,
@@ -2132,11 +2334,11 @@ RETURNING created_at, updated_at, id, patient_id, doctor_id, pending, approved
 `
 
 type UpdateAccessRequestByIDParams struct {
-	PatientID pgtype.UUID `json:"patientId"`
-	DoctorID  pgtype.UUID `json:"doctorId"`
-	Pending   bool        `json:"pending"`
-	Approved  bool        `json:"approved"`
-	ID        pgtype.UUID `json:"id"`
+	PatientID pgtype.UUID
+	DoctorID  pgtype.UUID
+	Pending   bool
+	Approved  bool
+	ID        pgtype.UUID
 }
 
 func (q *Queries) UpdateAccessRequestByID(ctx context.Context, arg UpdateAccessRequestByIDParams) (DoctorAccessRequest, error) {
@@ -2167,31 +2369,29 @@ SET institution_id = $1,
     lastname = $3,
     gov_id = $4,
     birthdate = $5,
-    password = crypt($6, gen_salt('bf')),
-    email = $7,
-    phone_number = $8,
-    credentials = $9,
-    pending = $10,
-    patient_pending = $11,
-    sex = $12
-WHERE id = $13
+    email = $6,
+    phone_number = $7,
+    credentials = $8,
+    pending = $9,
+    patient_pending = $10,
+    sex = $11
+WHERE id = $12
 RETURNING created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, sex, password, phone_number, credentials, pending, patient_pending
 `
 
 type UpdateDoctorByIDParams struct {
-	InstitutionID  pgtype.UUID      `json:"institutionId"`
-	Firstname      string           `json:"firstname"`
-	Lastname       string           `json:"lastname"`
-	GovID          string           `json:"govId"`
-	Birthdate      pgtype.Timestamp `json:"birthdate"`
-	Crypt          string           `json:"crypt"`
-	Email          string           `json:"email"`
-	PhoneNumber    string           `json:"phoneNumber"`
-	Credentials    string           `json:"credentials"`
-	Pending        bool             `json:"pending"`
-	PatientPending bool             `json:"patientPending"`
-	Sex            string           `json:"sex"`
-	ID             pgtype.UUID      `json:"id"`
+	InstitutionID  pgtype.UUID
+	Firstname      string
+	Lastname       string
+	GovID          string
+	Birthdate      pgtype.Timestamp
+	Email          string
+	PhoneNumber    string
+	Credentials    string
+	Pending        bool
+	PatientPending bool
+	Sex            string
+	ID             pgtype.UUID
 }
 
 func (q *Queries) UpdateDoctorByID(ctx context.Context, arg UpdateDoctorByIDParams) (Doctor, error) {
@@ -2201,7 +2401,6 @@ func (q *Queries) UpdateDoctorByID(ctx context.Context, arg UpdateDoctorByIDPara
 		arg.Lastname,
 		arg.GovID,
 		arg.Birthdate,
-		arg.Crypt,
 		arg.Email,
 		arg.PhoneNumber,
 		arg.Credentials,
@@ -2233,20 +2432,18 @@ func (q *Queries) UpdateDoctorByID(ctx context.Context, arg UpdateDoctorByIDPara
 
 const updateGovernmentByID = `-- name: UpdateGovernmentByID :one
 UPDATE government
-SET email = $1,
-    password = $2
-WHERE id = $3
+SET email = $1
+WHERE id = $2
 RETURNING created_at, updated_at, id, email, password
 `
 
 type UpdateGovernmentByIDParams struct {
-	Email    string      `json:"email"`
-	Password string      `json:"password"`
-	ID       pgtype.UUID `json:"id"`
+	Email string
+	ID    pgtype.UUID
 }
 
 func (q *Queries) UpdateGovernmentByID(ctx context.Context, arg UpdateGovernmentByIDParams) (Government, error) {
-	row := q.db.QueryRow(ctx, updateGovernmentByID, arg.Email, arg.Password, arg.ID)
+	row := q.db.QueryRow(ctx, updateGovernmentByID, arg.Email, arg.ID)
 	var i Government
 	err := row.Scan(
 		&i.CreatedAt,
@@ -2258,41 +2455,6 @@ func (q *Queries) UpdateGovernmentByID(ctx context.Context, arg UpdateGovernment
 	return i, err
 }
 
-const updateGovernmentEnrollmentRequestsByID = `-- name: UpdateGovernmentEnrollmentRequestsByID :one
-UPDATE government_enrollment_request
-SET institution_id = $1,
-    pending = $2,
-    approved = $3
-WHERE id = $4
-RETURNING created_at, updated_at, id, institution_id, pending, approved
-`
-
-type UpdateGovernmentEnrollmentRequestsByIDParams struct {
-	InstitutionID pgtype.UUID `json:"institutionId"`
-	Pending       bool        `json:"pending"`
-	Approved      bool        `json:"approved"`
-	ID            pgtype.UUID `json:"id"`
-}
-
-func (q *Queries) UpdateGovernmentEnrollmentRequestsByID(ctx context.Context, arg UpdateGovernmentEnrollmentRequestsByIDParams) (GovernmentEnrollmentRequest, error) {
-	row := q.db.QueryRow(ctx, updateGovernmentEnrollmentRequestsByID,
-		arg.InstitutionID,
-		arg.Pending,
-		arg.Approved,
-		arg.ID,
-	)
-	var i GovernmentEnrollmentRequest
-	err := row.Scan(
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.ID,
-		&i.InstitutionID,
-		&i.Pending,
-		&i.Approved,
-	)
-	return i, err
-}
-
 const updateInstitutionByID = `-- name: UpdateInstitutionByID :one
 UPDATE institution
 SET name = $1,
@@ -2300,19 +2462,21 @@ SET name = $1,
     credentials = $3,
     type = $4,
     gov_id = $5,
-    pending = $6
-WHERE id = $7
-RETURNING created_at, updated_at, id, name, address, credentials, type, gov_id, pending
+    pending = $6,
+    government_id = $7
+WHERE id = $8
+RETURNING created_at, updated_at, id, government_id, name, address, credentials, type, gov_id, pending
 `
 
 type UpdateInstitutionByIDParams struct {
-	Name        string      `json:"name"`
-	Address     string      `json:"address"`
-	Credentials string      `json:"credentials"`
-	Type        string      `json:"type"`
-	GovID       string      `json:"govId"`
-	Pending     bool        `json:"pending"`
-	ID          pgtype.UUID `json:"id"`
+	Name         string
+	Address      string
+	Credentials  string
+	Type         InstitutionType
+	GovID        string
+	Pending      bool
+	GovernmentID pgtype.UUID
+	ID           pgtype.UUID
 }
 
 func (q *Queries) UpdateInstitutionByID(ctx context.Context, arg UpdateInstitutionByIDParams) (Institution, error) {
@@ -2323,6 +2487,7 @@ func (q *Queries) UpdateInstitutionByID(ctx context.Context, arg UpdateInstituti
 		arg.Type,
 		arg.GovID,
 		arg.Pending,
+		arg.GovernmentID,
 		arg.ID,
 	)
 	var i Institution
@@ -2330,6 +2495,7 @@ func (q *Queries) UpdateInstitutionByID(ctx context.Context, arg UpdateInstituti
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.ID,
+		&i.GovernmentID,
 		&i.Name,
 		&i.Address,
 		&i.Credentials,
@@ -2352,12 +2518,12 @@ RETURNING created_at, updated_at, id, institution_id, doctor_id, nurse_id, pendi
 `
 
 type UpdateInstitutionEnrollmentRequestByIDParams struct {
-	InstitutionID pgtype.UUID `json:"institutionId"`
-	DoctorID      pgtype.UUID `json:"doctorId"`
-	NurseID       pgtype.UUID `json:"nurseId"`
-	Pending       bool        `json:"pending"`
-	Approved      bool        `json:"approved"`
-	ID            pgtype.UUID `json:"id"`
+	InstitutionID pgtype.UUID
+	DoctorID      pgtype.UUID
+	NurseID       pgtype.UUID
+	Pending       bool
+	Approved      bool
+	ID            pgtype.UUID
 }
 
 func (q *Queries) UpdateInstitutionEnrollmentRequestByID(ctx context.Context, arg UpdateInstitutionEnrollmentRequestByIDParams) (InstitutionEnrollmentRequest, error) {
@@ -2389,23 +2555,22 @@ SET firstname = $2,
     lastname = $3,
     birthdate = $5,
     email = $6,
-    password = crypt($7, gen_salt('bf')),
-    phone_number = $8,
-    role = $9
-WHERE gov_id = $4 AND institution_id = $1
+    phone_number = $7,
+    role = $8
+WHERE gov_id = $4
+    AND institution_id = $1
 RETURNING created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, password, phone_number, role
 `
 
 type UpdateInstitutionUserByGovIDParams struct {
-	InstitutionID pgtype.UUID      `json:"institutionId"`
-	Firstname     string           `json:"firstname"`
-	Lastname      string           `json:"lastname"`
-	GovID         string           `json:"govId"`
-	Birthdate     pgtype.Timestamp `json:"birthdate"`
-	Email         string           `json:"email"`
-	Crypt         string           `json:"crypt"`
-	PhoneNumber   string           `json:"phoneNumber"`
-	Role          string           `json:"role"`
+	InstitutionID pgtype.UUID
+	Firstname     string
+	Lastname      string
+	GovID         string
+	Birthdate     pgtype.Timestamp
+	Email         string
+	PhoneNumber   string
+	Role          InstitutionUserRole
 }
 
 func (q *Queries) UpdateInstitutionUserByGovID(ctx context.Context, arg UpdateInstitutionUserByGovIDParams) (InstitutionUser, error) {
@@ -2416,7 +2581,6 @@ func (q *Queries) UpdateInstitutionUserByGovID(ctx context.Context, arg UpdateIn
 		arg.GovID,
 		arg.Birthdate,
 		arg.Email,
-		arg.Crypt,
 		arg.PhoneNumber,
 		arg.Role,
 	)
@@ -2448,26 +2612,24 @@ SET institution_id = $1,
     email = $6,
     phone_number = $7,
     credentials = $8,
-    password = crypt($9, gen_salt('bf')),
-    pending = $10,
-    sex = $11
-WHERE id = $12
+    pending = $9,
+    sex = $10
+WHERE id = $11
 RETURNING created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, sex, email, password, phone_number, credentials, pending
 `
 
 type UpdateNurseByIDParams struct {
-	InstitutionID pgtype.UUID      `json:"institutionId"`
-	Firstname     string           `json:"firstname"`
-	Lastname      string           `json:"lastname"`
-	GovID         string           `json:"govId"`
-	Birthdate     pgtype.Timestamp `json:"birthdate"`
-	Email         string           `json:"email"`
-	PhoneNumber   string           `json:"phoneNumber"`
-	Credentials   string           `json:"credentials"`
-	Crypt         string           `json:"crypt"`
-	Pending       bool             `json:"pending"`
-	Sex           string           `json:"sex"`
-	ID            pgtype.UUID      `json:"id"`
+	InstitutionID pgtype.UUID
+	Firstname     string
+	Lastname      string
+	GovID         string
+	Birthdate     pgtype.Timestamp
+	Email         string
+	PhoneNumber   string
+	Credentials   string
+	Pending       bool
+	Sex           string
+	ID            pgtype.UUID
 }
 
 func (q *Queries) UpdateNurseByID(ctx context.Context, arg UpdateNurseByIDParams) (Nurse, error) {
@@ -2480,7 +2642,6 @@ func (q *Queries) UpdateNurseByID(ctx context.Context, arg UpdateNurseByIDParams
 		arg.Email,
 		arg.PhoneNumber,
 		arg.Credentials,
-		arg.Crypt,
 		arg.Pending,
 		arg.Sex,
 		arg.ID,
@@ -2512,29 +2673,33 @@ SET firstname = $1,
     gov_id = $3,
     birthdate = $4,
     email = $5,
-    password =  crypt($6, password),
-    phone_number = $7,
-    sex = $8,
-    pending = $9,
-    status = $10,
-    bed = $11
-WHERE id = $12
-RETURNING created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, password, phone_number, sex, pending, status, bed
+    phone_number = $6,
+    sex = $7,
+    pending = $8,
+    status = $9,
+    bed = $10,
+    private_key = $11,
+    blockchain_address = $12,
+    institution_id = $13
+WHERE id = $14
+RETURNING created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, password, phone_number, sex, pending, status, bed, private_key, blockchain_address
 `
 
 type UpdatePatientByIDParams struct {
-	Firstname   string           `json:"firstname"`
-	Lastname    string           `json:"lastname"`
-	GovID       string           `json:"govId"`
-	Birthdate   pgtype.Timestamp `json:"birthdate"`
-	Email       string           `json:"email"`
-	Crypt       string           `json:"crypt"`
-	PhoneNumber string           `json:"phoneNumber"`
-	Sex         string           `json:"sex"`
-	Pending     bool             `json:"pending"`
-	Status      string           `json:"status"`
-	Bed         string           `json:"bed"`
-	ID          pgtype.UUID      `json:"id"`
+	Firstname         string
+	Lastname          string
+	GovID             string
+	Birthdate         pgtype.Timestamp
+	Email             string
+	PhoneNumber       string
+	Sex               string
+	Pending           bool
+	Status            PatientStatus
+	Bed               string
+	PrivateKey        string
+	BlockchainAddress string
+	InstitutionID     pgtype.UUID
+	ID                pgtype.UUID
 }
 
 func (q *Queries) UpdatePatientByID(ctx context.Context, arg UpdatePatientByIDParams) (Patient, error) {
@@ -2544,12 +2709,14 @@ func (q *Queries) UpdatePatientByID(ctx context.Context, arg UpdatePatientByIDPa
 		arg.GovID,
 		arg.Birthdate,
 		arg.Email,
-		arg.Crypt,
 		arg.PhoneNumber,
 		arg.Sex,
 		arg.Pending,
 		arg.Status,
 		arg.Bed,
+		arg.PrivateKey,
+		arg.BlockchainAddress,
+		arg.InstitutionID,
 		arg.ID,
 	)
 	var i Patient
@@ -2569,6 +2736,45 @@ func (q *Queries) UpdatePatientByID(ctx context.Context, arg UpdatePatientByIDPa
 		&i.Pending,
 		&i.Status,
 		&i.Bed,
+		&i.PrivateKey,
+		&i.BlockchainAddress,
+	)
+	return i, err
+}
+
+const updatePendingGovernmentEnrollmentRequestsByID = `-- name: UpdatePendingGovernmentEnrollmentRequestsByID :one
+UPDATE government_enrollment_request
+SET institution_id = $1,
+    pending = $2,
+    approved = $3
+WHERE id = $4
+    AND pending = TRUE
+RETURNING created_at, updated_at, id, institution_id, government_id, pending, approved
+`
+
+type UpdatePendingGovernmentEnrollmentRequestsByIDParams struct {
+	InstitutionID pgtype.UUID
+	Pending       bool
+	Approved      bool
+	ID            pgtype.UUID
+}
+
+func (q *Queries) UpdatePendingGovernmentEnrollmentRequestsByID(ctx context.Context, arg UpdatePendingGovernmentEnrollmentRequestsByIDParams) (GovernmentEnrollmentRequest, error) {
+	row := q.db.QueryRow(ctx, updatePendingGovernmentEnrollmentRequestsByID,
+		arg.InstitutionID,
+		arg.Pending,
+		arg.Approved,
+		arg.ID,
+	)
+	var i GovernmentEnrollmentRequest
+	err := row.Scan(
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.ID,
+		&i.InstitutionID,
+		&i.GovernmentID,
+		&i.Pending,
+		&i.Approved,
 	)
 	return i, err
 }
@@ -2582,9 +2788,9 @@ RETURNING created_at, updated_at, id, description, name
 `
 
 type UpdateSpecialtyByIDParams struct {
-	Description string        `json:"description"`
-	Name        SpecialtyName `json:"name"`
-	ID          pgtype.UUID   `json:"id"`
+	Description string
+	Name        string
+	ID          pgtype.UUID
 }
 
 func (q *Queries) UpdateSpecialtyByID(ctx context.Context, arg UpdateSpecialtyByIDParams) (Specialty, error) {

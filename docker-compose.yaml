@@ -7,12 +7,10 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    environment:
-      DATABASE_URL: postgres://postgres:postgres@db:5432/postgres
     volumes:
       - ./records:/records
   db:
-    image: postgres:latest
+    image: postgres:16
     restart: always
     environment:
       POSTGRES_PASSWORD: postgres

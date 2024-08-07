@@ -9,17 +9,17 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// InstitutionsInstitutionIDUsersGovIdGet - Returns a single institution user by gov id
-func (s *Server) InstitutionsInstitutionIDUsersGovIdGet(ctx echo.Context) error {
+// InstitutionsInstitutionIDUsersGovIDGet - Returns a single institution user by gov id
+func (s *Server) InstitutionsInstitutionIDUsersGovIDGet(ctx echo.Context) error {
 	uuidStr := ctx.Param("institutionId")
 	institutionID, err := uuid.Parse(uuidStr)
 	if err != nil {
 		return ctx.String(http.StatusBadRequest, err.Error())
 	}
 
-	govId := ctx.Param("govId")
+	govID := ctx.Param("govId")
 
-	user, err := s.Controller.GetInstitutionUserByGovID(institutionID, govId)
+	user, err := s.Controller.GetInstitutionUserByGovID(institutionID, govID)
 	if err != nil {
 		return err
 	}
@@ -80,7 +80,7 @@ func (s *Server) InstitutionsInstitutionIDUsersPost(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, resp)
 }
 
-// InstitutionsInstitutionIDUsersPut - Update an existing institutions user by Id
+// InstitutionsInstitutionIDUsersPut - Update an existing institutions user by ID
 func (s *Server) InstitutionsInstitutionIDUsersPut(ctx echo.Context) error {
 	req := models.InstitutionUserPutRequest{}
 	if err := ctx.Bind(&req); err != nil {
@@ -103,18 +103,18 @@ func (s *Server) InstitutionsInstitutionIDUsersPut(ctx echo.Context) error {
 // InstitutionsInstitutionIDUsersUserIDDelete - Deletes a institution user
 func (s *Server) InstitutionsInstitutionIDUsersUserIDDelete(ctx echo.Context) error {
 	uuidStr := ctx.Param("institutionId")
-	institutionId, err := uuid.Parse(uuidStr)
+	institutionID, err := uuid.Parse(uuidStr)
 	if err != nil {
 		return ctx.String(http.StatusBadRequest, err.Error())
 	}
 
 	uuidStr = ctx.Param("userId")
-	userId, err := uuid.Parse(uuidStr)
+	userID, err := uuid.Parse(uuidStr)
 	if err != nil {
 		return ctx.String(http.StatusBadRequest, err.Error())
 	}
 
-	if err := s.Controller.DeleteInstitutionUserByInstitutionAndUserID(institutionId, userId); err != nil {
+	if err := s.Controller.DeleteInstitutionUserByInstitutionAndUserID(institutionID, userID); err != nil {
 		return err
 	}
 

@@ -8,7 +8,7 @@ import (
 
 type Institution struct {
 	Name        string `json:"name"`
-	GovId       string `json:"govId"`
+	GovID       string `json:"govId"`
 	Credentials string `json:"credentials"`
 	Type        string `json:"type"`
 	Address     string `json:"address"`
@@ -16,7 +16,7 @@ type Institution struct {
 
 type CreateInstitutionRequest struct {
 	Name            string          `json:"name"`
-	GovId           string          `json:"govId"`
+	GovID           string          `json:"govId"`
 	Credentials     string          `json:"credentials"`
 	Type            string          `json:"type"`
 	Address         string          `json:"address"`
@@ -45,7 +45,7 @@ func NewInstitutionResponse(institution db.Institution, user db.InstitutionUser)
 			ID: institution.ID.Bytes,
 			Institution: Institution{
 				Name:        institution.Name,
-				GovId:       institution.GovID,
+				GovID:       institution.GovID,
 				Credentials: institution.Credentials,
 				Type:        string(institution.Type),
 				Address:     institution.Address,
@@ -57,7 +57,7 @@ func NewInstitutionResponse(institution db.Institution, user db.InstitutionUser)
 			InstitutionUser: InstitutionUser{
 				Firstname:     user.Firstname,
 				Lastname:      user.Lastname,
-				GovId:         user.GovID,
+				GovID:         user.GovID,
 				Birthdate:     user.Birthdate.Time.Format(constants.ISOLayout),
 				Email:         user.Email,
 				PhoneNumber:   user.PhoneNumber,
@@ -68,6 +68,20 @@ func NewInstitutionResponse(institution db.Institution, user db.InstitutionUser)
 	}
 
 	return resp, nil
+}
+
+func NewInstitutionWithoutUserResponse(institution db.Institution) InstitutionWithID {
+	return InstitutionWithID{
+		ID: institution.ID.Bytes,
+		Institution: Institution{
+			Name:        institution.Name,
+			GovID:       institution.GovID,
+			Credentials: institution.Credentials,
+			Type:        string(institution.Type),
+			Address:     institution.Address,
+		},
+		Pending: institution.Pending,
+	}
 }
 
 type InstitutionsEnrollmentRequestsResponse struct {

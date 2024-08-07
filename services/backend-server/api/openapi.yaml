@@ -13,10 +13,10 @@ info:
   version: 0.0.1
 tags:
   - name: institution
+  - name: institution-user
   - name: doctor
   - name: patient
   - name: nurse
-  - name: institution-user
   - name: health-record
   - name: government
   - name: specialty
@@ -685,27 +685,6 @@ paths:
           description: Doctor not found
         "500":
           $ref: "#/components/responses/ErrorMessage"
-  /institutions/{govId}:
-    get:
-      tags:
-        - institution
-      summary: Returns a single institution by govId
-      parameters:
-        - name: govId
-          in: path
-          description: govId of institutions to return
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          $ref: "#/components/responses/ReadInstitution"
-        "400":
-          $ref: "#/components/responses/ErrorMessage"
-        "404":
-          description: Institution not found
-        "500":
-          $ref: "#/components/responses/ErrorMessage"
   /institutions/approved:
     get:
       tags:
@@ -735,6 +714,26 @@ paths:
       responses:
         "204":
           description: Successful operation
+        "400":
+          $ref: "#/components/responses/ErrorMessage"
+        "404":
+          description: Institution not found
+        "500":
+          $ref: "#/components/responses/ErrorMessage"
+    get:
+      tags:
+        - institution
+      summary: Returns a single institution by institutionId
+      parameters:
+        - name: institutionId
+          in: path
+          description: institutionId of institutions to return
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/ReadInstitution"
         "400":
           $ref: "#/components/responses/ErrorMessage"
         "404":

@@ -2,37 +2,34 @@ package controller
 
 import (
 	"context"
+	"fmt"
+	"log/slog"
 
 	"github.com/TM-labs-A2024/core/services/backend-server/internal/db"
 	"github.com/TM-labs-A2024/core/services/backend-server/internal/server/models"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func (c Controller) ListApprovedInstitutions() ([]db.Institution, error) {
-	c.logger.Debug("ListApprovedInstitutions")
-	return c.queries.ListApprovedInstitutions(context.Background())
-}
-
 func (c Controller) GetFirstInstitutionUser(institutionID uuid.UUID) (db.InstitutionUser, error) {
-	c.logger.Debug("GetFirstInstitutionUser")
 	return c.queries.GetFirstInstitutionUserByInstitutionID(context.Background(), pgtype.UUID{
 		Bytes: institutionID,
 		Valid: true,
 	})
 }
 
-func (c Controller) CreateInstitutionEnrollmentRequestDoctor(docId, instId uuid.UUID) (db.InstitutionEnrollmentRequest, error) {
+func (c Controller) CreateInstitutionEnrollmentRequestDoctor(docID, instID uuid.UUID) (db.InstitutionEnrollmentRequest, error) {
 	er, err := c.queries.CreateInstitutionEnrollmentRequest(
 		context.Background(),
 		db.CreateInstitutionEnrollmentRequestParams{
 			DoctorID: pgtype.UUID{
 				Valid: true,
-				Bytes: docId,
+				Bytes: docID,
 			},
 			InstitutionID: pgtype.UUID{
 				Valid: true,
-				Bytes: instId,
+				Bytes: instID,
 			},
 		},
 	)
@@ -43,21 +40,42 @@ func (c Controller) CreateInstitutionEnrollmentRequestDoctor(docId, instId uuid.
 	return er, nil
 }
 
-func (c Controller) CreateInstitutionEnrollmentRequestNurse(nurseId, instId uuid.UUID) (db.InstitutionEnrollmentRequest, error) {
+func (c Controller) CreateInstitutionEnrollmentRequestNurse(nurseID, instID uuid.UUID) (db.InstitutionEnrollmentRequest, error) {
+	institutionId := pgtype.UUID{
+		Valid: true,
+		Bytes: instID,
+	}
 	er, err := c.queries.CreateInstitutionEnrollmentRequest(
 		context.Background(),
 		db.CreateInstitutionEnrollmentRequestParams{
-			InstitutionID: pgtype.UUID{
-				Valid: true,
-				Bytes: instId,
-			},
+			InstitutionID: institutionId,
 			NurseID: pgtype.UUID{
 				Valid: true,
-				Bytes: nurseId,
+				Bytes: nurseID,
 			},
 		},
 	)
 	if err != nil {
+		return db.InstitutionEnrollmentRequest{}, err
+	}
+
+	institution, err := c.queries.GetInstitutionByID(context.Background(), institutionId)
+	if err != nil {
+		return db.InstitutionEnrollmentRequest{}, err
+	}
+
+	institution.Pending = true
+	if _, err := c.queries.UpdateInstitutionByID(context.Background(),
+		db.UpdateInstitutionByIDParams{
+			Name:         institution.Name,
+			Address:      institution.Address,
+			Credentials:  institution.Credentials,
+			Type:         institution.Type,
+			GovID:        institution.GovID,
+			Pending:      institution.Pending,
+			GovernmentID: institution.GovernmentID,
+			ID:           institution.ID,
+		}); err != nil {
 		return db.InstitutionEnrollmentRequest{}, err
 	}
 
@@ -65,7 +83,6 @@ func (c Controller) CreateInstitutionEnrollmentRequestNurse(nurseId, instId uuid
 }
 
 func (c Controller) GetInstitutionEnrollmentRequestsByID(erID uuid.UUID) (db.InstitutionEnrollmentRequest, error) {
-	c.logger.Debug("GetInstitutionEnrollmentRequestsByID")
 	er, err := c.queries.GetInstitutionEnrollmentRequestsByID(
 		context.Background(),
 		pgtype.UUID{
@@ -80,40 +97,111 @@ func (c Controller) GetInstitutionEnrollmentRequestsByID(erID uuid.UUID) (db.Ins
 	return er, nil
 }
 
-func (c Controller) ApproveInstitutionEnrollmentRequestsByID(erByID db.InstitutionEnrollmentRequest) (db.InstitutionEnrollmentRequest, error) {
-	c.logger.Debug("UpdateInstitutionEnrollmentRequestsByID")
+func (c Controller) DeleteInstitutionEnrollmentRequestsByProfID(profID uuid.UUID) error {
+	return c.queries.DeleteInstitutionEnrollmentRequestByProfID(
+		context.Background(),
+		pgtype.UUID{
+			Bytes: profID,
+			Valid: true,
+		},
+	)
+}
 
-	er, err := c.queries.UpdateInstitutionEnrollmentRequestByID(
+func (c Controller) ApproveInstitutionEnrollmentRequestsByID(erByID db.InstitutionEnrollmentRequest) (db.InstitutionEnrollmentRequest, error) {
+	return c.updateInstitutionEnrollmentRequestByID(erByID, true)
+}
+
+func (c Controller) DenyInstitutionEnrollmentRequestsByID(erByID db.InstitutionEnrollmentRequest) (db.InstitutionEnrollmentRequest, error) {
+	return c.updateInstitutionEnrollmentRequestByID(erByID, false)
+}
+
+func (c Controller) updateInstitutionEnrollmentRequestByID(erByID db.InstitutionEnrollmentRequest, approve bool) (db.InstitutionEnrollmentRequest, error) {
+	tx, err := c.pool.BeginTx(context.Background(), pgx.TxOptions{})
+	if err != nil {
+		c.logger.Debug("error message1:", slog.String("err", err.Error()))
+		return db.InstitutionEnrollmentRequest{}, err
+	}
+
+	defer tx.Rollback(context.Background())
+	txQuery := c.queries.WithTx(tx)
+
+	er, err := txQuery.UpdateInstitutionEnrollmentRequestByID(
 		context.Background(),
 		db.UpdateInstitutionEnrollmentRequestByIDParams{
 			InstitutionID: erByID.InstitutionID,
 			DoctorID:      erByID.DoctorID,
 			NurseID:       erByID.NurseID,
 			Pending:       false,
-			Approved:      true,
+			Approved:      approve,
 			ID:            erByID.ID,
 		})
 	if err != nil {
 		return db.InstitutionEnrollmentRequest{}, err
 	}
 
-	return er, nil
-}
+	if erByID.DoctorID.Valid {
+		doctor, err := txQuery.GetDoctorByID(context.Background(), erByID.DoctorID)
+		if err != nil {
+			return db.InstitutionEnrollmentRequest{}, err
+		}
 
-func (c Controller) DenyInstitutionEnrollmentRequestsByID(erByID db.InstitutionEnrollmentRequest) (db.InstitutionEnrollmentRequest, error) {
-	c.logger.Debug("UpdateInstitutionEnrollmentRequestsByID")
+		count, err := txQuery.CountPendingInstitutionEnrollmentRequestByDoctorID(context.Background(), er.DoctorID)
+		if err != nil {
+			return db.InstitutionEnrollmentRequest{}, err
+		}
 
-	er, err := c.queries.UpdateInstitutionEnrollmentRequestByID(
-		context.Background(),
-		db.UpdateInstitutionEnrollmentRequestByIDParams{
-			InstitutionID: erByID.InstitutionID,
-			DoctorID:      erByID.DoctorID,
-			NurseID:       erByID.NurseID,
-			Pending:       false,
-			Approved:      false,
-			ID:            erByID.ID,
-		})
-	if err != nil {
+		doctor.Pending = count > 0
+		if _, err := txQuery.UpdateDoctorByID(context.Background(), db.UpdateDoctorByIDParams{
+			InstitutionID:  doctor.InstitutionID,
+			Firstname:      doctor.Firstname,
+			Lastname:       doctor.Lastname,
+			GovID:          doctor.GovID,
+			Birthdate:      doctor.Birthdate,
+			Email:          doctor.Email,
+			PhoneNumber:    doctor.PhoneNumber,
+			Credentials:    doctor.Credentials,
+			Pending:        doctor.Pending,
+			PatientPending: doctor.PatientPending,
+			Sex:            doctor.Sex,
+			ID:             doctor.ID,
+		}); err != nil {
+			return db.InstitutionEnrollmentRequest{}, err
+		}
+
+	}
+
+	if erByID.NurseID.Valid {
+		nurse, err := c.queries.GetNurseByID(context.Background(), erByID.NurseID)
+		if err != nil {
+			return db.InstitutionEnrollmentRequest{}, err
+		}
+
+		count, err := c.queries.CountPendingInstitutionEnrollmentRequestByNurseID(context.Background(), er.NurseID)
+		if err != nil {
+			return db.InstitutionEnrollmentRequest{}, err
+
+		}
+
+		nurse.Pending = count > 0
+		if _, err := c.queries.UpdateNurseByID(context.Background(), db.UpdateNurseByIDParams{
+			InstitutionID: nurse.InstitutionID,
+			Firstname:     nurse.Firstname,
+			Lastname:      nurse.Lastname,
+			GovID:         nurse.GovID,
+			Birthdate:     nurse.Birthdate,
+			Email:         nurse.Email,
+			PhoneNumber:   nurse.PhoneNumber,
+			Credentials:   nurse.Credentials,
+			Pending:       nurse.Pending,
+			Sex:           nurse.Sex,
+			ID:            nurse.ID,
+		}); err != nil {
+			return db.InstitutionEnrollmentRequest{}, err
+		}
+
+	}
+
+	if err := tx.Commit(context.Background()); err != nil {
 		return db.InstitutionEnrollmentRequest{}, err
 	}
 
@@ -135,29 +223,48 @@ func (c Controller) ListInstitutionsEnrollmentRequestsByInstitutionID(institutio
 	return ier, nil
 }
 
-func (c Controller) ListInstitutions() ([]db.Institution, error) {
-	c.logger.Debug("ListInstitutions")
-	institutions, err := c.queries.ListInstitutions(context.Background())
-	if err != nil {
-		return nil, err
-	}
+func (c Controller) ListInstitutions(onlyApproved bool) ([]db.Institution, error) {
+	var (
+		err          error
+		institutions []db.Institution
+	)
 
+	if onlyApproved {
+		institutions, err = c.queries.ListApprovedInstitutions(context.Background())
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		institutions, err = c.queries.ListInstitutions(context.Background())
+		if err != nil {
+			return nil, err
+		}
+	}
 	return institutions, nil
 }
 
-func (c Controller) GetInstitutionByGovID(govID string) (db.Institution, error) {
-	c.logger.Debug("GetInstitutionByGovID")
-	c.logger.Debug(govID)
-	institutions, err := c.queries.GetInstitutionByGovID(context.Background(), govID)
+func (c Controller) GetInstitutionByID(id uuid.UUID) (db.Institution, error) {
+	dbID := pgtype.UUID{
+		Bytes: id,
+		Valid: true,
+	}
+
+	institutions, err := c.queries.GetInstitutionByID(context.Background(), dbID)
 	if err != nil {
 		return db.Institution{}, err
 	}
+
+	count, err := c.queries.CountPendingGovernmentEnrollmentRequestsByInstitutionID(context.Background(), dbID)
+	if err != nil {
+		return db.Institution{}, err
+	}
+
+	institutions.Pending = count > 0
 
 	return institutions, nil
 }
 
 func (c Controller) DeleteInstitutionByID(id uuid.UUID) error {
-	c.logger.Debug("DeleteInstitutionByID")
 	dbID := pgtype.UUID{
 		Bytes: id,
 		Valid: true,
@@ -170,49 +277,69 @@ func (c Controller) DeleteInstitutionByID(id uuid.UUID) error {
 	return nil
 }
 
-func (c Controller) CreateInstitution(institution models.Institution) (db.Institution, error) {
-	c.logger.Debug("CreateInstitution")
-	// switch institution.Type){
-	// case db.InstitutionTypeClinic, db.InstitutionTypeHospital:
-	// 	break
-	// default:
-	// 	return db.Institution{}, fmt.Errorf("invalid intitution type: %s", institution.Type)
-	// }
+func (c Controller) CreateInstitution(institution models.Institution, user models.InstitutionUserPostRequest) (db.Institution, db.InstitutionUser, error) {
+	tx, err := c.pool.BeginTx(context.Background(), pgx.TxOptions{})
+	if err != nil {
+		c.logger.Debug("error message1:", slog.String("err", err.Error()))
+		return db.Institution{}, db.InstitutionUser{}, err
+	}
 
-	inst, err := c.queries.CreateInstitution(context.Background(), db.CreateInstitutionParams{
-		Name:        institution.Name,
-		Address:     institution.Address,
-		Credentials: institution.Credentials,
-		Type:        institution.Type,
-		GovID:       institution.GovId,
+	defer tx.Rollback(context.Background())
+	txQuery := c.queries.WithTx(tx)
+
+	gov, err := txQuery.GetGovernment(context.Background())
+	if err != nil {
+		return db.Institution{}, db.InstitutionUser{}, err
+	}
+
+	inst, err := txQuery.CreateInstitution(context.Background(), db.CreateInstitutionParams{
+		GovernmentID: gov.ID,
+		Name:         institution.Name,
+		Address:      institution.Address,
+		Credentials:  institution.Credentials,
+		Type:         db.InstitutionType(db.InstitutionType(institution.Type)),
+		GovID:        institution.GovID,
 	})
 	if err != nil {
-		return db.Institution{}, err
+		return db.Institution{}, db.InstitutionUser{}, err
 	}
 
-	_, err = c.queries.CreateGovernmentEnrollmentRequests(context.Background(), inst.ID)
+	user.InstitutionID = inst.ID.Bytes
+	u, err := c.createInstitutionUser(txQuery, user)
 	if err != nil {
-		return db.Institution{}, err
+		return db.Institution{}, db.InstitutionUser{}, err
 	}
 
-	return inst, nil
+	_, err = txQuery.CreateGovernmentEnrollmentRequests(context.Background(),
+		db.CreateGovernmentEnrollmentRequestsParams{
+			InstitutionID: inst.ID,
+			GovernmentID:  gov.ID,
+		})
+	if err != nil {
+		return db.Institution{}, db.InstitutionUser{}, err
+	}
+
+	if err := tx.Commit(context.Background()); err != nil {
+		return db.Institution{}, db.InstitutionUser{}, err
+	}
+
+	return inst, u, nil
 }
 
 func (c Controller) UpdateInstitution(institution models.Institution, id uuid.UUID) (db.Institution, error) {
-	c.logger.Debug("UpdateInstitution")
-	// switch institution.Type){
-	// case db.InstitutionTypeClinic, db.InstitutionTypeHospital:
-	// 	break
-	// default:
-	// 	return db.Institution{}, fmt.Errorf("invalid intitution type: %s", institution.Type)
-	// }
+	switch db.InstitutionType(institution.Type) {
+	case db.InstitutionTypeClnica, db.InstitutionTypeHospital:
+		break
+	default:
+		return db.Institution{}, fmt.Errorf("invalid intitution type: %s", db.InstitutionType(institution.Type))
+	}
 
 	return c.queries.UpdateInstitutionByID(context.Background(), db.UpdateInstitutionByIDParams{
 		Name:        institution.Name,
 		Address:     institution.Address,
 		Credentials: institution.Credentials,
-		Type:        institution.Type,
-		GovID:       institution.GovId,
+		Type:        db.InstitutionType(institution.Type),
+		GovID:       institution.GovID,
 		Pending:     false,
 		ID: pgtype.UUID{
 			Bytes: id,
@@ -221,16 +348,16 @@ func (c Controller) UpdateInstitution(institution models.Institution, id uuid.UU
 	})
 }
 
-func (c Controller) GetInstitutionEnrollmentRequestByDoctorIDAndInstitutionID(doctorId, institutionId uuid.UUID) (db.InstitutionEnrollmentRequest, error) {
+func (c Controller) GetInstitutionEnrollmentRequestByDoctorIDAndInstitutionID(doctorID, institutionID uuid.UUID) (db.InstitutionEnrollmentRequest, error) {
 	enrollmentRequest, err := c.queries.GetInstitutionEnrollmentRequestByDoctorIDAndInstitutionID(
 		context.Background(),
 		db.GetInstitutionEnrollmentRequestByDoctorIDAndInstitutionIDParams{
 			DoctorID: pgtype.UUID{
-				Bytes: doctorId,
+				Bytes: doctorID,
 				Valid: true,
 			},
 			InstitutionID: pgtype.UUID{
-				Bytes: institutionId,
+				Bytes: institutionID,
 				Valid: true,
 			},
 		},

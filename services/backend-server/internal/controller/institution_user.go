@@ -30,19 +30,23 @@ func (c Controller) ListInstitutionUsersByInstitutionID(institutiondID uuid.UUID
 }
 
 func (c Controller) CreateInstitutionUser(user models.InstitutionUserPostRequest) (db.InstitutionUser, error) {
-	// switch models.InstitutionUserRole(user.Role) {
-	// case models.ADMIN, models.VIEWER:
-	// 	break
-	// default:
-	// 	return db.InstitutionUser{}, fmt.Errorf("invalid institution user role")
-	// }
+	return c.createInstitutionUser(c.queries, user)
+}
+
+func (c Controller) createInstitutionUser(queries *db.Queries, user models.InstitutionUserPostRequest) (db.InstitutionUser, error) {
+	switch models.InstitutionUserRole(user.Role) {
+	case models.InstitutionUserRoleAdministrador, models.InstitutionUserRoleObservador:
+		break
+	default:
+		return db.InstitutionUser{}, fmt.Errorf("invalid institution user role")
+	}
 
 	birthdate, err := time.Parse(constants.ISOLayout, user.Birthdate)
 	if err != nil {
 		return db.InstitutionUser{}, err
 	}
 
-	institutionUser, err := c.queries.CreateInstitutionUser(
+	institutionUser, err := queries.CreateInstitutionUser(
 		context.Background(),
 		db.CreateInstitutionUserParams{
 			InstitutionID: pgtype.UUID{
@@ -51,7 +55,7 @@ func (c Controller) CreateInstitutionUser(user models.InstitutionUserPostRequest
 			},
 			Firstname: user.Firstname,
 			Lastname:  user.Lastname,
-			GovID:     user.GovId,
+			GovID:     user.GovID,
 			Birthdate: pgtype.Timestamp{
 				Time:  birthdate,
 				Valid: true,
@@ -59,7 +63,7 @@ func (c Controller) CreateInstitutionUser(user models.InstitutionUserPostRequest
 			Email:       user.Email,
 			Crypt:       user.Password,
 			PhoneNumber: user.PhoneNumber,
-			Role:        string(user.Role),
+			Role:        db.InstitutionUserRole(user.Role),
 		},
 	)
 	if err != nil {
@@ -71,7 +75,7 @@ func (c Controller) CreateInstitutionUser(user models.InstitutionUserPostRequest
 
 func (c Controller) UpdateInstitutionUser(user models.InstitutionUserPutRequest) (db.InstitutionUser, error) {
 	switch models.InstitutionUserRole(user.Role) {
-	case models.ADMIN, models.VIEWER:
+	case models.InstitutionUserRoleAdministrador, models.InstitutionUserRoleObservador:
 		break
 	default:
 		return db.InstitutionUser{}, fmt.Errorf("invalid institution user role")
@@ -91,15 +95,14 @@ func (c Controller) UpdateInstitutionUser(user models.InstitutionUserPutRequest)
 			},
 			Firstname: user.Firstname,
 			Lastname:  user.Lastname,
-			GovID:     user.GovId,
+			GovID:     user.GovID,
 			Birthdate: pgtype.Timestamp{
 				Time:  birthdate,
 				Valid: true,
 			},
 			Email:       user.Email,
-			Crypt:       user.Password,
 			PhoneNumber: user.PhoneNumber,
-			Role:        string(user.Role),
+			Role:        db.InstitutionUserRole(user.Role),
 		},
 	)
 	if err != nil {
@@ -124,14 +127,14 @@ func (c Controller) GetInstitutionUserByLogin(email, crypt string) (db.Instituti
 	return institutionUser, nil
 }
 
-func (c Controller) GetInstitutionUserByGovID(insitutionId uuid.UUID, govId string) (db.InstitutionUser, error) {
+func (c Controller) GetInstitutionUserByGovID(insitutionID uuid.UUID, govID string) (db.InstitutionUser, error) {
 	institutionUser, err := c.queries.GetInstitutionUserByGovAndInstitutionID(
 		context.Background(),
 		db.GetInstitutionUserByGovAndInstitutionIDParams{
-			GovID: govId,
+			GovID: govID,
 			InstitutionID: pgtype.UUID{
 				Valid: true,
-				Bytes: insitutionId,
+				Bytes: insitutionID,
 			},
 		},
 	)
@@ -142,17 +145,17 @@ func (c Controller) GetInstitutionUserByGovID(insitutionId uuid.UUID, govId stri
 	return institutionUser, nil
 }
 
-func (c Controller) DeleteInstitutionUserByInstitutionAndUserID(insitutionId, userId uuid.UUID) error {
+func (c Controller) DeleteInstitutionUserByInstitutionAndUserID(insitutionID, userID uuid.UUID) error {
 	err := c.queries.DeleteInstitutionUserByInsitutionAndUserID(
 		context.Background(),
 		db.DeleteInstitutionUserByInsitutionAndUserIDParams{
 			ID: pgtype.UUID{
 				Valid: true,
-				Bytes: userId,
+				Bytes: userID,
 			},
 			InstitutionID: pgtype.UUID{
 				Valid: true,
-				Bytes: insitutionId,
+				Bytes: insitutionID,
 			},
 		},
 	)

@@ -11,208 +11,320 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-type SpecialtyName string
+type HealthRecordType string
 
 const (
-	SpecialtyNameAllergyandimmunology              SpecialtyName = "Allergy and immunology"
-	SpecialtyNameAnesthesiology                    SpecialtyName = "Anesthesiology"
-	SpecialtyNameDermatology                       SpecialtyName = "Dermatology"
-	SpecialtyNameDiagnosticradiology               SpecialtyName = "Diagnostic radiology"
-	SpecialtyNameEmergencymedicine                 SpecialtyName = "Emergency medicine"
-	SpecialtyNameFamilymedicine                    SpecialtyName = "Family medicine"
-	SpecialtyNameInternalmedicine                  SpecialtyName = "Internal medicine"
-	SpecialtyNameMedicalgenetics                   SpecialtyName = "Medical genetics"
-	SpecialtyNameNeurology                         SpecialtyName = "Neurology"
-	SpecialtyNameNuclearmedicine                   SpecialtyName = "Nuclear medicine"
-	SpecialtyNameObstetricsandgynecology           SpecialtyName = "Obstetrics and gynecology"
-	SpecialtyNameOphthalmology                     SpecialtyName = "Ophthalmology"
-	SpecialtyNamePathology                         SpecialtyName = "Pathology"
-	SpecialtyNamePediatrics                        SpecialtyName = "Pediatrics"
-	SpecialtyNamePhysicalmedicineandrehabilitation SpecialtyName = "Physical medicine and rehabilitation"
-	SpecialtyNamePreventivemedicine                SpecialtyName = "Preventive medicine"
-	SpecialtyNamePsychiatry                        SpecialtyName = "Psychiatry"
-	SpecialtyNameRadiationoncology                 SpecialtyName = "Radiation oncology"
-	SpecialtyNameSurgery                           SpecialtyName = "Surgery"
-	SpecialtyNameUrology                           SpecialtyName = "Urology"
+	HealthRecordTypeEvolucin HealthRecordType = "evolución"
+	HealthRecordTypeAnlisis  HealthRecordType = "análisis"
+	HealthRecordTypeOrden    HealthRecordType = "orden"
 )
 
-func (e *SpecialtyName) Scan(src interface{}) error {
+func (e *HealthRecordType) Scan(src interface{}) error {
 	switch s := src.(type) {
 	case []byte:
-		*e = SpecialtyName(s)
+		*e = HealthRecordType(s)
 	case string:
-		*e = SpecialtyName(s)
+		*e = HealthRecordType(s)
 	default:
-		return fmt.Errorf("unsupported scan type for SpecialtyName: %T", src)
+		return fmt.Errorf("unsupported scan type for HealthRecordType: %T", src)
 	}
 	return nil
 }
 
-type NullSpecialtyName struct {
-	SpecialtyName SpecialtyName `json:"specialtyName"`
-	Valid         bool          `json:"valid"` // Valid is true if SpecialtyName is not NULL
+type NullHealthRecordType struct {
+	HealthRecordType HealthRecordType
+	Valid            bool // Valid is true if HealthRecordType is not NULL
 }
 
 // Scan implements the Scanner interface.
-func (ns *NullSpecialtyName) Scan(value interface{}) error {
+func (ns *NullHealthRecordType) Scan(value interface{}) error {
 	if value == nil {
-		ns.SpecialtyName, ns.Valid = "", false
+		ns.HealthRecordType, ns.Valid = "", false
 		return nil
 	}
 	ns.Valid = true
-	return ns.SpecialtyName.Scan(value)
+	return ns.HealthRecordType.Scan(value)
 }
 
 // Value implements the driver Valuer interface.
-func (ns NullSpecialtyName) Value() (driver.Value, error) {
+func (ns NullHealthRecordType) Value() (driver.Value, error) {
 	if !ns.Valid {
 		return nil, nil
 	}
-	return string(ns.SpecialtyName), nil
+	return string(ns.HealthRecordType), nil
+}
+
+type InstitutionType string
+
+const (
+	InstitutionTypeHospital InstitutionType = "hospital"
+	InstitutionTypeClnica   InstitutionType = "clínica"
+)
+
+func (e *InstitutionType) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = InstitutionType(s)
+	case string:
+		*e = InstitutionType(s)
+	default:
+		return fmt.Errorf("unsupported scan type for InstitutionType: %T", src)
+	}
+	return nil
+}
+
+type NullInstitutionType struct {
+	InstitutionType InstitutionType
+	Valid           bool // Valid is true if InstitutionType is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullInstitutionType) Scan(value interface{}) error {
+	if value == nil {
+		ns.InstitutionType, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.InstitutionType.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullInstitutionType) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.InstitutionType), nil
+}
+
+type InstitutionUserRole string
+
+const (
+	InstitutionUserRoleAdministrador InstitutionUserRole = "administrador"
+	InstitutionUserRoleObservador    InstitutionUserRole = "observador"
+)
+
+func (e *InstitutionUserRole) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = InstitutionUserRole(s)
+	case string:
+		*e = InstitutionUserRole(s)
+	default:
+		return fmt.Errorf("unsupported scan type for InstitutionUserRole: %T", src)
+	}
+	return nil
+}
+
+type NullInstitutionUserRole struct {
+	InstitutionUserRole InstitutionUserRole
+	Valid               bool // Valid is true if InstitutionUserRole is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullInstitutionUserRole) Scan(value interface{}) error {
+	if value == nil {
+		ns.InstitutionUserRole, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.InstitutionUserRole.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullInstitutionUserRole) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.InstitutionUserRole), nil
+}
+
+type PatientStatus string
+
+const (
+	PatientStatusHospitalizado PatientStatus = "hospitalizado"
+	PatientStatusRegular       PatientStatus = "regular"
+)
+
+func (e *PatientStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = PatientStatus(s)
+	case string:
+		*e = PatientStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for PatientStatus: %T", src)
+	}
+	return nil
+}
+
+type NullPatientStatus struct {
+	PatientStatus PatientStatus
+	Valid         bool // Valid is true if PatientStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullPatientStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.PatientStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.PatientStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullPatientStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.PatientStatus), nil
 }
 
 type Doctor struct {
-	CreatedAt      pgtype.Timestamptz `json:"createdAt"`
-	UpdatedAt      pgtype.Timestamptz `json:"updatedAt"`
-	ID             pgtype.UUID        `json:"id"`
-	InstitutionID  pgtype.UUID        `json:"institutionId"`
-	Firstname      string             `json:"firstname"`
-	Lastname       string             `json:"lastname"`
-	GovID          string             `json:"govId"`
-	Birthdate      pgtype.Timestamp   `json:"birthdate"`
-	Email          string             `json:"email"`
-	Sex            string             `json:"sex"`
-	Password       string             `json:"password"`
-	PhoneNumber    string             `json:"phoneNumber"`
-	Credentials    string             `json:"credentials"`
-	Pending        bool               `json:"pending"`
-	PatientPending bool               `json:"patientPending"`
+	CreatedAt      pgtype.Timestamptz
+	UpdatedAt      pgtype.Timestamptz
+	ID             pgtype.UUID
+	InstitutionID  pgtype.UUID
+	Firstname      string
+	Lastname       string
+	GovID          string
+	Birthdate      pgtype.Timestamp
+	Email          string
+	Sex            string
+	Password       string
+	PhoneNumber    string
+	Credentials    string
+	Pending        bool
+	PatientPending bool
 }
 
 type DoctorAccessRequest struct {
-	CreatedAt pgtype.Timestamptz `json:"createdAt"`
-	UpdatedAt pgtype.Timestamptz `json:"updatedAt"`
-	ID        pgtype.UUID        `json:"id"`
-	PatientID pgtype.UUID        `json:"patientId"`
-	DoctorID  pgtype.UUID        `json:"doctorId"`
-	Pending   bool               `json:"pending"`
-	Approved  bool               `json:"approved"`
+	CreatedAt pgtype.Timestamptz
+	UpdatedAt pgtype.Timestamptz
+	ID        pgtype.UUID
+	PatientID pgtype.UUID
+	DoctorID  pgtype.UUID
+	Pending   bool
+	Approved  bool
 }
 
 type DoctorSpecialty struct {
-	DoctorID    pgtype.UUID `json:"doctorId"`
-	SpecialtyID pgtype.UUID `json:"specialtyId"`
+	DoctorID    pgtype.UUID
+	SpecialtyID pgtype.UUID
 }
 
 type Government struct {
-	CreatedAt pgtype.Timestamptz `json:"createdAt"`
-	UpdatedAt pgtype.Timestamptz `json:"updatedAt"`
-	ID        pgtype.UUID        `json:"id"`
-	Email     string             `json:"email"`
-	Password  string             `json:"password"`
+	CreatedAt pgtype.Timestamptz
+	UpdatedAt pgtype.Timestamptz
+	ID        pgtype.UUID
+	Email     string
+	Password  string
 }
 
 type GovernmentEnrollmentRequest struct {
-	CreatedAt     pgtype.Timestamptz `json:"createdAt"`
-	UpdatedAt     pgtype.Timestamptz `json:"updatedAt"`
-	ID            pgtype.UUID        `json:"id"`
-	InstitutionID pgtype.UUID        `json:"institutionId"`
-	Pending       bool               `json:"pending"`
-	Approved      bool               `json:"approved"`
+	CreatedAt     pgtype.Timestamptz
+	UpdatedAt     pgtype.Timestamptz
+	ID            pgtype.UUID
+	InstitutionID pgtype.UUID
+	GovernmentID  pgtype.UUID
+	Pending       bool
+	Approved      bool
 }
 
 type HealthRecord struct {
-	CreatedAt     pgtype.Timestamptz `json:"createdAt"`
-	UpdatedAt     pgtype.Timestamptz `json:"updatedAt"`
-	ID            pgtype.UUID        `json:"id"`
-	PatientID     pgtype.UUID        `json:"patientId"`
-	Author        string             `json:"author"`
-	Title         string             `json:"title"`
-	Description   string             `json:"description"`
-	PrivateKey    string             `json:"privateKey"`
-	PublicKey     string             `json:"publicKey"`
-	Type          string             `json:"type"`
-	SpecialtyID   pgtype.UUID        `json:"specialtyId"`
-	ContentFormat string             `json:"contentFormat"`
+	CreatedAt     pgtype.Timestamptz
+	UpdatedAt     pgtype.Timestamptz
+	ID            pgtype.UUID
+	PatientID     pgtype.UUID
+	Author        string
+	Title         string
+	Description   string
+	PublicKey     string
+	Type          HealthRecordType
+	SpecialtyID   pgtype.UUID
+	ContentFormat string
 }
 
 type Institution struct {
-	CreatedAt   pgtype.Timestamptz `json:"createdAt"`
-	UpdatedAt   pgtype.Timestamptz `json:"updatedAt"`
-	ID          pgtype.UUID        `json:"id"`
-	Name        string             `json:"name"`
-	Address     string             `json:"address"`
-	Credentials string             `json:"credentials"`
-	Type        string             `json:"type"`
-	GovID       string             `json:"govId"`
-	Pending     bool               `json:"pending"`
+	CreatedAt    pgtype.Timestamptz
+	UpdatedAt    pgtype.Timestamptz
+	ID           pgtype.UUID
+	GovernmentID pgtype.UUID
+	Name         string
+	Address      string
+	Credentials  string
+	Type         InstitutionType
+	GovID        string
+	Pending      bool
 }
 
 type InstitutionEnrollmentRequest struct {
-	CreatedAt     pgtype.Timestamptz `json:"createdAt"`
-	UpdatedAt     pgtype.Timestamptz `json:"updatedAt"`
-	ID            pgtype.UUID        `json:"id"`
-	InstitutionID pgtype.UUID        `json:"institutionId"`
-	DoctorID      pgtype.UUID        `json:"doctorId"`
-	NurseID       pgtype.UUID        `json:"nurseId"`
-	Pending       bool               `json:"pending"`
-	Approved      bool               `json:"approved"`
+	CreatedAt     pgtype.Timestamptz
+	UpdatedAt     pgtype.Timestamptz
+	ID            pgtype.UUID
+	InstitutionID pgtype.UUID
+	DoctorID      pgtype.UUID
+	NurseID       pgtype.UUID
+	Pending       bool
+	Approved      bool
 }
 
 type InstitutionUser struct {
-	CreatedAt     pgtype.Timestamptz `json:"createdAt"`
-	UpdatedAt     pgtype.Timestamptz `json:"updatedAt"`
-	ID            pgtype.UUID        `json:"id"`
-	InstitutionID pgtype.UUID        `json:"institutionId"`
-	Firstname     string             `json:"firstname"`
-	Lastname      string             `json:"lastname"`
-	GovID         string             `json:"govId"`
-	Birthdate     pgtype.Timestamp   `json:"birthdate"`
-	Email         string             `json:"email"`
-	Password      string             `json:"password"`
-	PhoneNumber   string             `json:"phoneNumber"`
-	Role          string             `json:"role"`
+	CreatedAt     pgtype.Timestamptz
+	UpdatedAt     pgtype.Timestamptz
+	ID            pgtype.UUID
+	InstitutionID pgtype.UUID
+	Firstname     string
+	Lastname      string
+	GovID         string
+	Birthdate     pgtype.Timestamp
+	Email         string
+	Password      string
+	PhoneNumber   string
+	Role          InstitutionUserRole
 }
 
 type Nurse struct {
-	CreatedAt     pgtype.Timestamptz `json:"createdAt"`
-	UpdatedAt     pgtype.Timestamptz `json:"updatedAt"`
-	ID            pgtype.UUID        `json:"id"`
-	InstitutionID pgtype.UUID        `json:"institutionId"`
-	Firstname     string             `json:"firstname"`
-	Lastname      string             `json:"lastname"`
-	GovID         string             `json:"govId"`
-	Birthdate     pgtype.Timestamp   `json:"birthdate"`
-	Sex           string             `json:"sex"`
-	Email         string             `json:"email"`
-	Password      string             `json:"password"`
-	PhoneNumber   string             `json:"phoneNumber"`
-	Credentials   string             `json:"credentials"`
-	Pending       bool               `json:"pending"`
+	CreatedAt     pgtype.Timestamptz
+	UpdatedAt     pgtype.Timestamptz
+	ID            pgtype.UUID
+	InstitutionID pgtype.UUID
+	Firstname     string
+	Lastname      string
+	GovID         string
+	Birthdate     pgtype.Timestamp
+	Sex           string
+	Email         string
+	Password      string
+	PhoneNumber   string
+	Credentials   string
+	Pending       bool
 }
 
 type Patient struct {
-	CreatedAt     pgtype.Timestamptz `json:"createdAt"`
-	UpdatedAt     pgtype.Timestamptz `json:"updatedAt"`
-	ID            pgtype.UUID        `json:"id"`
-	InstitutionID pgtype.UUID        `json:"institutionId"`
-	Firstname     string             `json:"firstname"`
-	Lastname      string             `json:"lastname"`
-	GovID         string             `json:"govId"`
-	Birthdate     pgtype.Timestamp   `json:"birthdate"`
-	Email         string             `json:"email"`
-	Password      string             `json:"password"`
-	PhoneNumber   string             `json:"phoneNumber"`
-	Sex           string             `json:"sex"`
-	Pending       bool               `json:"pending"`
-	Status        string             `json:"status"`
-	Bed           string             `json:"bed"`
+	CreatedAt         pgtype.Timestamptz
+	UpdatedAt         pgtype.Timestamptz
+	ID                pgtype.UUID
+	InstitutionID     pgtype.UUID
+	Firstname         string
+	Lastname          string
+	GovID             string
+	Birthdate         pgtype.Timestamp
+	Email             string
+	Password          string
+	PhoneNumber       string
+	Sex               string
+	Pending           bool
+	Status            PatientStatus
+	Bed               string
+	PrivateKey        string
+	BlockchainAddress string
 }
 
 type Specialty struct {
-	CreatedAt   pgtype.Timestamptz `json:"createdAt"`
-	UpdatedAt   pgtype.Timestamptz `json:"updatedAt"`
-	ID          pgtype.UUID        `json:"id"`
-	Description string             `json:"description"`
-	Name        SpecialtyName      `json:"name"`
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+	ID          pgtype.UUID
+	Description string
+	Name        string
 }

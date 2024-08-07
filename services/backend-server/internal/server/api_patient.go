@@ -15,7 +15,7 @@ import (
 // PatientsAccessDoctorIDRevokePost - Deny doctor access to patient records
 func (s *Server) PatientsAccessDoctorIDRevokePost(ctx echo.Context) error {
 	uuidStr := ctx.Param("doctorId")
-	doctorId, err := uuid.Parse(uuidStr)
+	doctorID, err := uuid.Parse(uuidStr)
 	if err != nil {
 		return ctx.String(http.StatusBadRequest, err.Error())
 	}
@@ -23,7 +23,7 @@ func (s *Server) PatientsAccessDoctorIDRevokePost(ctx echo.Context) error {
 	user := ctx.Get("user").(*jwt.Token)
 	claims := user.Claims.(*controller.JWTCustomClaims)
 
-	ar, err := s.Controller.GetAccessRequestByPatientAndDoctorID(doctorId, claims.UserID)
+	ar, err := s.Controller.GetAccessRequestByPatientAndDoctorID(doctorID, claims.UserID)
 	if err != nil {
 		return err
 	}
@@ -38,12 +38,12 @@ func (s *Server) PatientsAccessDoctorIDRevokePost(ctx echo.Context) error {
 // PatientsAccessRequestsAccessRequestIDApprovePost - Approve doctor access to patient records
 func (s *Server) PatientsAccessRequestsAccessRequestIDApprovePost(ctx echo.Context) error {
 	uuidStr := ctx.Param("accessRequestId")
-	accessRequestId, err := uuid.Parse(uuidStr)
+	accessRequestID, err := uuid.Parse(uuidStr)
 	if err != nil {
 		return ctx.String(http.StatusBadRequest, err.Error())
 	}
 
-	ar, err := s.Controller.GetAccessRequestByID(accessRequestId)
+	ar, err := s.Controller.GetAccessRequestByID(accessRequestID)
 	if err != nil {
 		return err
 	}
@@ -64,12 +64,12 @@ func (s *Server) PatientsAccessRequestsAccessRequestIDApprovePost(ctx echo.Conte
 // PatientsAccessRequestsAccessRequestIDDenyPost - Deny doctor access to patient records
 func (s *Server) PatientsAccessRequestsAccessRequestIDDenyPost(ctx echo.Context) error {
 	uuidStr := ctx.Param("accessRequestId")
-	accessRequestId, err := uuid.Parse(uuidStr)
+	accessRequestID, err := uuid.Parse(uuidStr)
 	if err != nil {
 		return ctx.String(http.StatusBadRequest, err.Error())
 	}
 
-	ar, err := s.Controller.GetAccessRequestByID(accessRequestId)
+	ar, err := s.Controller.GetAccessRequestByID(accessRequestID)
 	if err != nil {
 		return err
 	}
@@ -92,7 +92,7 @@ func (s *Server) PatientsAccessRequestsGet(ctx echo.Context) error {
 	user := ctx.Get("user").(*jwt.Token)
 	claims := user.Claims.(*controller.JWTCustomClaims)
 
-	ars, err := s.Controller.ListAccessRequestsByPatientId(claims.UserID)
+	ars, err := s.Controller.ListAccessRequestsByPatientID(claims.UserID)
 	if err != nil {
 		return err
 	}
@@ -130,11 +130,11 @@ func (s *Server) PatientsGet(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, resps)
 }
 
-// PatientsGovIdDoctorsGet - Returns a list of doctors treating patients
-func (s *Server) PatientsGovIdDoctorsGet(ctx echo.Context) error {
-	govId := ctx.Param("govId")
+// PatientsGovIDDoctorsGet - Returns a list of doctors treating patients
+func (s *Server) PatientsGovIDDoctorsGet(ctx echo.Context) error {
+	govID := ctx.Param("govId")
 
-	doctors, err := s.Controller.ListPatientApprovedDoctors(govId)
+	doctors, err := s.Controller.ListPatientApprovedDoctorsByGovID(govID)
 	if err != nil {
 		return err
 	}
@@ -175,11 +175,11 @@ func (s *Server) PatientsGovIdDoctorsGet(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, resps)
 }
 
-// PatientsGovIdGet - Find patient by gov_id
-func (s *Server) PatientsGovIdGet(ctx echo.Context) error {
-	govId := ctx.Param("govId")
+// PatientsGovIDGet - Find patient by gov_id
+func (s *Server) PatientsGovIDGet(ctx echo.Context) error {
+	govID := ctx.Param("govId")
 
-	patient, err := s.Controller.GetPatientByGovID(govId)
+	patient, err := s.Controller.GetPatientByGovID(govID)
 	if err != nil {
 		return err
 	}
@@ -192,11 +192,16 @@ func (s *Server) PatientsGovIdGet(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, resp)
 }
 
-// PatientsGovIdHealthRecordsGet - List health records by patient
-func (s *Server) PatientsGovIdHealthRecordsGet(ctx echo.Context) error {
-	govId := ctx.Param("govId")
+// PatientsGovIDHealthRecordsGet - List health records by patient
+func (s *Server) PatientsGovIDHealthRecordsGet(ctx echo.Context) error {
+	govID := ctx.Param("govId")
 
-	healthRecords, err := s.Controller.ListHealthRecordPatientsGovID(govId)
+	healthRecords, err := s.Controller.ListHealthRecordPatientsGovID(govID)
+	if err != nil {
+		return err
+	}
+
+	patient, err := s.Controller.GetPatientByGovID(govID)
 	if err != nil {
 		return err
 	}
@@ -208,7 +213,14 @@ func (s *Server) PatientsGovIdHealthRecordsGet(ctx echo.Context) error {
 			return err
 		}
 
-		resp := models.NewHealthRecordResponse(healthRecord, specialty)
+		resp, err := models.NewHealthRecordResponse(db.CreateHealthRecordResult{
+			HealthRecord: healthRecord,
+			Specialty:    specialty,
+			Patient:      patient,
+		}, s.ivEncryptionKey)
+		if err != nil {
+			return err
+		}
 
 		resps = append(resps, resp)
 	}
@@ -216,11 +228,11 @@ func (s *Server) PatientsGovIdHealthRecordsGet(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, resps)
 }
 
-// PatientsGovIdHealthRecordsSpecialtiesGet - List health records specialty ids by patient id
-func (s *Server) PatientsGovIdHealthRecordsSpecialtiesGet(ctx echo.Context) error {
-	govId := ctx.Param("govId")
+// PatientsGovIDHealthRecordsSpecialtiesGet - List health records specialty ids by patient id
+func (s *Server) PatientsGovIDHealthRecordsSpecialtiesGet(ctx echo.Context) error {
+	govID := ctx.Param("govId")
 
-	healthRecords, err := s.Controller.ListHealthRecordPatientsGovID(govId)
+	healthRecords, err := s.Controller.ListHealthRecordPatientsGovID(govID)
 	if err != nil {
 		return err
 	}
@@ -240,32 +252,44 @@ func (s *Server) PatientsGovIdHealthRecordsSpecialtiesGet(ctx echo.Context) erro
 	return ctx.JSON(http.StatusOK, resps)
 }
 
-// PatientsGovIdHealthRecordsSpecialtyIdGet - List health records by patient and specialty Id
-func (s *Server) PatientsGovIdHealthRecordsSpecialtyIdGet(ctx echo.Context) error {
-	govId := ctx.Param("govId")
+// PatientsGovIDHealthRecordsSpecialtyIDGet - List health records by patient and specialty ID
+func (s *Server) PatientsGovIDHealthRecordsSpecialtyIDGet(ctx echo.Context) error {
+	govID := ctx.Param("govId")
 
 	uuidStr := ctx.Param("specialtyId")
-	specialtyId, err := uuid.Parse(uuidStr)
+	specialtyID, err := uuid.Parse(uuidStr)
 	if err != nil {
 		return ctx.String(http.StatusBadRequest, err.Error())
 	}
 
 	healthRecords, err := s.Controller.ListHealthRecordByPatientsGovAndSpecialtyID(
-		govId,
-		specialtyId,
+		govID,
+		specialtyID,
 	)
+	if err != nil {
+		return err
+	}
+
+	patient, err := s.Controller.GetPatientByGovID(govID)
 	if err != nil {
 		return err
 	}
 
 	resps := []models.HealthRecordResponse{}
 	for _, healthRecord := range healthRecords {
-		speciaty, err := s.Controller.GetSpecialtyByID(specialtyId)
+		specialty, err := s.Controller.GetSpecialtyByID(specialtyID)
 		if err != nil {
 			return err
 		}
 
-		resp := models.NewHealthRecordResponse(healthRecord, speciaty)
+		resp, err := models.NewHealthRecordResponse(db.CreateHealthRecordResult{
+			HealthRecord: healthRecord,
+			Specialty:    specialty,
+			Patient:      patient,
+		}, s.ivEncryptionKey)
+		if err != nil {
+			return err
+		}
 
 		resps = append(resps, resp)
 	}
@@ -273,23 +297,35 @@ func (s *Server) PatientsGovIdHealthRecordsSpecialtyIdGet(ctx echo.Context) erro
 	return ctx.JSON(http.StatusOK, resps)
 }
 
-// PatientsGovIdOrdersGet - List health orders by patient
-func (s *Server) PatientsGovIdOrdersGet(ctx echo.Context) error {
-	govId := ctx.Param("govId")
+// PatientsGovIDOrdersGet - List health orders by patient
+func (s *Server) PatientsGovIDOrdersGet(ctx echo.Context) error {
+	govID := ctx.Param("govId")
 
-	healthRecords, err := s.Controller.ListOrdersByPatientGovID(govId)
+	healthRecords, err := s.Controller.ListOrdersByPatientGovID(govID)
+	if err != nil {
+		return err
+	}
+
+	patient, err := s.Controller.GetPatientByGovID(govID)
 	if err != nil {
 		return err
 	}
 
 	resps := []models.HealthRecordResponse{}
 	for _, healthRecord := range healthRecords {
-		speciaty, err := s.Controller.GetSpecialtyByID(healthRecord.SpecialtyID.Bytes)
+		specialty, err := s.Controller.GetSpecialtyByID(healthRecord.SpecialtyID.Bytes)
 		if err != nil {
 			return err
 		}
 
-		resp := models.NewHealthRecordResponse(healthRecord, speciaty)
+		resp, err := models.NewHealthRecordResponse(db.CreateHealthRecordResult{
+			HealthRecord: healthRecord,
+			Specialty:    specialty,
+			Patient:      patient,
+		}, s.ivEncryptionKey)
+		if err != nil {
+			return err
+		}
 
 		resps = append(resps, resp)
 	}
@@ -328,7 +364,7 @@ func (s *Server) PatientsLoginPost(ctx echo.Context) error {
 // PatientsPatientIDAccessRequestsPost - Make request for doctor to access patient records
 func (s *Server) PatientsPatientIDAccessRequestsPost(ctx echo.Context) error {
 	uuidStr := ctx.Param("patientId")
-	patientId, err := uuid.Parse(uuidStr)
+	patientID, err := uuid.Parse(uuidStr)
 	if err != nil {
 		return ctx.String(http.StatusBadRequest, err.Error())
 	}
@@ -336,7 +372,7 @@ func (s *Server) PatientsPatientIDAccessRequestsPost(ctx echo.Context) error {
 	user := ctx.Get("user").(*jwt.Token)
 	claims := user.Claims.(*controller.JWTCustomClaims)
 
-	ar, err := s.Controller.CreateAccessRequestWithDoctorAndPatientID(claims.UserID, patientId)
+	ar, err := s.Controller.CreateAccessRequestWithDoctorAndPatientID(claims.UserID, patientID)
 	if err != nil {
 		return err
 	}
@@ -352,12 +388,12 @@ func (s *Server) PatientsPatientIDAccessRequestsPost(ctx echo.Context) error {
 // PatientsPatientIDDelete - Deletes a patient
 func (s *Server) PatientsPatientIDDelete(ctx echo.Context) error {
 	uuidStr := ctx.Param("patientId")
-	patientId, err := uuid.Parse(uuidStr)
+	patientID, err := uuid.Parse(uuidStr)
 	if err != nil {
 		return ctx.String(http.StatusBadRequest, err.Error())
 	}
 
-	if err := s.Controller.DeletePatientByID(patientId); err != nil {
+	if err := s.Controller.DeletePatientByID(patientID); err != nil {
 		return err
 	}
 

@@ -1,14 +1,19 @@
 package controller
 
 import (
+	"bytes"
 	"context"
-	"crypto/sha256"
-	"fmt"
+	"encoding/json"
+	"io"
+	"log/slog"
 	"math/rand"
 	"time"
 
 	"github.com/TM-labs-A2024/core/services/backend-server/internal/db"
+	"github.com/TM-labs-A2024/core/services/backend-server/internal/server/models"
+	"github.com/TM-labs-A2024/core/services/backend-server/internal/utils"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -33,39 +38,109 @@ func GenRandomString(length int) string {
 
 type CreateHealthRecordArgs struct {
 	Type          string
-	SpecialtyId   uuid.UUID
-	PatientId     uuid.UUID
+	SpecialtyID   uuid.UUID
+	PatientID     uuid.UUID
 	ContentFormat string
 	Title         string
 	Description   string
-	Author        string
+	DoctorID      uuid.UUID
+	Payload       io.Reader
 }
 
-func (c Controller) CreateHealthRecord(args CreateHealthRecordArgs) (db.HealthRecord, error) {
-	h := sha256.New()
-	h.Write([]byte(GenRandomString(25)))
-	publicKey := fmt.Sprintf("%x", h.Sum(nil))
+type CreateEvolutionArgs struct {
+	models.EvolutionRequest
+	InstitutionID uuid.UUID
+	DoctorID      uuid.UUID
+}
 
-	h.Write([]byte(GenRandomString(25)))
-	privateKey := fmt.Sprintf("%x", h.Sum(nil))
+func (c Controller) CreateHealthRecord(args CreateHealthRecordArgs) (db.CreateHealthRecordResult, error) {
+	tx, err := c.pool.BeginTx(context.Background(), pgx.TxOptions{})
+	if err != nil {
+		c.logger.Debug("error message1:", slog.String("err", err.Error()))
+		return db.CreateHealthRecordResult{}, err
+	}
+	defer tx.Rollback(context.Background())
+	txQuery := c.queries.WithTx(tx)
 
-	return c.queries.CreateHealthRecord(context.Background(), db.CreateHealthRecordParams{
-		PatientID: pgtype.UUID{
-			Valid: true,
-			Bytes: args.PatientId,
-		},
-		PrivateKey: privateKey,
-		PublicKey:  publicKey,
-		Type:       args.Type,
-		SpecialtyID: pgtype.UUID{
-			Valid: true,
-			Bytes: args.SpecialtyId,
-		},
-		ContentFormat: args.ContentFormat,
-		Title:         args.Title,
-		Description:   args.Description,
-		Author:        args.Author,
+	res, err := c.createHealthRecord(txQuery, args)
+	if err != nil {
+		return db.CreateHealthRecordResult{}, err
+	}
+
+	if tx.Commit(context.Background()); err != nil {
+		return db.CreateHealthRecordResult{}, err
+	}
+
+	return res, nil
+}
+
+func (c Controller) CreateEvolution(args CreateEvolutionArgs) (db.CreateHealthRecordResult, error) {
+	tx, err := c.pool.BeginTx(context.Background(), pgx.TxOptions{})
+	if err != nil {
+		c.logger.Debug("error message1:", slog.String("err", err.Error()))
+		return db.CreateHealthRecordResult{}, err
+	}
+	defer func() {
+		tx.Rollback(context.Background())
+
+	}()
+	txQuery := c.queries.WithTx(tx)
+
+	data, err := json.Marshal(&args.EvolutionRequest.Payload)
+	if err != nil {
+		return db.CreateHealthRecordResult{}, err
+	}
+
+	res, err := c.createHealthRecord(txQuery, CreateHealthRecordArgs{
+		Type:          string(db.HealthRecordTypeEvolucin),
+		SpecialtyID:   args.EvolutionRequest.Specialty,
+		PatientID:     args.EvolutionRequest.PatientID,
+		ContentFormat: "json",
+		Title:         args.EvolutionRequest.Title,
+		Description:   args.EvolutionRequest.Description,
+		DoctorID:      args.DoctorID,
+		Payload:       bytes.NewReader(data),
 	})
+	if err != nil {
+		return db.CreateHealthRecordResult{}, err
+	}
+
+	patient, err := txQuery.GetPatientByID(context.Background(), res.Patient.ID)
+	if err != nil {
+		return db.CreateHealthRecordResult{}, err
+	}
+
+	if args.Bed != nil {
+		patient.Bed = *args.Bed
+		patient.InstitutionID = pgtype.UUID{
+			Bytes: args.InstitutionID,
+			Valid: true,
+		}
+
+		if _, err := txQuery.UpdatePatientByID(
+			context.Background(),
+			db.UpdatePatientByIDParams{
+				Firstname:         patient.Firstname,
+				Lastname:          patient.Lastname,
+				GovID:             patient.GovID,
+				Birthdate:         patient.Birthdate,
+				Email:             patient.Email,
+				PhoneNumber:       patient.PhoneNumber,
+				Sex:               patient.Sex,
+				Pending:           patient.Pending,
+				Status:            patient.Status,
+				Bed:               patient.Bed,
+				PrivateKey:        patient.PrivateKey,
+				BlockchainAddress: patient.BlockchainAddress,
+				ID:                patient.ID,
+				InstitutionID:     patient.InstitutionID,
+			},
+		); err != nil {
+			return db.CreateHealthRecordResult{}, err
+		}
+	}
+
+	return res, nil
 }
 
 func (c Controller) DeleteHealthRecordByID(id uuid.UUID) error {
@@ -80,4 +155,80 @@ func (c Controller) GetHealthRecordByID(id uuid.UUID) (db.HealthRecord, error) {
 		Bytes: id,
 		Valid: true,
 	})
+}
+
+func (c Controller) createHealthRecord(txQuery *db.Queries, args CreateHealthRecordArgs) (db.CreateHealthRecordResult, error) {
+	key, err := c.storage.UploadFile(args.PatientID, args.Payload)
+	if err != nil {
+		c.DeleteFile(key)
+		return db.CreateHealthRecordResult{}, err
+	}
+
+	doctor, err := txQuery.GetDoctorByID(
+		context.TODO(),
+		pgtype.UUID{
+			Bytes: args.DoctorID,
+			Valid: true,
+		},
+	)
+	if err != nil {
+		c.DeleteFile(key)
+		return db.CreateHealthRecordResult{}, err
+	}
+
+	specialty, err := txQuery.GetSpecialtyByID(
+		context.TODO(),
+		pgtype.UUID{
+			Bytes: args.SpecialtyID,
+			Valid: true,
+		})
+	if err != nil {
+		c.DeleteFile(key)
+		return db.CreateHealthRecordResult{}, err
+	}
+
+	patient, err := txQuery.GetPatientByID(
+		context.TODO(),
+		pgtype.UUID{
+			Bytes: args.PatientID,
+			Valid: true,
+		},
+	)
+	if err != nil {
+		c.DeleteFile(key)
+		return db.CreateHealthRecordResult{}, err
+	}
+
+	encryptedURL, err := utils.GetAESEncrypted(
+		key,
+		patient.PrivateKey,
+		c.ivEncryptionKey,
+	)
+	if err != nil {
+		return db.CreateHealthRecordResult{}, err
+	}
+
+	hr, err := c.queries.CreateHealthRecord(
+		context.Background(),
+		db.CreateHealthRecordParams{
+			PatientID:     patient.ID,
+			Type:          db.HealthRecordType(args.Type),
+			SpecialtyID:   specialty.ID,
+			ContentFormat: args.ContentFormat,
+			Title:         args.Title,
+			Description:   args.Description,
+			Author:        doctor.Firstname + " " + doctor.Lastname,
+			PublicKey:     encryptedURL,
+		},
+	)
+	if err != nil {
+		c.DeleteFile(key)
+		return db.CreateHealthRecordResult{}, err
+	}
+
+	return db.CreateHealthRecordResult{
+		HealthRecord: hr,
+		Specialty:    specialty,
+		Patient:      patient,
+	}, nil
 }

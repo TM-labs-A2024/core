@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/TM-labs-A2024/core/services/backend-server/config"
 	"github.com/TM-labs-A2024/core/services/backend-server/internal/controller"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -11,25 +12,27 @@ import (
 
 // Server will hold all dependencies for your application.
 type Server struct {
-	Router     *echo.Echo
-	Controller *controller.Controller
-	Logger     *slog.Logger
+	Router          *echo.Echo
+	Controller      *controller.Controller
+	Logger          *slog.Logger
+	ivEncryptionKey string
 }
 
 // NewServer returns an empty or an initialized container for your handlers.
-func NewServer() (Server, error) {
+func NewServer(conf config.Config) (Server, error) {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelDebug,
 	}))
-	c, err := controller.NewController(os.Getenv("DATABASE_URL"), logger)
+	c, err := controller.NewController(conf, logger)
 	if err != nil {
 		return Server{}, err
 	}
 
 	s := Server{
-		Router:     echo.New(),
-		Logger:     logger,
-		Controller: c,
+		Router:          echo.New(),
+		Logger:          logger,
+		Controller:      c,
+		ivEncryptionKey: conf.IVEncryptionKey,
 	}
 
 	return s, nil
@@ -73,14 +76,14 @@ func (s Server) AddRoutes() {
 	// DoctorsPost - Add a new doctor to the system
 	unrestricted.POST("/doctors", s.DoctorsPost)
 
-	// DoctorsPut - Update an existing doctor by Id
+	// DoctorsPut - Update an existing doctor by ID
 	restricted.PUT("/doctors", s.DoctorsPut)
 
-	// DoctorsSpecialtyIdGet - Returns a list of doctors by specialty
-	restricted.GET("/doctors/specialties/:specialtyId", s.DoctorsSpecialtyIdGet)
+	// DoctorsSpecialtyIDGet - Returns a list of doctors by specialty
+	restricted.GET("/doctors/specialties/:specialtyId", s.DoctorsSpecialtyIDGet)
 
-	// DoctorsSpecialtyIdPatientsGet - Returns a list of patients that have at least one record for a given  specialty that are treated by a doctor
-	restricted.GET("/doctors/patients/specialties/:specialtyId", s.DoctorsSpecialtyIdPatientsGet)
+	// DoctorsSpecialtyIDPatientsGet - Returns a list of patients that have at least one record for a given  specialty that are treated by a doctor
+	restricted.GET("/doctors/patients/specialties/:specialtyId", s.DoctorsSpecialtyIDPatientsGet)
 
 	// GovermentLoginPost -
 	unrestricted.POST("/goverment/login", s.GovermentLoginPost)
@@ -88,7 +91,7 @@ func (s Server) AddRoutes() {
 	// GovernmentEnrollmentInstitutionIDRevokePost - Deny institution into the system
 	restricted.POST("/government/enrollment/:institutionId/revoke", s.GovernmentEnrollmentInstitutionIDRevokePost)
 
-	// GovernmentEnrollmentRequestsEnrollmentRequestIDApprovePost - Approve institution into the system
+	// GovernmentEnrollmentRequestsEnrollmentRequestIDApprovePost - Approve instituz	tion into the system
 	restricted.POST("/government/enrollment-requests/:enrollmentRequestId/approve", s.GovernmentEnrollmentRequestsEnrollmentRequestIDApprovePost)
 
 	// GovernmentEnrollmentRequestsEnrollmentRequestIDDenyPost - Deny institution into the system
@@ -109,8 +112,11 @@ func (s Server) AddRoutes() {
 	// HealthRecordPost - Add a new health-record to the system
 	restricted.POST("/health-record", s.HealthRecordPost)
 
+	// HealthRecordJSONPost - Add a new health-record to the system with only JSON data
+	restricted.POST("/health-record/evolution", s.HealthRecordEvolutionPost)
+
 	// InstitutionsApprovedGet - List ALL approved institutions
-	restricted.GET("/institutions/approved", s.InstitutionsApprovedGet)
+	unrestricted.GET("/institutions/approved", s.InstitutionsApprovedGet)
 
 	// InstitutionsEnrollmentDoctorIDRevokePost - Deny doctor into institution
 	restricted.POST("/institutions/enrollment/:professionalId/revoke", s.InstitutionsEnrollmentDoctorIDRevokePost)
@@ -130,8 +136,8 @@ func (s Server) AddRoutes() {
 	// InstitutionsGet - List ALL institutions
 	unrestricted.GET("/institutions", s.InstitutionsGet)
 
-	// InstitutionsGovIdGet - Returns a single institution by govId
-	restricted.GET("/institutions/:govId", s.InstitutionsGovIdGet)
+	// InstitutionsGovIDGet - Returns a single institution by id
+	restricted.GET("/institutions/:institutionId", s.InstitutionsIDGet)
 
 	// InstitutionsInstitutionIDDelete - Delete an institution
 	restricted.DELETE("/institutions/:institutionId", s.InstitutionsInstitutionIDDelete)
@@ -142,11 +148,11 @@ func (s Server) AddRoutes() {
 	// InstitutionsPost - Add a new institutions to the system
 	unrestricted.POST("/institutions", s.InstitutionsPost)
 
-	// InstitutionsPut - Update an existing institutions by Id
+	// InstitutionsPut - Update an existing institutions by ID
 	restricted.PUT("/institutions", s.InstitutionsPut)
 
-	// InstitutionsInstitutionIDUsersGovIdGet - Returns a single institution user by gov id
-	restricted.GET("/institutions/:institutionId/users/:govId", s.InstitutionsInstitutionIDUsersGovIdGet)
+	// InstitutionsInstitutionIDUsersGovIDGet - Returns a single institution user by gov id
+	restricted.GET("/institutions/:institutionId/users/:govId", s.InstitutionsInstitutionIDUsersGovIDGet)
 
 	// InstitutionsInstitutionIDUsersLoginPost -
 	unrestricted.POST("/institutions/users/login", s.InstitutionsInstitutionIDUsersLoginPost)
@@ -154,7 +160,7 @@ func (s Server) AddRoutes() {
 	// InstitutionsInstitutionIDUsersPost - Add a new institutions user to the system
 	unrestricted.POST("/institutions/users", s.InstitutionsInstitutionIDUsersPost)
 
-	// InstitutionsInstitutionIDUsersPut - Update an existing institutions user by Id
+	// InstitutionsInstitutionIDUsersPut - Update an existing institutions user by ID
 	restricted.PUT("/institutions/users", s.InstitutionsInstitutionIDUsersPut)
 
 	// InstitutionsInstitutionIDUsersUserIDDelete - Deletes a institution user
@@ -196,23 +202,23 @@ func (s Server) AddRoutes() {
 	// PatientsGet - List ALL patients
 	restricted.GET("/patients", s.PatientsGet)
 
-	// PatientsGovIdDoctorsGet - Returns a list of doctors treating patients
-	restricted.GET("/patients/:govId/doctors", s.PatientsGovIdDoctorsGet)
+	// PatientsGovIDDoctorsGet - Returns a list of doctors treating patients
+	restricted.GET("/patients/:govId/doctors", s.PatientsGovIDDoctorsGet)
 
-	// PatientsGovIdGet - Find patient by govId
-	restricted.GET("/patients/:govId", s.PatientsGovIdGet)
+	// PatientsGovIDGet - Find patient by govID
+	restricted.GET("/patients/:govId", s.PatientsGovIDGet)
 
-	// PatientsGovIdHealthRecordsGet - List health records by patient
-	restricted.GET("/patients/:govId/health-records", s.PatientsGovIdHealthRecordsGet)
+	// PatientsGovIDHealthRecordsGet - List health records by patient
+	restricted.GET("/patients/:govId/health-records", s.PatientsGovIDHealthRecordsGet)
 
-	// PatientsGovIdHealthRecordsSpecialtiesGet - List health records by patient and specialty Id
-	restricted.GET("/patients/:govId/health-records/specialties", s.PatientsGovIdHealthRecordsSpecialtiesGet)
+	// PatientsGovIDHealthRecordsSpecialtiesGet - List health records by patient and specialty ID
+	restricted.GET("/patients/:govId/health-records/specialties", s.PatientsGovIDHealthRecordsSpecialtiesGet)
 
-	// PatientsGovIdHealthRecordsSpecialtyIdGet - List health records by patient and specialty Id
-	restricted.GET("/patients/:govId/health-records/:specialtyId", s.PatientsGovIdHealthRecordsSpecialtyIdGet)
+	// PatientsGovIDHealthRecordsSpecialtyIDGet - List health records by patient and specialty ID
+	restricted.GET("/patients/:govId/health-records/:specialtyId", s.PatientsGovIDHealthRecordsSpecialtyIDGet)
 
-	// PatientsGovIdOrdersGet - List health orders by patient
-	restricted.GET("/patients/:govId/orders", s.PatientsGovIdOrdersGet)
+	// PatientsGovIDOrdersGet - List health orders by patient
+	restricted.GET("/patients/:govId/orders", s.PatientsGovIDOrdersGet)
 
 	// PatientsLoginPost -
 	unrestricted.POST("/patients/login", s.PatientsLoginPost)

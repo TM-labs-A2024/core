@@ -10,22 +10,13 @@ type Doctor struct {
 	InstitutionID uuid.UUID `json:"institutionId"`
 	Firstname     string    `json:"firstname"`
 	Lastname      string    `json:"lastname"`
-	GovId         string    `json:"govId"`
+	GovID         string    `json:"govId"`
 	Birthdate     string    `json:"birthdate"`
 	Email         string    `json:"email"`
 	PhoneNumber   string    `json:"phoneNumber"`
 	Credentials   string    `json:"credentials"`
 	Sex           string    `json:"sex"`
 }
-
-// DoctorEnrollmentRequest <= NOT USED ON API, ONLY db
-// type DoctorEnrollmentRequest struct {
-// 	InstitutionUUID  uuid.UUID `json:"institutionId"`
-// 	DoctorUUID       uuid.UUID `json:"doctorId"`
-// 	Pending          bool   `json:"pending"`
-// 	Approved         bool   `json:"approved"`
-// 	ProfessionalType string `json:"professional-type"`
-// }
 
 type DoctorAccessRequest struct {
 	PatientID uuid.UUID `json:"patientId"`
@@ -42,26 +33,11 @@ type DoctorPutAccessRequest struct {
 type DoctorAccessResponse DoctorPutAccessRequest
 
 func NewDoctorAccessResponse(dar db.DoctorAccessRequest) (DoctorAccessResponse, error) {
-	darID, err := uuid.FromBytes(dar.ID.Bytes[:])
-	if err != nil {
-		return DoctorAccessResponse{}, err
-	}
-
-	doctorID, err := uuid.FromBytes(dar.DoctorID.Bytes[:])
-	if err != nil {
-		return DoctorAccessResponse{}, err
-	}
-
-	patientID, err := uuid.FromBytes(dar.PatientID.Bytes[:])
-	if err != nil {
-		return DoctorAccessResponse{}, err
-	}
-
 	return DoctorAccessResponse{
-		ID: darID,
+		ID: dar.ID.Bytes,
 		DoctorAccessRequest: DoctorAccessRequest{
-			PatientID: patientID,
-			DoctorID:  doctorID,
+			PatientID: dar.PatientID.Bytes,
+			DoctorID:  dar.DoctorID.Bytes,
 			Pending:   dar.Pending,
 			Approved:  dar.Approved,
 		},
@@ -83,7 +59,7 @@ type DoctorsPutRequest struct {
 type DoctorsResponse struct {
 	ID uuid.UUID `json:"id"`
 	Doctor
-	Specialities   []Specialty `json:"specialities"`
+	Specialities   []Specialty `json:"specialties"`
 	Pending        bool        `json:"pending"`
 	PatientPending bool        `json:"patientPending"`
 }
@@ -122,7 +98,7 @@ func NewDoctorResponse(args NewDoctorResponseArgs) (DoctorsResponse, error) {
 			InstitutionID: institutionID,
 			Firstname:     args.Doctor.Firstname,
 			Lastname:      args.Doctor.Lastname,
-			GovId:         args.Doctor.GovID,
+			GovID:         args.Doctor.GovID,
 			Birthdate:     args.Doctor.Birthdate.Time.Format(constants.ISOLayout),
 			Email:         args.Doctor.Email,
 			PhoneNumber:   args.Doctor.PhoneNumber,

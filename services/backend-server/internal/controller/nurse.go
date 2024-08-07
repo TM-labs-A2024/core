@@ -18,9 +18,9 @@ func (c Controller) DeleteNurseByID(nurseID uuid.UUID) error {
 	})
 }
 
-func (c Controller) GetNurseByID(nurseId uuid.UUID) (db.Nurse, error) {
+func (c Controller) GetNurseByID(nurseID uuid.UUID) (db.Nurse, error) {
 	return c.queries.GetNurseByID(context.Background(), pgtype.UUID{
-		Bytes: nurseId,
+		Bytes: nurseID,
 		Valid: true,
 	})
 }
@@ -53,7 +53,7 @@ func (c Controller) CreateNurse(req models.NursePostRequest) (db.Nurse, error) {
 		},
 		Firstname: req.Firstname,
 		Lastname:  req.Lastname,
-		GovID:     req.GovId,
+		GovID:     req.GovID,
 		Birthdate: pgtype.Timestamp{
 			Valid: true,
 			Time:  birthdate,
@@ -83,7 +83,7 @@ func (c Controller) UpdateNurse(req models.NursesPutRequest) (db.Nurse, error) {
 		},
 		Firstname: req.Firstname,
 		Lastname:  req.Lastname,
-		GovID:     req.GovId,
+		GovID:     req.GovID,
 		Birthdate: pgtype.Timestamp{
 			Valid: true,
 			Time:  birthdate,
@@ -91,7 +91,6 @@ func (c Controller) UpdateNurse(req models.NursesPutRequest) (db.Nurse, error) {
 		Email:       req.Email,
 		PhoneNumber: req.PhoneNumber,
 		Credentials: req.Credentials,
-		Crypt:       req.Password,
 		ID: pgtype.UUID{
 			Valid: true,
 			Bytes: req.ID,
@@ -109,9 +108,9 @@ func (c Controller) ListNurses() ([]db.Nurse, error) {
 	return c.queries.ListNurses(context.Background())
 }
 
-func (c Controller) ListNursesByInstitutionID(institutionId uuid.UUID) ([]db.Nurse, error) {
+func (c Controller) ListNursesByInstitutionID(institutionID uuid.UUID) ([]db.Nurse, error) {
 	return c.queries.ListNursesByInstitutionID(context.Background(), pgtype.UUID{
 		Valid: true,
-		Bytes: institutionId,
+		Bytes: institutionID,
 	})
 }

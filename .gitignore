@@ -1,2 +1,5 @@
 _postgres-data
 records
+.vscode
+.local_utils
+config.yaml
