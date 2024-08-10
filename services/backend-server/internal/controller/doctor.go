@@ -187,46 +187,6 @@ func (c Controller) UpdateDoctorByID(req models.DoctorsPutRequest) (db.Doctor, e
 		return db.Doctor{}, err
 	}
 
-	specialties, err := txQuery.ListSpecialtyDoctorJunctionsByDoctorID(
-		context.Background(),
-		pgtype.UUID{
-			Bytes: req.ID,
-			Valid: true,
-		},
-	)
-	if err != nil {
-		c.logger.Debug("error message3:", slog.String("err", err.Error()))
-		return db.Doctor{}, err
-	}
-
-	specialtiesToAdd := map[uuid.UUID]bool{}
-	for _, specialty := range req.Specialties {
-		specialtiesToAdd[specialty] = true
-	}
-
-	toDelete := []db.DoctorSpecialty{}
-	for _, specialty := range specialties {
-		specialtyID, err := uuid.FromBytes(specialty.SpecialtyID.Bytes[:])
-		if err != nil {
-			return db.Doctor{}, err
-		}
-		if _, ok := specialtiesToAdd[specialtyID]; !ok {
-			toDelete = append(toDelete, specialty)
-		} else {
-			specialtiesToAdd[specialty.SpecialtyID.Bytes] = false
-		}
-	}
-
-	for _, specialty := range toDelete {
-		if err := txQuery.DeleteSpecialtyDoctorJunction(
-			context.Background(),
-			db.DeleteSpecialtyDoctorJunctionParams(specialty),
-		); err != nil {
-			c.logger.Debug("error message4:", slog.String("err", err.Error()))
-			return db.Doctor{}, err
-		}
-	}
-
 	doctor, err := txQuery.UpdateDoctorByID(
 		context.Background(),
 		db.UpdateDoctorByIDParams{
@@ -251,12 +211,59 @@ func (c Controller) UpdateDoctorByID(req models.DoctorsPutRequest) (db.Doctor, e
 			Sex:         req.Sex,
 		})
 	if err != nil {
-		c.logger.Debug("error message5:", slog.String("err", err.Error()))
 		return db.Doctor{}, err
 	}
 
+	specialties, err := txQuery.ListSpecialtyDoctorJunctionsByDoctorID(
+		context.Background(),
+		pgtype.UUID{
+			Bytes: req.ID,
+			Valid: true,
+		},
+	)
+	if err != nil {
+		return db.Doctor{}, err
+	}
+
+	specialtiesToAdd := map[uuid.UUID]bool{}
+	for _, specialty := range req.Specialties {
+		specialtiesToAdd[specialty] = true
+	}
+
+	toDelete := []db.DoctorSpecialty{}
+	for _, specialty := range specialties {
+		if _, ok := specialtiesToAdd[specialty.SpecialtyID.Bytes]; !ok {
+			toDelete = append(toDelete, specialty)
+		} else {
+			specialtiesToAdd[specialty.SpecialtyID.Bytes] = false
+		}
+	}
+
+	for _, specialty := range toDelete {
+		if err := txQuery.DeleteSpecialtyDoctorJunction(
+			context.Background(),
+			db.DeleteSpecialtyDoctorJunctionParams(specialty),
+		); err != nil {
+			return db.Doctor{}, err
+		}
+	}
+
+	for specialty, toAdd := range specialtiesToAdd {
+		if toAdd {
+			txQuery.CreateSpecialtyDoctorJunction(
+				context.Background(),
+				db.CreateSpecialtyDoctorJunctionParams{
+					DoctorID: doctor.ID,
+					SpecialtyID: pgtype.UUID{
+						Valid: true,
+						Bytes: specialty,
+					},
+				},
+			)
+		}
+	}
+
 	if err := tx.Commit(context.Background()); err != nil {
-		c.logger.Debug("errozr message6:", slog.String("err", err.Error()))
 		return db.Doctor{}, err
 	}
 

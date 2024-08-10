@@ -23,6 +23,10 @@ case $CMD in
     "build")
         compose-build
         ;;
+    "up-build")
+        compose-build
+        compose-up
+        ;;
     *)
         echo "Unknown command."
         ;;

@@ -40,9 +40,7 @@ services:
       - 7050:7050
       - 7053:7053
       - 9443:9443
-    networks:
-      - tm-network
-
+      
   peer0.main.tmlabs.com:
     container_name: peer0.main.tmlabs.com
     image: hyperledger/fabric-peer:latest
@@ -83,8 +81,6 @@ services:
     ports:
       - 7051:7051
       - 9444:9444
-    networks:
-      - tm-network
 
   peer0.aux.tmlabs.com:
     container_name: peer0.aux.tmlabs.com
@@ -126,5 +122,3 @@ services:
     ports:
       - 9051:9051
       - 9445:9445
-    networks:
-      - tm-network  

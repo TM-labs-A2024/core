@@ -3,10 +3,6 @@ volumes:
   peer0.main.tmlabs.com:
   peer0.aux.tmlabs.com:
 
-networks:
-  tm-network:
-    name: tm-network
-
 services:
   backend.tmlabs.com:
     build:
@@ -18,8 +14,8 @@ services:
         condition: service_healthy
     volumes:
       - ./records:/records
-    networks:
-      - tm-network
+      - ./config.yaml:/config.yaml
+
   
   db.tmlabs.com:
     image: postgres:16
@@ -42,8 +38,6 @@ services:
       interval: 30s
       timeout: 1m
       retries: 50
-    networks:
-      - tm-network
 
   orderer.tmlabs.com:
     extends:
