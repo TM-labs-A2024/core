@@ -297,7 +297,7 @@ func (c Controller) CreateInstitution(institution models.Institution, user model
 		Name:         institution.Name,
 		Address:      institution.Address,
 		Credentials:  institution.Credentials,
-		Type:         db.InstitutionType(db.InstitutionType(institution.Type)),
+		Type:         db.InstitutionType(institution.Type),
 		GovID:        institution.GovID,
 	})
 	if err != nil {

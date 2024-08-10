@@ -1257,7 +1257,7 @@ components:
         content:
           type: string
           format: url
-          example: example.com/some/path/to/record
+          example: tmlabs/some/path/to/record
         type:
           type: string
           example: evolution

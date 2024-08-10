@@ -1,0 +1,10 @@
+PeerOrgs:
+  - Name: TM-Labs-Main
+    Domain: main.tmlabs.com
+    EnableNodeOUs: true
+    Template:
+      Count: 1
+      SANS:
+        - localhost
+    Users:
+      Count: 1

@@ -104,7 +104,8 @@ INSERT INTO doctor(
         sex,
         password,
         phone_number,
-        credentials
+        credentials,
+        sex
     )
 VALUES (
         $1,
@@ -116,7 +117,8 @@ VALUES (
         $7,
         crypt($8, gen_salt('bf')),
         $9,
-        $10
+        $10,
+        $11
     )
 RETURNING created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, sex, password, phone_number, credentials, pending, patient_pending
 `
@@ -132,6 +134,7 @@ type CreateDoctorParams struct {
 	Crypt         string
 	PhoneNumber   string
 	Credentials   string
+	Sex_2         string
 }
 
 func (q *Queries) CreateDoctor(ctx context.Context, arg CreateDoctorParams) (Doctor, error) {
@@ -146,6 +149,7 @@ func (q *Queries) CreateDoctor(ctx context.Context, arg CreateDoctorParams) (Doc
 		arg.Crypt,
 		arg.PhoneNumber,
 		arg.Credentials,
+		arg.Sex_2,
 	)
 	var i Doctor
 	err := row.Scan(

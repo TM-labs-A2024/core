@@ -38,7 +38,7 @@ func (c Controller) CreateGovernmentEnrollmentRequest(institutionID, governmentI
 				Bytes: governmentID,
 			},
 		},
-	)
+	)	
 	if err != nil {
 		return db.GovernmentEnrollmentRequest{}, err
 	}

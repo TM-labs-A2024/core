@@ -90,7 +90,8 @@ INSERT INTO doctor(
         sex,
         password,
         phone_number,
-        credentials
+        credentials,
+        sex
     )
 VALUES (
         $1,
@@ -102,7 +103,8 @@ VALUES (
         $7,
         crypt($8, gen_salt('bf')),
         $9,
-        $10
+        $10,
+        $11
     )
 RETURNING *;
 -- name: UpdateDoctorByID :one
