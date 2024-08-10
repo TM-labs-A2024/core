@@ -113,12 +113,8 @@ func (s *Server) PatientsAccessRequestsGet(ctx echo.Context) error {
 func (s *Server) PatientsGet(ctx echo.Context) error {
 	user := ctx.Get("user").(*jwt.Token)
 	claims := user.Claims.(*controller.JWTCustomClaims)
-	doctorID, err := uuid.Parse(claims.ID)
-	if err != nil {
-		return err
-	}
 
-	patients, err := s.Controller.ListPatients(doctorID)
+	patients, err := s.Controller.ListPatients(claims.UserID)
 	if err != nil {
 		return err
 	}
