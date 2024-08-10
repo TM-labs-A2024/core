@@ -135,6 +135,10 @@ func (s *Server) PatientsGet(ctx echo.Context) error {
 // PatientsGovIDDoctorsGet - Returns a list of doctors treating patients
 func (s *Server) PatientsGovIDDoctorsGet(ctx echo.Context) error {
 	govID := ctx.Param("govId")
+	patient, err := s.Controller.GetPatientByGovID(govID)
+	if err != nil {
+		return err
+	}
 
 	doctors, err := s.Controller.ListPatientApprovedDoctorsByGovID(govID)
 	if err != nil {
@@ -148,6 +152,15 @@ func (s *Server) PatientsGovIDDoctorsGet(ctx echo.Context) error {
 			return err
 		}
 
+		ar, err := s.Controller.GetAccessRequestByPatientAndDoctorID(
+			doctor.ID.Bytes,
+			patient.ID.Bytes,
+		)
+		if err != nil {
+			return err
+		}
+
+		doctor.PatientPending = ar.Pending
 		resp, err := models.NewDoctorResponse(models.NewDoctorResponseArgs{
 			Doctor:      doctor,
 			Specialties: specialties,

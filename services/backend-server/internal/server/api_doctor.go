@@ -34,6 +34,11 @@ func (s *Server) DoctorsDoctorIDGet(ctx echo.Context) error {
 		return ctx.String(http.StatusBadRequest, err.Error())
 	}
 
+	user := ctx.Get("user").(*jwt.Token)
+	claims := user.Claims.(*controller.JWTCustomClaims)
+	_, err = s.Controller.GetPatientByID(claims.UserID)
+	userIsPatient := err == nil
+
 	doctor, err := s.Controller.GetDoctorByID(doctorID)
 	if err != nil {
 		return err
@@ -42,6 +47,16 @@ func (s *Server) DoctorsDoctorIDGet(ctx echo.Context) error {
 	specialties, err := s.Controller.ListSpecialtiesByDoctorID(doctor.ID.Bytes)
 	if err != nil {
 		return err
+	}
+
+	if userIsPatient {
+		ar, err := s.Controller.GetAccessRequestByPatientAndDoctorID(
+			doctor.ID.Bytes,
+			claims.UserID,
+		)
+		if err == nil {
+			doctor.PatientPending = ar.Pending
+		}
 	}
 
 	resp, err := models.NewDoctorResponse(models.NewDoctorResponseArgs{
@@ -88,10 +103,26 @@ func (s *Server) DoctorsGet(ctx echo.Context) error {
 	if err != nil {
 		return err
 	}
+
+	user := ctx.Get("user").(*jwt.Token)
+	claims := user.Claims.(*controller.JWTCustomClaims)
+	_, err = s.Controller.GetPatientByID(claims.UserID)
+	userIsPatient := err == nil
+
 	for _, doctor := range doctors {
 		speciaties, err := s.Controller.ListSpecialtiesByDoctorID(doctor.ID.Bytes)
 		if err != nil {
 			return err
+		}
+
+		if userIsPatient {
+			ar, err := s.Controller.GetAccessRequestByPatientAndDoctorID(
+				doctor.ID.Bytes,
+				claims.UserID,
+			)
+			if err == nil {
+				doctor.PatientPending = ar.Pending
+			}
 		}
 
 		resp, err := models.NewDoctorResponse(models.NewDoctorResponseArgs{
@@ -117,6 +148,11 @@ func (s *Server) DoctorsInstitutionIDGet(ctx echo.Context) error {
 		return ctx.String(http.StatusBadRequest, err.Error())
 	}
 
+	user := ctx.Get("user").(*jwt.Token)
+	claims := user.Claims.(*controller.JWTCustomClaims)
+	_, err = s.Controller.GetPatientByID(claims.UserID)
+	userIsPatient := err == nil
+
 	doctors, err := s.Controller.ListDoctorsByInstitutionID(institutionID)
 	if err != nil {
 		return err
@@ -126,6 +162,16 @@ func (s *Server) DoctorsInstitutionIDGet(ctx echo.Context) error {
 		speciaties, err := s.Controller.ListSpecialtiesByDoctorID(doctor.ID.Bytes)
 		if err != nil {
 			return err
+		}
+
+		if userIsPatient {
+			ar, err := s.Controller.GetAccessRequestByPatientAndDoctorID(
+				doctor.ID.Bytes,
+				claims.UserID,
+			)
+			if err == nil {
+				doctor.PatientPending = ar.Pending
+			}
 		}
 
 		resp, err := models.NewDoctorResponse(models.NewDoctorResponseArgs{
@@ -248,6 +294,11 @@ func (s *Server) DoctorsSpecialtyIDGet(ctx echo.Context) error {
 		return ctx.String(http.StatusBadRequest, err.Error())
 	}
 
+	user := ctx.Get("user").(*jwt.Token)
+	claims := user.Claims.(*controller.JWTCustomClaims)
+	_, err = s.Controller.GetPatientByID(claims.UserID)
+	userIsPatient := err == nil
+
 	specialtyDoctorJunctions, err := s.Controller.ListDoctorsBySpecialtyID(specialtyID)
 	if err != nil {
 		return err
@@ -262,6 +313,16 @@ func (s *Server) DoctorsSpecialtyIDGet(ctx echo.Context) error {
 		speciaties, err := s.Controller.ListSpecialtiesByDoctorID(doctor.ID.Bytes)
 		if err != nil {
 			return err
+		}
+
+		if userIsPatient {
+			ar, err := s.Controller.GetAccessRequestByPatientAndDoctorID(
+				doctor.ID.Bytes,
+				claims.UserID,
+			)
+			if err == nil {
+				doctor.PatientPending = ar.Pending
+			}
 		}
 
 		resp, err := models.NewDoctorResponse(models.NewDoctorResponseArgs{
