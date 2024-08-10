@@ -183,10 +183,8 @@ SET firstname = $1,
     pending = $8,
     status = $9,
     bed = $10,
-    private_key = $11,
-    blockchain_address = $12,
-    institution_id = $13
-WHERE id = $14
+    institution_id = $11
+WHERE id = $12
 RETURNING *;
 -- name: SetPatientAddressAndPrivateKey :one
 UPDATE patient
@@ -457,6 +455,11 @@ WHERE doctor_id = $1;
 SELECT COUNT (*)
 FROM doctor_access_request
 WHERE doctor_id = $1
+    AND pending = TRUE;
+-- name: CountPendingAccessRequestsByPatientID :one
+SELECT COUNT (*)
+FROM doctor_access_request
+WHERE patient_id = $1
     AND pending = TRUE;
 -- name: CreateAccessRequest :one
 INSERT INTO doctor_access_request(patient_id, doctor_id)

@@ -25,6 +25,20 @@ func (q *Queries) CountPendingAccessRequestsByDoctorID(ctx context.Context, doct
 	return count, err
 }
 
+const countPendingAccessRequestsByPatientID = `-- name: CountPendingAccessRequestsByPatientID :one
+SELECT COUNT (*)
+FROM doctor_access_request
+WHERE patient_id = $1
+    AND pending = TRUE
+`
+
+func (q *Queries) CountPendingAccessRequestsByPatientID(ctx context.Context, patientID pgtype.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countPendingAccessRequestsByPatientID, patientID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const countPendingGovernmentEnrollmentRequestsByInstitutionID = `-- name: CountPendingGovernmentEnrollmentRequestsByInstitutionID :one
 SELECT COUNT (*)
 FROM government_enrollment_request
@@ -2682,28 +2696,24 @@ SET firstname = $1,
     pending = $8,
     status = $9,
     bed = $10,
-    private_key = $11,
-    blockchain_address = $12,
-    institution_id = $13
-WHERE id = $14
+    institution_id = $11
+WHERE id = $12
 RETURNING created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, password, phone_number, sex, pending, status, bed, private_key, blockchain_address
 `
 
 type UpdatePatientByIDParams struct {
-	Firstname         string
-	Lastname          string
-	GovID             string
-	Birthdate         pgtype.Timestamp
-	Email             string
-	PhoneNumber       string
-	Sex               string
-	Pending           bool
-	Status            PatientStatus
-	Bed               string
-	PrivateKey        string
-	BlockchainAddress string
-	InstitutionID     pgtype.UUID
-	ID                pgtype.UUID
+	Firstname     string
+	Lastname      string
+	GovID         string
+	Birthdate     pgtype.Timestamp
+	Email         string
+	PhoneNumber   string
+	Sex           string
+	Pending       bool
+	Status        PatientStatus
+	Bed           string
+	InstitutionID pgtype.UUID
+	ID            pgtype.UUID
 }
 
 func (q *Queries) UpdatePatientByID(ctx context.Context, arg UpdatePatientByIDParams) (Patient, error) {
@@ -2718,8 +2728,6 @@ func (q *Queries) UpdatePatientByID(ctx context.Context, arg UpdatePatientByIDPa
 		arg.Pending,
 		arg.Status,
 		arg.Bed,
-		arg.PrivateKey,
-		arg.BlockchainAddress,
 		arg.InstitutionID,
 		arg.ID,
 	)

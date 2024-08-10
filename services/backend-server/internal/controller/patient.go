@@ -81,22 +81,33 @@ func (c Controller) UpdatePatientByID(req models.PatientPutRequest) (db.Patient,
 		return db.Patient{}, err
 	}
 
-	patient, err := c.queries.UpdatePatientByID(context.Background(), db.UpdatePatientByIDParams{
-		ID: pgtype.UUID{
+	institutionId := pgtype.UUID{}
+	if req.InstitutionID != uuid.Nil {
+		institutionId = pgtype.UUID{
+			Bytes: req.InstitutionID,
 			Valid: true,
-			Bytes: req.ID,
-		},
+		}
+	}
+
+	patient, err := c.queries.UpdatePatientByID(context.Background(), db.UpdatePatientByIDParams{
 		Firstname: req.Firstname,
 		Lastname:  req.Lastname,
 		GovID:     req.GovID,
 		Birthdate: pgtype.Timestamp{
-			Valid: true,
 			Time:  birthdate,
+			Valid: true,
 		},
 		Email:       req.Email,
 		PhoneNumber: req.PhoneNumber,
 		Sex:         req.Sex,
 		Pending:     req.Pending,
+		Status:      db.PatientStatus(req.Status),
+		Bed:         req.Bed,
+		ID: pgtype.UUID{
+			Bytes: req.ID,
+			Valid: true,
+		},
+		InstitutionID: institutionId,
 	})
 	if err != nil {
 		return db.Patient{}, err
@@ -212,7 +223,16 @@ func (c Controller) ListPatientApprovedDoctorsByGovID(govID string) ([]db.Doctor
 }
 
 func (c Controller) CreateAccessRequestWithDoctorAndPatientID(doctorID, patientID uuid.UUID) (db.DoctorAccessRequest, error) {
-	ar, err := c.queries.CreateAccessRequest(
+	tx, err := c.pool.BeginTx(context.Background(), pgx.TxOptions{})
+	if err != nil {
+		c.logger.Debug("error message1:", slog.String("err", err.Error()))
+		return db.DoctorAccessRequest{}, err
+	}
+
+	defer tx.Rollback(context.Background())
+	txQuery := c.queries.WithTx(tx)
+
+	ar, err := txQuery.CreateAccessRequest(
 		context.Background(),
 		db.CreateAccessRequestParams{
 			PatientID: pgtype.UUID{
@@ -226,6 +246,57 @@ func (c Controller) CreateAccessRequestWithDoctorAndPatientID(doctorID, patientI
 		},
 	)
 	if err != nil {
+		return db.DoctorAccessRequest{}, err
+	}
+
+	doctor, err := txQuery.GetDoctorByID(context.Background(), ar.DoctorID)
+	if err != nil {
+		return db.DoctorAccessRequest{}, err
+	}
+
+	if _, err = txQuery.UpdateDoctorByID(
+		context.Background(),
+		db.UpdateDoctorByIDParams{
+			InstitutionID:  doctor.InstitutionID,
+			Firstname:      doctor.Firstname,
+			Lastname:       doctor.Lastname,
+			GovID:          doctor.GovID,
+			Birthdate:      doctor.Birthdate,
+			Email:          doctor.Email,
+			PhoneNumber:    doctor.PhoneNumber,
+			Credentials:    doctor.Credentials,
+			Pending:        true,
+			PatientPending: doctor.PatientPending,
+			Sex:            doctor.Sex,
+			ID:             doctor.ID,
+		},
+	); err != nil {
+		return db.DoctorAccessRequest{}, err
+	}
+
+	patient, err := txQuery.GetPatientByID(context.Background(), ar.PatientID)
+	if err != nil {
+		return db.DoctorAccessRequest{}, err
+	}
+
+	if txQuery.UpdatePatientByID(context.Background(), db.UpdatePatientByIDParams{
+		Firstname:     patient.Firstname,
+		Lastname:      patient.Lastname,
+		GovID:         patient.GovID,
+		Birthdate:     patient.Birthdate,
+		Email:         patient.Email,
+		PhoneNumber:   patient.PhoneNumber,
+		Sex:           patient.Sex,
+		Pending:       true,
+		Status:        patient.Status,
+		Bed:           patient.Bed,
+		InstitutionID: patient.InstitutionID,
+		ID:            patient.ID,
+	}); err != nil {
+		return db.DoctorAccessRequest{}, err
+	}
+
+	if err := tx.Commit(context.Background()); err != nil {
 		return db.DoctorAccessRequest{}, err
 	}
 
@@ -357,6 +428,34 @@ func (c Controller) updateAccessRequestByID(ar db.DoctorAccessRequest, approve b
 			ID:             doctor.ID,
 		},
 	); err != nil {
+		return db.DoctorAccessRequest{}, err
+	}
+
+	patient, err := txQuery.GetPatientByID(context.Background(), ar.PatientID)
+	if err != nil {
+		return db.DoctorAccessRequest{}, err
+	}
+
+	count, err = txQuery.CountPendingAccessRequestsByPatientID(context.Background(), patient.ID)
+	if err != nil {
+		return db.DoctorAccessRequest{}, err
+	}
+
+	patient.Pending = count > 0
+	if txQuery.UpdatePatientByID(context.Background(), db.UpdatePatientByIDParams{
+		Firstname:     patient.Firstname,
+		Lastname:      patient.Lastname,
+		GovID:         patient.GovID,
+		Birthdate:     patient.Birthdate,
+		Email:         patient.Email,
+		PhoneNumber:   patient.PhoneNumber,
+		Sex:           patient.Sex,
+		Pending:       patient.Pending,
+		Status:        patient.Status,
+		Bed:           patient.Bed,
+		InstitutionID: patient.InstitutionID,
+		ID:            patient.ID,
+	}); err != nil {
 		return db.DoctorAccessRequest{}, err
 	}
 
