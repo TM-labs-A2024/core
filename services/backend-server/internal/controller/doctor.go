@@ -271,25 +271,43 @@ func (c Controller) UpdateDoctorByID(req models.DoctorsPutRequest) (db.Doctor, e
 }
 
 func (c Controller) ListPatientsTreatedByDoctorID(id uuid.UUID) ([]db.Patient, error) {
+	doctorId := pgtype.UUID{Bytes: id, Valid: true}
+
 	patients, err := c.queries.ListPatientsTreatedByDoctorID(
 		context.Background(),
-		pgtype.UUID{Bytes: id, Valid: true},
+		doctorId,
 	)
 	if err != nil {
 		return nil, err
+	}
+
+	for i := 0; i < len(patients); i++ {
+		ar, err := c.queries.GetAccessRequestsByPatientAndDoctorID(
+			context.Background(),
+			db.GetAccessRequestsByPatientAndDoctorIDParams{
+				PatientID: patients[i].ID,
+				DoctorID:  doctorId,
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		patients[i].Pending = ar.Pending
 	}
 
 	return patients, nil
 }
 
 func (c Controller) ListPatientsTreatedByDoctorIDWithHealthRecordOfSpecialtyID(doctorID, specialtyID uuid.UUID) ([]db.Patient, error) {
+	dbDoctorID := pgtype.UUID{
+		Valid: true,
+		Bytes: doctorID,
+	}
 	patients, err := c.queries.ListPatientsTreatedByDoctorIDWithHealthRecordOfSpecialtyID(
 		context.Background(),
 		db.ListPatientsTreatedByDoctorIDWithHealthRecordOfSpecialtyIDParams{
-			DoctorID: pgtype.UUID{
-				Valid: true,
-				Bytes: doctorID,
-			},
+			DoctorID: dbDoctorID,
 			SpecialtyID: pgtype.UUID{
 				Valid: true,
 				Bytes: specialtyID,
@@ -298,6 +316,21 @@ func (c Controller) ListPatientsTreatedByDoctorIDWithHealthRecordOfSpecialtyID(d
 	)
 	if err != nil {
 		return nil, err
+	}
+
+	for i := 0; i < len(patients); i++ {
+		ar, err := c.queries.GetAccessRequestsByPatientAndDoctorID(
+			context.Background(),
+			db.GetAccessRequestsByPatientAndDoctorIDParams{
+				PatientID: patients[i].ID,
+				DoctorID:  dbDoctorID,
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		patients[i].Pending = ar.Pending
 	}
 
 	return patients, nil

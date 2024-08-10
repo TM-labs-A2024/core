@@ -111,7 +111,14 @@ func (s *Server) PatientsAccessRequestsGet(ctx echo.Context) error {
 
 // PatientsGet - List ALL patients
 func (s *Server) PatientsGet(ctx echo.Context) error {
-	patients, err := s.Controller.ListPatients()
+	user := ctx.Get("user").(*jwt.Token)
+	claims := user.Claims.(*controller.JWTCustomClaims)
+	doctorID, err := uuid.Parse(claims.ID)
+	if err != nil {
+		return err
+	}
+
+	patients, err := s.Controller.ListPatients(doctorID)
 	if err != nil {
 		return err
 	}

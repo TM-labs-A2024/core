@@ -6,7 +6,6 @@ import (
 	"crypto/cipher"
 	"encoding/base64"
 	"fmt"
-	"log"
 	mrand "math/rand"
 	"strings"
 	"time"
@@ -113,7 +112,5 @@ func GenerateKey(patientId uuid.UUID, iv string) (string, error) {
 		return "", err
 	}
 
-	log.Println(len(shortedId), shortedId, encrypted, randomString)
-
-	return encrypted, nil
+	return encrypted[:32], nil
 }

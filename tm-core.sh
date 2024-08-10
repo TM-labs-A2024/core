@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 DOCKER_COMPOSE='docker compose'
 # Get docker sock path from environment variable
 SOCK="${DOCKER_HOST:-/var/run/docker.sock}"

@@ -152,10 +152,12 @@ func (c Controller) GetPatientByGovID(govID string) (db.Patient, error) {
 }
 
 func (c Controller) GetPatientByID(id uuid.UUID) (db.Patient, error) {
-	patient, err := c.queries.GetPatientByID(context.Background(), pgtype.UUID{
+	patientId := pgtype.UUID{
 		Bytes: id,
 		Valid: true,
-	})
+	}
+
+	patient, err := c.queries.GetPatientByID(context.Background(), patientId)
 	if err != nil {
 		return db.Patient{}, err
 	}
@@ -163,13 +165,37 @@ func (c Controller) GetPatientByID(id uuid.UUID) (db.Patient, error) {
 	return patient, nil
 }
 
-func (c Controller) ListPatients() ([]db.Patient, error) {
+func (c Controller) ListPatients(doctorID uuid.UUID) ([]db.Patient, error) {
 	patients, err := c.queries.ListPatients(context.Background())
 	if err != nil {
 		return nil, err
 	}
 
-	return patients, nil
+	ars, err := c.queries.ListAccessRequestsByDoctorID(context.Background(), pgtype.UUID{
+		Bytes: doctorID,
+		Valid: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	approvedPatientLedger := map[pgtype.UUID]bool{}
+	for _, ar := range ars {
+		approvedPatientLedger[ar.PatientID] = ar.Approved
+	}
+
+	result := []db.Patient{}
+	for _, patient := range patients {
+		if approved, ok := approvedPatientLedger[patient.ID]; ok && approved {
+			continue
+		} else if ok && !approved {
+			patient.Pending = true
+		}
+
+		result = append(result, patient)
+	}
+
+	return result, nil
 }
 
 func (c Controller) ListHealthRecordPatientsGovID(govID string) ([]db.HealthRecord, error) {
