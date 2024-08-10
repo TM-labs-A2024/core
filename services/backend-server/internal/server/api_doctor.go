@@ -8,7 +8,6 @@ import (
 	"github.com/TM-labs-A2024/core/services/backend-server/internal/server/models"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 	"github.com/labstack/echo/v4"
 )
 
@@ -45,24 +44,9 @@ func (s *Server) DoctorsDoctorIDGet(ctx echo.Context) error {
 		return err
 	}
 
-	accessRequests, err := s.Controller.ListAccessRequestsByDoctorID(doctor.ID.Bytes)
-	if err != nil && err != pgx.ErrNoRows {
-		return err
-	}
-
-	enrollmentRequests, err := s.Controller.GetInstitutionEnrollmentRequestByDoctorIDAndInstitutionID(
-		doctor.ID.Bytes,
-		doctor.InstitutionID.Bytes,
-	)
-	if err != nil && err != pgx.ErrNoRows {
-		return err
-	}
-
 	resp, err := models.NewDoctorResponse(models.NewDoctorResponseArgs{
-		Doctor:         doctor,
-		Specialties:    specialties,
-		PatientPending: len(accessRequests) != 0,
-		Pending:        enrollmentRequests.Pending,
+		Doctor:      doctor,
+		Specialties: specialties,
 	})
 	if err != nil {
 		return err
@@ -110,24 +94,9 @@ func (s *Server) DoctorsGet(ctx echo.Context) error {
 			return err
 		}
 
-		accessRequests, err := s.Controller.ListAccessRequestsByDoctorID(doctor.ID.Bytes)
-		if err != nil && err != pgx.ErrNoRows {
-			return err
-		}
-
-		enrollmentRequests, err := s.Controller.GetInstitutionEnrollmentRequestByDoctorIDAndInstitutionID(
-			doctor.ID.Bytes,
-			doctor.InstitutionID.Bytes,
-		)
-		if err != nil && err != pgx.ErrNoRows {
-			return err
-		}
-
 		resp, err := models.NewDoctorResponse(models.NewDoctorResponseArgs{
-			Doctor:         doctor,
-			Specialties:    speciaties,
-			PatientPending: len(accessRequests) != 0,
-			Pending:        enrollmentRequests.Pending,
+			Doctor:      doctor,
+			Specialties: speciaties,
 		})
 		if err != nil {
 			return err
@@ -159,24 +128,9 @@ func (s *Server) DoctorsInstitutionIDGet(ctx echo.Context) error {
 			return err
 		}
 
-		accessRequests, err := s.Controller.ListAccessRequestsByDoctorID(doctor.ID.Bytes)
-		if err != nil && err != pgx.ErrNoRows {
-			return err
-		}
-
-		enrollmentRequests, err := s.Controller.GetInstitutionEnrollmentRequestByDoctorIDAndInstitutionID(
-			doctor.ID.Bytes,
-			doctor.InstitutionID.Bytes,
-		)
-		if err != nil && err != pgx.ErrNoRows {
-			return err
-		}
-
 		resp, err := models.NewDoctorResponse(models.NewDoctorResponseArgs{
-			Doctor:         doctor,
-			Specialties:    speciaties,
-			PatientPending: len(accessRequests) != 0,
-			Pending:        enrollmentRequests.Pending,
+			Doctor:      doctor,
+			Specialties: speciaties,
 		})
 		if err != nil {
 			return err
@@ -205,29 +159,14 @@ func (s *Server) DoctorsLoginPost(ctx echo.Context) error {
 		return err
 	}
 
-	accessRequests, err := s.Controller.ListAccessRequestsByDoctorID(doctor.ID.Bytes)
-	if err != nil && err != pgx.ErrNoRows {
-		return err
-	}
-
-	enrollmentRequests, err := s.Controller.GetInstitutionEnrollmentRequestByDoctorIDAndInstitutionID(
-		doctor.ID.Bytes,
-		doctor.InstitutionID.Bytes,
-	)
-	if err != nil && err != pgx.ErrNoRows {
-		return err
-	}
-
 	token, err := controller.NewClaim(doctor.ID.Bytes, doctor.InstitutionID.Bytes)
 	if err != nil {
 		return err
 	}
 
 	resp, err := models.NewDoctorResponse(models.NewDoctorResponseArgs{
-		Doctor:         doctor,
-		Specialties:    speciaties,
-		PatientPending: len(accessRequests) != 0,
-		Pending:        enrollmentRequests.Pending,
+		Doctor:      doctor,
+		Specialties: speciaties,
 	})
 	if err != nil {
 		return err
@@ -325,24 +264,9 @@ func (s *Server) DoctorsSpecialtyIDGet(ctx echo.Context) error {
 			return err
 		}
 
-		accessRequests, err := s.Controller.ListAccessRequestsByDoctorID(doctor.ID.Bytes)
-		if err != nil && err != pgx.ErrNoRows {
-			return err
-		}
-
-		enrollmentRequests, err := s.Controller.GetInstitutionEnrollmentRequestByDoctorIDAndInstitutionID(
-			doctor.ID.Bytes,
-			doctor.InstitutionID.Bytes,
-		)
-		if err != nil && err != pgx.ErrNoRows {
-			return err
-		}
-
 		resp, err := models.NewDoctorResponse(models.NewDoctorResponseArgs{
-			Doctor:         doctor,
-			Specialties:    speciaties,
-			PatientPending: len(accessRequests) != 0,
-			Pending:        enrollmentRequests.Pending,
+			Doctor:      doctor,
+			Specialties: speciaties,
 		})
 		if err != nil {
 			return err

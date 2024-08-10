@@ -65,10 +65,8 @@ type DoctorsResponse struct {
 }
 
 type NewDoctorResponseArgs struct {
-	Doctor         db.Doctor
-	Specialties    []db.Specialty
-	PatientPending bool
-	Pending        bool
+	Doctor      db.Doctor
+	Specialties []db.Specialty
 }
 
 func NewDoctorResponse(args NewDoctorResponseArgs) (DoctorsResponse, error) {

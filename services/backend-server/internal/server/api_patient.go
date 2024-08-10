@@ -8,7 +8,6 @@ import (
 	"github.com/TM-labs-A2024/core/services/backend-server/internal/server/models"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 	"github.com/labstack/echo/v4"
 )
 
@@ -146,24 +145,9 @@ func (s *Server) PatientsGovIDDoctorsGet(ctx echo.Context) error {
 			return err
 		}
 
-		accessRequests, err := s.Controller.ListAccessRequestsByDoctorID(doctor.ID.Bytes)
-		if err != nil && err != pgx.ErrNoRows {
-			return err
-		}
-
-		enrollmentRequests, err := s.Controller.GetInstitutionEnrollmentRequestByDoctorIDAndInstitutionID(
-			doctor.ID.Bytes,
-			doctor.InstitutionID.Bytes,
-		)
-		if err != nil && err != pgx.ErrNoRows {
-			return err
-		}
-
 		resp, err := models.NewDoctorResponse(models.NewDoctorResponseArgs{
-			Doctor:         doctor,
-			Specialties:    specialties,
-			PatientPending: len(accessRequests) != 0,
-			Pending:        enrollmentRequests.ID.Valid,
+			Doctor:      doctor,
+			Specialties: specialties,
 		})
 		if err != nil {
 			return err
