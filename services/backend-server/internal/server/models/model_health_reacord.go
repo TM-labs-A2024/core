@@ -65,5 +65,6 @@ func NewHealthRecordResponse(res db.CreateHealthRecordResult, content string) (H
 			Author:        res.HealthRecord.Author,
 		},
 		Specialty: specialty,
+		CreatedAt: res.HealthRecord.CreatedAt.Time,
 	}, nil
 }
