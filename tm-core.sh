@@ -21,12 +21,14 @@ compose-build() {
 start-blockchain() {
     cd $BLOCKCHAIN
     ./network.sh up createChannel -c tm-healthcore -ca
-    ./network.sh deployCC -ccn health-record -ccp ../chaincode/ -ccl go
+    ./network.sh deployCC -ccn health-record -ccp ../chaincode/ -ccl go -c tm-healthcore
 }
 
 clean-blockchain() {
     cd $BLOCKCHAIN
     ./network.sh down
+    cd $ROOT
+    ${DOCKER_COMPOSE}  -f ./docker-compose.yaml down --remove-orphans
 }
 
 case $CMD in
@@ -44,6 +46,7 @@ case $CMD in
         clean-blockchain
         ;;
     "chain-up")
+        git lfs pull
         start-blockchain
         ;;
     *)

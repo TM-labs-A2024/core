@@ -10,6 +10,9 @@ services:
     volumes:
       - ./records:/records
       - ./config.yaml:/config.yaml
+      - ./services/hyperledger/tm-network/organizations/peerOrganizations/org1.tmlabs.com:/hyperledger/tm-network/organizations/peerOrganizations/org1.tmlabs.com
+    networks:
+      - backend-network
 
   db.tmlabs.com:
     image: postgres:16
@@ -28,3 +31,10 @@ services:
       interval: 30s
       timeout: 1m
       retries: 50
+    networks:
+      - backend-network
+
+networks:
+  backend-network:
+    name: fabric_test
+    external: true

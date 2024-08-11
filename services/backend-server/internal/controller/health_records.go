@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log/slog"
 	"math/rand"
@@ -148,6 +149,13 @@ func (c Controller) DeleteHealthRecordByID(id uuid.UUID) error {
 	})
 }
 
+func (c Controller) DeleteHealthRecordDataByID(id uuid.UUID) error {
+	return c.queries.DeleteHealthRecordByID(context.Background(), pgtype.UUID{
+		Bytes: id,
+		Valid: true,
+	})
+}
+
 func (c Controller) GetHealthRecordByID(id uuid.UUID) (db.HealthRecord, error) {
 	return c.queries.GetHealthRecordByID(context.Background(), pgtype.UUID{
 		Bytes: id,
@@ -156,12 +164,6 @@ func (c Controller) GetHealthRecordByID(id uuid.UUID) (db.HealthRecord, error) {
 }
 
 func (c Controller) createHealthRecord(txQuery *db.Queries, args CreateHealthRecordArgs) (db.CreateHealthRecordResult, error) {
-	key, err := c.storage.UploadFile(args.PatientID, args.Payload)
-	if err != nil {
-		c.DeleteFile(key)
-		return db.CreateHealthRecordResult{}, err
-	}
-
 	doctor, err := txQuery.GetDoctorByID(
 		context.TODO(),
 		pgtype.UUID{
@@ -170,8 +172,7 @@ func (c Controller) createHealthRecord(txQuery *db.Queries, args CreateHealthRec
 		},
 	)
 	if err != nil {
-		c.DeleteFile(key)
-		return db.CreateHealthRecordResult{}, err
+		return db.CreateHealthRecordResult{}, fmt.Errorf("could not find doctor: %w", err)
 	}
 
 	specialty, err := txQuery.GetSpecialtyByID(
@@ -181,8 +182,7 @@ func (c Controller) createHealthRecord(txQuery *db.Queries, args CreateHealthRec
 			Valid: true,
 		})
 	if err != nil {
-		c.DeleteFile(key)
-		return db.CreateHealthRecordResult{}, err
+		return db.CreateHealthRecordResult{}, fmt.Errorf("could not find specialty: %w", err)
 	}
 
 	patient, err := txQuery.GetPatientByID(
@@ -193,7 +193,26 @@ func (c Controller) createHealthRecord(txQuery *db.Queries, args CreateHealthRec
 		},
 	)
 	if err != nil {
-		c.DeleteFile(key)
+		return db.CreateHealthRecordResult{}, fmt.Errorf("could not find patient: %w", err)
+	}
+
+	ar, err := txQuery.GetAccessRequestsByPatientAndDoctorID(
+		context.TODO(),
+		db.GetAccessRequestsByPatientAndDoctorIDParams{
+			PatientID: patient.ID,
+			DoctorID:  doctor.ID,
+		},
+	)
+	if err != nil {
+		return db.CreateHealthRecordResult{}, fmt.Errorf("could not find access request: %w", err)
+	}
+
+	if !ar.Approved {
+		return db.CreateHealthRecordResult{}, fmt.Errorf("only approved doctors can upload health-rcords")
+	}
+
+	key, err := c.storage.UploadFile(args.PatientID, args.Payload)
+	if err != nil {
 		return db.CreateHealthRecordResult{}, err
 	}
 
@@ -203,6 +222,7 @@ func (c Controller) createHealthRecord(txQuery *db.Queries, args CreateHealthRec
 		c.ivEncryptionKey,
 	)
 	if err != nil {
+		c.DeleteFile(key)
 		return db.CreateHealthRecordResult{}, err
 	}
 
@@ -222,6 +242,14 @@ func (c Controller) createHealthRecord(txQuery *db.Queries, args CreateHealthRec
 	if err != nil {
 		c.DeleteFile(key)
 		return db.CreateHealthRecordResult{}, err
+	}
+
+	if err := c.blockchain.CreateHealthRecord(
+		patient.BlockchainAddress,
+		encryptedURL,
+	); err != nil {
+		c.DeleteFile(key)
+		return db.CreateHealthRecordResult{}, fmt.Errorf("could not insert to blockchain: %w", err)
 	}
 
 	return db.CreateHealthRecordResult{

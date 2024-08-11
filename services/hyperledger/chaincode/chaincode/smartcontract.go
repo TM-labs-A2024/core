@@ -12,9 +12,9 @@ type SmartContract struct {
 }
 
 type HealthRecord struct {
-	ID      string
-	Content string
-	Address string
+	ID      string `json:"id"`
+	Content string `json:"content"`
+	Address string `json:"address"`
 }
 
 func (s *SmartContract) CreateHealthRecord(ctx contractapi.TransactionContextInterface, id, content, address string) error {
@@ -39,7 +39,6 @@ func (s *SmartContract) CreateHealthRecord(ctx contractapi.TransactionContextInt
 	return ctx.GetStub().PutState(id, healthRecordJSON)
 }
 
-// ReadHealthRecord returns the healthRecord stored in the world state with given id.
 func (s *SmartContract) ReadHealthRecord(ctx contractapi.TransactionContextInterface, id string) (*HealthRecord, error) {
 	healthRecordJSON, err := ctx.GetStub().GetState(id)
 	if err != nil {
@@ -58,7 +57,6 @@ func (s *SmartContract) ReadHealthRecord(ctx contractapi.TransactionContextInter
 	return &healthRecord, nil
 }
 
-// HealthRecordExists returns true when healthRecord with given ID exists in world state
 func (s *SmartContract) HealthRecordExists(ctx contractapi.TransactionContextInterface, id string) (bool, error) {
 	healthRecordJSON, err := ctx.GetStub().GetState(id)
 	if err != nil {
@@ -68,10 +66,7 @@ func (s *SmartContract) HealthRecordExists(ctx contractapi.TransactionContextInt
 	return healthRecordJSON != nil, nil
 }
 
-// GetAllHealthRecords returns all healthRecords found in world state
 func (s *SmartContract) GetAllHealthRecords(ctx contractapi.TransactionContextInterface) ([]*HealthRecord, error) {
-	// range query with empty string for startKey and endKey does an
-	// open-ended query of all healthRecords in the chaincode namespace.
 	resultsIterator, err := ctx.GetStub().GetStateByRange("", "")
 	if err != nil {
 		return nil, err
@@ -96,10 +91,7 @@ func (s *SmartContract) GetAllHealthRecords(ctx contractapi.TransactionContextIn
 	return healthRecords, nil
 }
 
-// GetAllHealthRecords returns all healthRecords found in world state
 func (s *SmartContract) GetAllHealthRecordsByAddress(ctx contractapi.TransactionContextInterface, address string) ([]*HealthRecord, error) {
-	// range query with empty string for startKey and endKey does an
-	// open-ended query of all healthRecords in the chaincode namespace.
 	resultsIterator, err := ctx.GetStub().GetStateByRange("", "")
 	if err != nil {
 		return nil, err

@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"io"
 	"net/http"
-	"os"
-	"path/filepath"
 
 	"github.com/TM-labs-A2024/core/services/backend-server/internal/controller"
 	"github.com/TM-labs-A2024/core/services/backend-server/internal/db"
@@ -134,16 +132,6 @@ func (s *Server) HealthRecordPost(ctx echo.Context) error {
 		Payload:       bytes.NewReader(data),
 	})
 	if err != nil {
-		return err
-	}
-
-	dst, err := os.Create(filepath.Join(storagePath, file.Filename))
-	if err != nil {
-		return err
-	}
-	defer dst.Close()
-
-	if _, err := dst.Write(data); err != nil {
 		return err
 	}
 

@@ -4,8 +4,8 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/TM-labs-A2024/core/services/backend-server/config"
 	"github.com/TM-labs-A2024/core/services/backend-server/internal/controller"
+	"github.com/TM-labs-A2024/core/services/backend-server/pkg/config"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )

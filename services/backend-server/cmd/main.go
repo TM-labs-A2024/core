@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/TM-labs-A2024/core/services/backend-server/config"
 	"github.com/TM-labs-A2024/core/services/backend-server/internal/server"
+	"github.com/TM-labs-A2024/core/services/backend-server/pkg/config"
 )
 
 func main() {
-	config, err := config.LoadConfig()
+	config, err := config.LoadConfig("config.yaml")
 	if err != nil {
 		panic(fmt.Errorf("could not load config %w", err))
 	}
