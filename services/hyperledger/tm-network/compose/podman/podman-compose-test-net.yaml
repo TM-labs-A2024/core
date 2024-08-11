@@ -6,11 +6,11 @@
 version: '3.7'
 
 services:
-  peer0.main.tmlabs.com:
+  peer0.org1.tmlabs.com:
     volumes:
       - ./podman/peercfg:/etc/hyperledger/peercfg
 
-  peer0.aux.tmlabs.com:
+  peer0.org2.tmlabs.com:
     volumes:
       - ./podman/peercfg:/etc/hyperledger/peercfg
 

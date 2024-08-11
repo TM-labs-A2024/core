@@ -41,52 +41,52 @@ Organizations:
       - orderer2.tmlabs.com:7052
       - orderer3.tmlabs.com:7056
       - orderer4.tmlabs.com:7058
-  - &Main
+  - &Org1
     # DefaultOrg defines the organization which is used in the sampleconfig
     # of the fabric.git development environment
-    Name: MainMSP
+    Name: Org1MSP
     # ID to load the MSP definition as
-    ID: MainMSP
-    MSPDir: ../organizations/peerOrganizations/main.tmlabs.com/msp
+    ID: Org1MSP
+    MSPDir: ../organizations/peerOrganizations/org1.tmlabs.com/msp
     # Policies defines the set of policies at this level of the config tree
     # For organization policies, their canonical path is usually
     #   /Channel/<Application|Orderer>/<OrgName>/<PolicyName>
     Policies:
       Readers:
         Type: Signature
-        Rule: "OR('MainMSP.admin', 'MainMSP.peer', 'MainMSP.client')"
+        Rule: "OR('Org1MSP.admin', 'Org1MSP.peer', 'Org1MSP.client')"
       Writers:
         Type: Signature
-        Rule: "OR('MainMSP.admin', 'MainMSP.client')"
+        Rule: "OR('Org1MSP.admin', 'Org1MSP.client')"
       Admins:
         Type: Signature
-        Rule: "OR('MainMSP.admin')"
+        Rule: "OR('Org1MSP.admin')"
       Endorsement:
         Type: Signature
-        Rule: "OR('MainMSP.peer')"
-  - &Aux
+        Rule: "OR('Org1MSP.peer')"
+  - &Org2
     # DefaultOrg defines the organization which is used in the sampleconfig
     # of the fabric.git development environment
-    Name: AuxMSP
+    Name: Org2MSP
     # ID to load the MSP definition as
-    ID: AuxMSP
-    MSPDir: ../organizations/peerOrganizations/aux.tmlabs.com/msp
+    ID: Org2MSP
+    MSPDir: ../organizations/peerOrganizations/org2.tmlabs.com/msp
     # Policies defines the set of policies at this level of the config tree
     # For organization policies, their canonical path is usually
     #   /Channel/<Application|Orderer>/<OrgName>/<PolicyName>
     Policies:
       Readers:
         Type: Signature
-        Rule: "OR('AuxMSP.admin', 'AuxMSP.peer', 'AuxMSP.client')"
+        Rule: "OR('Org2MSP.admin', 'Org2MSP.peer', 'Org2MSP.client')"
       Writers:
         Type: Signature
-        Rule: "OR('AuxMSP.admin', 'AuxMSP.client')"
+        Rule: "OR('Org2MSP.admin', 'Org2MSP.client')"
       Admins:
         Type: Signature
-        Rule: "OR('AuxMSP.admin')"
+        Rule: "OR('Org2MSP.admin')"
       Endorsement:
         Type: Signature
-        Rule: "OR('AuxMSP.peer')"
+        Rule: "OR('Org2MSP.peer')"
 ################################################################################
 #
 #   SECTION: Capabilities
@@ -307,6 +307,6 @@ Profiles:
     Application:
       <<: *ApplicationDefaults
       Organizations:
-        - *Main
-        - *Aux
+        - *Org1
+        - *Org2
       Capabilities: *ApplicationCapabilities

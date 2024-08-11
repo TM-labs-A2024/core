@@ -10,7 +10,7 @@ You will need to have installed **docker-compose with version 1.29 or above** (n
 ## How to use
 
 1. Go to the tm-network directory and run bring up the tm-network **./network.sh up createChannel**
-2. Bring up the Prometheus/Grafana network in the hyperledger/prometheus-grafana directory and run **docker-compose up -d**
+2. Bring up the Prometheus/Grafana network in the tm-network/prometheus-grafana directory and run **docker-compose up -d**
 3. Log in: type “localhost:3000” on your web browser -> username=“admin”, password=“admin” -> set a new password
 4. Browse dashboard and analyse results
    - The default dashboard "HLF Performances Review" can be found and displayed by hovering over the dashboard menu and clicking on the browse button.
@@ -35,8 +35,8 @@ Brings up
 
 Fabric metrics targets:
 
-- `peer0.main.tmlabs.com:9444`
-- `peer0.aux.tmlabs.com:9445`
+- `peer0.org1.tmlabs.com:9444`
+- `peer0.org2.tmlabs.com:9445`
 - `orderer.tmlabs.com:9443`
 
 System and docker metrics targets:

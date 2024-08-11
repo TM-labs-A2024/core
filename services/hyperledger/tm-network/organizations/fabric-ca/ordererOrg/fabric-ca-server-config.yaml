@@ -237,10 +237,10 @@ ldap:
 # which are always stored in lower case.
 #############################################################################
 affiliations:
-   main:
+   org1:
       - department1
       - department2
-   aux:
+   org2:
       - department1
 
 #############################################################################
@@ -301,16 +301,16 @@ signing:
 #     CA certificates though it can still issue end entity certificates.
 ###########################################################################
 csr:
-   cn: ca.tmlabs.com
+   cn: ca.example.com
    names:
       - C: US
         ST: "New York"
         L: "New York"
-        O: tmlabs.com
+        O: example.com
         OU:
    hosts:
      - localhost
-     - tmlabs.com
+     - example.com
    ca:
       expiry: 131400h
       pathlength: 1

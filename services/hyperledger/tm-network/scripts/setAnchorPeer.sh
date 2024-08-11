@@ -8,7 +8,7 @@
 # import utils
 # test network home var targets to test network folder
 # the reason we use a var here is considering with org3 specific folder
-# when invoking this for org3 as hyperledger/scripts/org3-scripts
+# when invoking this for org3 as tm-network/scripts/org3-scripts
 # the value is changed from default as $PWD(tm-network)
 # to .. as relative path to make the import works
 TEST_NETWORK_HOME=${TEST_NETWORK_HOME:-${PWD}}
@@ -23,10 +23,10 @@ createAnchorPeerUpdate() {
   infoln "Generating anchor peer update transaction for Org${ORG} on channel $CHANNEL_NAME"
 
   if [ $ORG -eq 1 ]; then
-    HOST="peer0.main.tmlabs.com"
+    HOST="peer0.org1.tmlabs.com"
     PORT=7051
   elif [ $ORG -eq 2 ]; then
-    HOST="peer0.aux.tmlabs.com"
+    HOST="peer0.org2.tmlabs.com"
     PORT=9051
   elif [ $ORG -eq 3 ]; then
     HOST="peer0.org3.tmlabs.com"

@@ -10,12 +10,12 @@ scrape_configs:
   - job_name: "orderer"
     static_configs:
       - targets: ["orderer.tmlabs.com:9443"]
-  - job_name: "peer0_main"
+  - job_name: "peer0_org1"
     static_configs:
-      - targets: ["peer0.main.tmlabs.com:9444"]
-  - job_name: "peer0_aux"
+      - targets: ["peer0.org1.tmlabs.com:9444"]
+  - job_name: "peer0_org2"
     static_configs:
-      - targets: ["peer0.aux.tmlabs.com:9445"]
+      - targets: ["peer0.org2.tmlabs.com:9445"]
   - job_name: cadvisor
     scrape_interval: 5s
     static_configs:

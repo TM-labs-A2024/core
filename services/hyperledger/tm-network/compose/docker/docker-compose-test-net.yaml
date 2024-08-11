@@ -5,8 +5,8 @@
 
 version: '3.7'
 services:
-  peer0.main.tmlabs.com:
-    container_name: peer0.main.tmlabs.com
+  peer0.org1.tmlabs.com:
+    container_name: peer0.org1.tmlabs.com
     image: hyperledger/fabric-peer:latest
     labels:
       service: hyperledger-fabric
@@ -18,8 +18,8 @@ services:
       - ./docker/peercfg:/etc/hyperledger/peercfg
       - ${DOCKER_SOCK}:/host/var/run/docker.sock
 
-  peer0.aux.tmlabs.com:
-    container_name: peer0.aux.tmlabs.com
+  peer0.org2.tmlabs.com:
+    container_name: peer0.org2.tmlabs.com
     image: hyperledger/fabric-peer:latest
     labels:
       service: hyperledger-fabric

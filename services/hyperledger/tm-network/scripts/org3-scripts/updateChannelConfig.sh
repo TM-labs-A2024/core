@@ -25,7 +25,7 @@ MAX_RETRY=5
 # imports
 # test network home var targets to tm-network folder
 # the reason we use a var here is considering with org3 specific folder
-# when invoking this for org3 as hyperledger/scripts/org3-scripts
+# when invoking this for org3 as tm-network/scripts/org3-scripts
 # the value is changed from default as $PWD (tm-network)
 # to ${PWD}/.. to make the import works
 export TEST_NETWORK_HOME="${PWD}/.."
@@ -47,7 +47,7 @@ createConfigUpdate ${CHANNEL_NAME} ${TEST_NETWORK_HOME}/channel-artifacts/config
 infoln "Signing config transaction"
 signConfigtxAsPeerOrg 1 ${TEST_NETWORK_HOME}/channel-artifacts/org3_update_in_envelope.pb
 
-infoln "Submitting transaction from a different peer (peer0.aux) which also signs it"
+infoln "Submitting transaction from a different peer (peer0.org2) which also signs it"
 setGlobals 2
 set -x
 peer channel update -f ${TEST_NETWORK_HOME}/channel-artifacts/org3_update_in_envelope.pb -c ${CHANNEL_NAME} -o localhost:7050 --ordererTLSHostnameOverride orderer.tmlabs.com --tls --cafile "$ORDERER_CA"

@@ -10,7 +10,7 @@
 # imports
 # test network home var targets to tm-network folder
 # the reason we use a var here is to accommodate scenarios
-# where execution occurs from folders outside of default as $PWD, such as the hyperledger/addOrg3 folder.
+# where execution occurs from folders outside of default as $PWD, such as the tm-network/addOrg3 folder.
 # For setting environment variables, simple relative paths like ".." could lead to unintended references
 # due to how they interact with FABRIC_CFG_PATH. It's advised to specify paths more explicitly,
 # such as using "../${PWD}", to ensure that Fabric's environment variables are pointing to the correct paths.
@@ -19,8 +19,8 @@ TEST_NETWORK_HOME=${TEST_NETWORK_HOME:-${PWD}}
 
 export CORE_PEER_TLS_ENABLED=true
 export ORDERER_CA=${TEST_NETWORK_HOME}/organizations/ordererOrganizations/tmlabs.com/tlsca/tlsca.tmlabs.com-cert.pem
-export PEER0_Main_CA=${TEST_NETWORK_HOME}/organizations/peerOrganizations/main.tmlabs.com/tlsca/tlsca.main.tmlabs.com-cert.pem
-export PEER0_ORG2_CA=${TEST_NETWORK_HOME}/organizations/peerOrganizations/aux.tmlabs.com/tlsca/tlsca.aux.tmlabs.com-cert.pem
+export PEER0_ORG1_CA=${TEST_NETWORK_HOME}/organizations/peerOrganizations/org1.tmlabs.com/tlsca/tlsca.org1.tmlabs.com-cert.pem
+export PEER0_ORG2_CA=${TEST_NETWORK_HOME}/organizations/peerOrganizations/org2.tmlabs.com/tlsca/tlsca.org2.tmlabs.com-cert.pem
 export PEER0_ORG3_CA=${TEST_NETWORK_HOME}/organizations/peerOrganizations/org3.tmlabs.com/tlsca/tlsca.org3.tmlabs.com-cert.pem
 
 # Set environment variables for the peer org
@@ -33,14 +33,14 @@ setGlobals() {
   fi
   infoln "Using organization ${USING_ORG}"
   if [ $USING_ORG -eq 1 ]; then
-    export CORE_PEER_LOCALMSPID=MainMSP
-    export CORE_PEER_TLS_ROOTCERT_FILE=$PEER0_Main_CA
-    export CORE_PEER_MSPCONFIGPATH=${TEST_NETWORK_HOME}/organizations/peerOrganizations/main.tmlabs.com/users/Admin@main.tmlabs.com/msp
+    export CORE_PEER_LOCALMSPID=Org1MSP
+    export CORE_PEER_TLS_ROOTCERT_FILE=$PEER0_ORG1_CA
+    export CORE_PEER_MSPCONFIGPATH=${TEST_NETWORK_HOME}/organizations/peerOrganizations/org1.tmlabs.com/users/Admin@org1.tmlabs.com/msp
     export CORE_PEER_ADDRESS=localhost:7051
   elif [ $USING_ORG -eq 2 ]; then
-    export CORE_PEER_LOCALMSPID=AuxMSP
+    export CORE_PEER_LOCALMSPID=Org2MSP
     export CORE_PEER_TLS_ROOTCERT_FILE=$PEER0_ORG2_CA
-    export CORE_PEER_MSPCONFIGPATH=${TEST_NETWORK_HOME}/organizations/peerOrganizations/aux.tmlabs.com/users/Admin@aux.tmlabs.com/msp
+    export CORE_PEER_MSPCONFIGPATH=${TEST_NETWORK_HOME}/organizations/peerOrganizations/org2.tmlabs.com/users/Admin@org2.tmlabs.com/msp
     export CORE_PEER_ADDRESS=localhost:9051
   elif [ $USING_ORG -eq 3 ]; then
     export CORE_PEER_LOCALMSPID=Org3MSP

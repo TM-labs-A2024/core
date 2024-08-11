@@ -29,17 +29,17 @@ function yaml_ccp {
 ORG=1
 P0PORT=7051
 CAPORT=7054
-PEERPEM=organizations/peerOrganizations/main.tmlabs.com/tlsca/tlsca.main.tmlabs.com-cert.pem
-CAPEM=organizations/peerOrganizations/main.tmlabs.com/ca/ca.main.tmlabs.com-cert.pem
+PEERPEM=organizations/peerOrganizations/org1.tmlabs.com/tlsca/tlsca.org1.tmlabs.com-cert.pem
+CAPEM=organizations/peerOrganizations/org1.tmlabs.com/ca/ca.org1.tmlabs.com-cert.pem
 
-echo "$(json_ccp $ORG $P0PORT $CAPORT $PEERPEM $CAPEM)" > organizations/peerOrganizations/main.tmlabs.com/connection-main.json
-echo "$(yaml_ccp $ORG $P0PORT $CAPORT $PEERPEM $CAPEM)" > organizations/peerOrganizations/main.tmlabs.com/connection-main.yaml
+echo "$(json_ccp $ORG $P0PORT $CAPORT $PEERPEM $CAPEM)" > organizations/peerOrganizations/org1.tmlabs.com/connection-org1.json
+echo "$(yaml_ccp $ORG $P0PORT $CAPORT $PEERPEM $CAPEM)" > organizations/peerOrganizations/org1.tmlabs.com/connection-org1.yaml
 
 ORG=2
 P0PORT=9051
 CAPORT=8054
-PEERPEM=organizations/peerOrganizations/aux.tmlabs.com/tlsca/tlsca.aux.tmlabs.com-cert.pem
-CAPEM=organizations/peerOrganizations/aux.tmlabs.com/ca/ca.aux.tmlabs.com-cert.pem
+PEERPEM=organizations/peerOrganizations/org2.tmlabs.com/tlsca/tlsca.org2.tmlabs.com-cert.pem
+CAPEM=organizations/peerOrganizations/org2.tmlabs.com/ca/ca.org2.tmlabs.com-cert.pem
 
-echo "$(json_ccp $ORG $P0PORT $CAPORT $PEERPEM $CAPEM)" > organizations/peerOrganizations/aux.tmlabs.com/connection-aux.json
-echo "$(yaml_ccp $ORG $P0PORT $CAPORT $PEERPEM $CAPEM)" > organizations/peerOrganizations/aux.tmlabs.com/connection-aux.yaml
+echo "$(json_ccp $ORG $P0PORT $CAPORT $PEERPEM $CAPEM)" > organizations/peerOrganizations/org2.tmlabs.com/connection-org2.json
+echo "$(yaml_ccp $ORG $P0PORT $CAPORT $PEERPEM $CAPEM)" > organizations/peerOrganizations/org2.tmlabs.com/connection-org2.yaml

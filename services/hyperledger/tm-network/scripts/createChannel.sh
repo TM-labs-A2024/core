@@ -119,15 +119,15 @@ createChannel $BFT
 successln "Channel '$CHANNEL_NAME' created"
 
 ## Join all the peers to the channel
-infoln "Joining main peer to the channel..."
+infoln "Joining org1 peer to the channel..."
 joinChannel 1
-infoln "Joining aux peer to the channel..."
+infoln "Joining org2 peer to the channel..."
 joinChannel 2
 
 ## Set the anchor peers for each org in the channel
-infoln "Setting anchor peer for main..."
+infoln "Setting anchor peer for org1..."
 setAnchorPeer 1
-infoln "Setting anchor peer for aux..."
+infoln "Setting anchor peer for org2..."
 setAnchorPeer 2
 
 successln "Channel '$CHANNEL_NAME' joined"

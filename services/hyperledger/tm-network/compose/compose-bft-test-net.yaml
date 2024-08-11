@@ -5,8 +5,8 @@ volumes:
   orderer2.tmlabs.com:
   orderer3.tmlabs.com:
   orderer4.tmlabs.com:
-  peer0.main.tmlabs.com:
-  peer0.aux.tmlabs.com:
+  peer0.org1.tmlabs.com:
+  peer0.org2.tmlabs.com:
 
 networks:
   test:
@@ -185,8 +185,8 @@ services:
 
 
 
-  peer0.main.tmlabs.com:
-    container_name: peer0.main.tmlabs.com
+  peer0.org1.tmlabs.com:
+    container_name: peer0.org1.tmlabs.com
     image: hyperledger/fabric-peer:latest
     labels:
       service: hyperledger-fabric
@@ -200,22 +200,22 @@ services:
       - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
       - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
       # Peer specific variables
-      - CORE_PEER_ID=peer0.main.tmlabs.com
-      - CORE_PEER_ADDRESS=peer0.main.tmlabs.com:7051
+      - CORE_PEER_ID=peer0.org1.tmlabs.com
+      - CORE_PEER_ADDRESS=peer0.org1.tmlabs.com:7051
       - CORE_PEER_LISTENADDRESS=0.0.0.0:7051
-      - CORE_PEER_CHAINCODEADDRESS=peer0.main.tmlabs.com:7052
+      - CORE_PEER_CHAINCODEADDRESS=peer0.org1.tmlabs.com:7052
       - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7052
-      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.main.tmlabs.com:7051
-      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.main.tmlabs.com:7051
-      - CORE_PEER_LOCALMSPID=MainMSP
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org1.tmlabs.com:7051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org1.tmlabs.com:7051
+      - CORE_PEER_LOCALMSPID=Org1MSP
       - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
-      - CORE_OPERATIONS_LISTENADDRESS=peer0.main.tmlabs.com:9444
+      - CORE_OPERATIONS_LISTENADDRESS=peer0.org1.tmlabs.com:9444
       - CORE_METRICS_PROVIDER=prometheus
-      - CHAINCODE_AS_A_SERVICE_BUILDER_CONFIG={"peername":"peer0main"}
+      - CHAINCODE_AS_A_SERVICE_BUILDER_CONFIG={"peername":"peer0org1"}
       - CORE_CHAINCODE_EXECUTETIMEOUT=300s
     volumes:
-      - ../organizations/peerOrganizations/main.tmlabs.com/peers/peer0.main.tmlabs.com:/etc/hyperledger/fabric
-      - peer0.main.tmlabs.com:/var/hyperledger/production
+      - ../organizations/peerOrganizations/org1.tmlabs.com/peers/peer0.org1.tmlabs.com:/etc/hyperledger/fabric
+      - peer0.org1.tmlabs.com:/var/hyperledger/production
     working_dir: /root
     command: peer node start
     ports:
@@ -224,8 +224,8 @@ services:
     networks:
       - test
 
-  peer0.aux.tmlabs.com:
-    container_name: peer0.aux.tmlabs.com
+  peer0.org2.tmlabs.com:
+    container_name: peer0.org2.tmlabs.com
     image: hyperledger/fabric-peer:latest
     labels:
       service: hyperledger-fabric
@@ -239,22 +239,22 @@ services:
       - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
       - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
       # Peer specific variables
-      - CORE_PEER_ID=peer0.aux.tmlabs.com
-      - CORE_PEER_ADDRESS=peer0.aux.tmlabs.com:9051
+      - CORE_PEER_ID=peer0.org2.tmlabs.com
+      - CORE_PEER_ADDRESS=peer0.org2.tmlabs.com:9051
       - CORE_PEER_LISTENADDRESS=0.0.0.0:9051
-      - CORE_PEER_CHAINCODEADDRESS=peer0.aux.tmlabs.com:9052
+      - CORE_PEER_CHAINCODEADDRESS=peer0.org2.tmlabs.com:9052
       - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:9052
-      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.aux.tmlabs.com:9051
-      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.aux.tmlabs.com:9051
-      - CORE_PEER_LOCALMSPID=AuxMSP
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org2.tmlabs.com:9051
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org2.tmlabs.com:9051
+      - CORE_PEER_LOCALMSPID=Org2MSP
       - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
-      - CORE_OPERATIONS_LISTENADDRESS=peer0.aux.tmlabs.com:9445
+      - CORE_OPERATIONS_LISTENADDRESS=peer0.org2.tmlabs.com:9445
       - CORE_METRICS_PROVIDER=prometheus
-      - CHAINCODE_AS_A_SERVICE_BUILDER_CONFIG={"peername":"peer0aux"}
+      - CHAINCODE_AS_A_SERVICE_BUILDER_CONFIG={"peername":"peer0org2"}
       - CORE_CHAINCODE_EXECUTETIMEOUT=300s
     volumes:
-      - ../organizations/peerOrganizations/aux.tmlabs.com/peers/peer0.aux.tmlabs.com:/etc/hyperledger/fabric
-      - peer0.aux.tmlabs.com:/var/hyperledger/production
+      - ../organizations/peerOrganizations/org2.tmlabs.com/peers/peer0.org2.tmlabs.com:/etc/hyperledger/fabric
+      - peer0.org2.tmlabs.com:/var/hyperledger/production
     working_dir: /root
     command: peer node start
     ports:
