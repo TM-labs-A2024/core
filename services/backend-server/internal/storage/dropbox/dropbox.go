@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"path/filepath"
@@ -68,6 +69,9 @@ func (c *DropboxClient) UploadFile(patientId uuid.UUID, body io.Reader) (string,
 		return "", err
 	}
 	defer resp.Body.Close()
+
+	data, _ = io.ReadAll(resp.Body)
+	log.Println(string(data))
 
 	return path, nil
 }

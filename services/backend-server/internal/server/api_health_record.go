@@ -10,6 +10,7 @@ import (
 	"github.com/TM-labs-A2024/core/services/backend-server/internal/controller"
 	"github.com/TM-labs-A2024/core/services/backend-server/internal/db"
 	"github.com/TM-labs-A2024/core/services/backend-server/internal/server/models"
+	"github.com/TM-labs-A2024/core/services/backend-server/internal/utils"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/h2non/filetype"
@@ -56,11 +57,25 @@ func (s *Server) HealthRecordHealthReacordIDGet(ctx echo.Context) error {
 		return err
 	}
 
+	key, err := utils.GetAESDecrypted(
+		hr.PublicKey,
+		patient.PrivateKey,
+		s.ivEncryptionKey,
+	)
+	if err != nil {
+		return err
+	}
+
+	url, err := s.Controller.GenerateURL(key)
+	if err != nil {
+		return err
+	}
+
 	resp, err := models.NewHealthRecordResponse(db.CreateHealthRecordResult{
 		HealthRecord: hr,
 		Specialty:    specialty,
 		Patient:      patient,
-	}, s.ivEncryptionKey)
+	}, url.String())
 	if err != nil {
 		return err
 	}
@@ -132,7 +147,21 @@ func (s *Server) HealthRecordPost(ctx echo.Context) error {
 		return err
 	}
 
-	resp, err := models.NewHealthRecordResponse(res, s.ivEncryptionKey)
+	key, err := utils.GetAESDecrypted(
+		res.HealthRecord.PublicKey,
+		res.Patient.PrivateKey,
+		s.ivEncryptionKey,
+	)
+	if err != nil {
+		return err
+	}
+
+	url, err := s.Controller.GenerateURL(key)
+	if err != nil {
+		return err
+	}
+
+	resp, err := models.NewHealthRecordResponse(res, url.String())
 	if err != nil {
 		return err
 	}
@@ -159,7 +188,21 @@ func (s *Server) HealthRecordEvolutionPost(ctx echo.Context) error {
 		return err
 	}
 
-	resp, err := models.NewHealthRecordResponse(res, s.ivEncryptionKey)
+	key, err := utils.GetAESDecrypted(
+		res.HealthRecord.PublicKey,
+		res.Patient.PrivateKey,
+		s.ivEncryptionKey,
+	)
+	if err != nil {
+		return err
+	}
+
+	url, err := s.Controller.GenerateURL(key)
+	if err != nil {
+		return err
+	}
+
+	resp, err := models.NewHealthRecordResponse(res, url.String())
 	if err != nil {
 		return err
 	}

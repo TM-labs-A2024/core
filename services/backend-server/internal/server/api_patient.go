@@ -6,6 +6,7 @@ import (
 	"github.com/TM-labs-A2024/core/services/backend-server/internal/controller"
 	"github.com/TM-labs-A2024/core/services/backend-server/internal/db"
 	"github.com/TM-labs-A2024/core/services/backend-server/internal/server/models"
+	"github.com/TM-labs-A2024/core/services/backend-server/internal/utils"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -213,11 +214,25 @@ func (s *Server) PatientsGovIDHealthRecordsGet(ctx echo.Context) error {
 			return err
 		}
 
+		key, err := utils.GetAESDecrypted(
+			healthRecord.PublicKey,
+			patient.PrivateKey,
+			s.ivEncryptionKey,
+		)
+		if err != nil {
+			return err
+		}
+
+		url, err := s.Controller.GenerateURL(key)
+		if err != nil {
+			return err
+		}
+
 		resp, err := models.NewHealthRecordResponse(db.CreateHealthRecordResult{
 			HealthRecord: healthRecord,
 			Specialty:    specialty,
 			Patient:      patient,
-		}, s.ivEncryptionKey)
+		}, url.String())
 		if err != nil {
 			return err
 		}
@@ -282,11 +297,25 @@ func (s *Server) PatientsGovIDHealthRecordsSpecialtyIDGet(ctx echo.Context) erro
 			return err
 		}
 
+		key, err := utils.GetAESDecrypted(
+			healthRecord.PublicKey,
+			patient.PrivateKey,
+			s.ivEncryptionKey,
+		)
+		if err != nil {
+			return err
+		}
+
+		url, err := s.Controller.GenerateURL(key)
+		if err != nil {
+			return err
+		}
+
 		resp, err := models.NewHealthRecordResponse(db.CreateHealthRecordResult{
 			HealthRecord: healthRecord,
 			Specialty:    specialty,
 			Patient:      patient,
-		}, s.ivEncryptionKey)
+		}, url.String())
 		if err != nil {
 			return err
 		}
@@ -318,11 +347,25 @@ func (s *Server) PatientsGovIDOrdersGet(ctx echo.Context) error {
 			return err
 		}
 
+		key, err := utils.GetAESDecrypted(
+			healthRecord.PublicKey,
+			patient.PrivateKey,
+			s.ivEncryptionKey,
+		)
+		if err != nil {
+			return err
+		}
+
+		url, err := s.Controller.GenerateURL(key)
+		if err != nil {
+			return err
+		}
+
 		resp, err := models.NewHealthRecordResponse(db.CreateHealthRecordResult{
 			HealthRecord: healthRecord,
 			Specialty:    specialty,
 			Patient:      patient,
-		}, s.ivEncryptionKey)
+		}, url.String())
 		if err != nil {
 			return err
 		}

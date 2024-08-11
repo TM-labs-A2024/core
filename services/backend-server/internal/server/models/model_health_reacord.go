@@ -2,7 +2,6 @@ package models
 
 import (
 	"github.com/TM-labs-A2024/core/services/backend-server/internal/db"
-	"github.com/TM-labs-A2024/core/services/backend-server/internal/utils"
 	"github.com/google/uuid"
 )
 
@@ -47,20 +46,13 @@ type HealthRecordResponse struct {
 	Specialty Specialty `json:"specialty"`
 }
 
-func NewHealthRecordResponse(res db.CreateHealthRecordResult, iv string) (HealthRecordResponse, error) {
+func NewHealthRecordResponse(res db.CreateHealthRecordResult, content string) (HealthRecordResponse, error) {
 	specialty := NewSpecialtyResponse(res.Specialty)
-	url, err := utils.GetAESDecrypted(
-		res.HealthRecord.PublicKey,
-		res.Patient.PrivateKey,
-		iv,
-	)
-	if err != nil {
-		return HealthRecordResponse{}, err
-	}
+
 	return HealthRecordResponse{
 		ID: res.HealthRecord.ID.Bytes,
 		HealthRecord: HealthRecord{
-			Content:       url,
+			Content:       content,
 			Type:          string(res.HealthRecord.Type),
 			ContentFormat: res.HealthRecord.ContentFormat,
 			Title:         res.HealthRecord.Title,
