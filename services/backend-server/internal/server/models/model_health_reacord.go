@@ -39,6 +39,8 @@ type EvolutionRequest struct {
 		History     string `json:"history"`
 		Examination string `json:"examination"`
 		Comments    string `json:"comments"`
+		Summary     string `json:"summary"`
+		Diagnostic  string `json:"diagnostic"`
 	} `json:"payload"`
 }
 

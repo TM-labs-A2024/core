@@ -6,3 +6,9 @@ config.yaml
 services/hyperledger/channel-artifacts/health-records-channel.block
 services/hyperledger/log.txt
 services/hyperledger/chaincode/vendor
+services/hyperledger/tm-network/channel-artifacts
+services/hyperledger/tm-network/organizations/fabric-ca
+services/hyperledger/tm-network/organizations/ordererOrganizations
+services/hyperledger/tm-network/organizations/peerOrganizations
+services/hyperledger/tm-network/health-record.tar.gz
+services/hyperledger/tm-network/log.txt
