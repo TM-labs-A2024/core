@@ -3,6 +3,5 @@ records
 .vscode
 .local_utils
 config.yaml
-services/hyperledger/bin
 services/hyperledger/channel-artifacts/health-records-channel.block
 services/hyperledger/log.txt

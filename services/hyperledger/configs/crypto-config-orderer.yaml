@@ -1,9 +1,0 @@
-OrdererOrgs:
-  - Name: Orderer
-    Domain: tmlabs.com
-    EnableNodeOUs: true
-
-    Specs:
-      - Hostname: orderer
-        SANS:
-          - localhost
