@@ -12,3 +12,4 @@ services/hyperledger/tm-network/organizations/ordererOrganizations
 services/hyperledger/tm-network/organizations/peerOrganizations
 services/hyperledger/tm-network/health-record.tar.gz
 services/hyperledger/tm-network/log.txt
+services/hyperledger/bin
