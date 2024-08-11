@@ -186,6 +186,7 @@ func (c Controller) ListPatients(doctorID uuid.UUID) ([]db.Patient, error) {
 
 	result := []db.Patient{}
 	for _, patient := range patients {
+		patient.Pending = false
 		if approved, ok := approvedPatientLedger[patient.ID]; ok && approved {
 			continue
 		} else if ok && !approved {

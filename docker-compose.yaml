@@ -1,8 +1,3 @@
-volumes:
-  orderer.tmlabs.com:
-  peer0.main.tmlabs.com:
-  peer0.aux.tmlabs.com:
-
 services:
   backend.tmlabs.com:
     build:
@@ -16,7 +11,6 @@ services:
       - ./records:/records
       - ./config.yaml:/config.yaml
 
-  
   db.tmlabs.com:
     image: postgres:16
     restart: always
@@ -29,27 +23,8 @@ services:
       - ./services/backend-server/internal/db/sql/schema:/docker-entrypoint-initdb.d
     ports:
       - 5432:5432
-    depends_on:
-      - orderer.tmlabs.com
-      - peer0.main.tmlabs.com
-      - peer0.aux.tmlabs.com
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
       interval: 30s
       timeout: 1m
       retries: 50
-
-  orderer.tmlabs.com:
-    extends:
-      file: ./services/hyperledger/compose-hyperledger.yaml
-      service: orderer.tmlabs.com
-  
-  peer0.main.tmlabs.com:
-    extends:
-      file: ./services/hyperledger/compose-hyperledger.yaml
-      service: peer0.main.tmlabs.com
-
-  peer0.aux.tmlabs.com:
-    extends:
-      file: ./services/hyperledger/compose-hyperledger.yaml
-      service: peer0.aux.tmlabs.com
