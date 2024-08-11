@@ -112,8 +112,11 @@ func (s Server) AddRoutes() {
 	// HealthRecordPost - Add a new health-record to the system
 	restricted.POST("/health-record", s.HealthRecordPost)
 
-	// HealthRecordJSONPost - Add a new health-record to the system with only JSON data
+	// HealthRecordEvolutionPost - Add a new health-record to the system with only JSON data
 	restricted.POST("/health-record/evolution", s.HealthRecordEvolutionPost)
+
+	// HealthRecordDetach - Add a new health-record to the system with only JSON data
+	restricted.POST("/health-record/:healthRecordId/detach", s.HealthRecordHealthReacordIDDetatchPost)
 
 	// InstitutionsApprovedGet - List ALL approved institutions
 	unrestricted.GET("/institutions/approved", s.InstitutionsApprovedGet)

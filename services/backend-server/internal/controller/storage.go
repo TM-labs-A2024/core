@@ -12,6 +12,10 @@ func (c *Controller) UploadFile(patientId uuid.UUID, body io.Reader) (string, er
 }
 
 func (c *Controller) GenerateURL(key string) (*url.URL, error) {
+	if key == "" {
+		return nil, nil
+	}
+
 	return c.storage.GenerateURL(key)
 }
 

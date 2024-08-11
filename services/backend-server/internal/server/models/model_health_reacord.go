@@ -1,6 +1,8 @@
 package models
 
 import (
+	"time"
+
 	"github.com/TM-labs-A2024/core/services/backend-server/internal/db"
 	"github.com/google/uuid"
 )
@@ -44,6 +46,7 @@ type HealthRecordResponse struct {
 	ID uuid.UUID `json:"id"`
 	HealthRecord
 	Specialty Specialty `json:"specialty"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 func NewHealthRecordResponse(res db.CreateHealthRecordResult, content string) (HealthRecordResponse, error) {

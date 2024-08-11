@@ -139,7 +139,7 @@ CREATE TABLE IF NOT EXISTS health_record (
     author TEXT NOT NULL,
     title TEXT NOT NULL,
     description TEXT NOT NULL,
-    public_key TEXT NOT NULL,
+    public_key TEXT,
     type HEALTH_RECORD_TYPE NOT NULL,
     specialty_id UUID NOT NULL,
     content_format TEXT NOT NULL,

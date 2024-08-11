@@ -150,7 +150,7 @@ func (c Controller) DeleteHealthRecordByID(id uuid.UUID) error {
 }
 
 func (c Controller) DeleteHealthRecordDataByID(id uuid.UUID) error {
-	return c.queries.DeleteHealthRecordByID(context.Background(), pgtype.UUID{
+	return c.queries.DeleteHealthRecordDataByID(context.Background(), pgtype.UUID{
 		Bytes: id,
 		Valid: true,
 	})
@@ -236,7 +236,10 @@ func (c Controller) createHealthRecord(txQuery *db.Queries, args CreateHealthRec
 			Title:         args.Title,
 			Description:   args.Description,
 			Author:        doctor.Firstname + " " + doctor.Lastname,
-			PublicKey:     encryptedURL,
+			PublicKey: pgtype.Text{
+				String: encryptedURL,
+				Valid:  encryptedURL != "",
+			},
 		},
 	)
 	if err != nil {

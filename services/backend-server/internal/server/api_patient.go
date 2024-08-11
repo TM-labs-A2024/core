@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/TM-labs-A2024/core/services/backend-server/internal/controller"
@@ -199,12 +200,12 @@ func (s *Server) PatientsGovIDHealthRecordsGet(ctx echo.Context) error {
 
 	healthRecords, err := s.Controller.ListHealthRecordPatientsGovID(govID)
 	if err != nil {
-		return err
+		return fmt.Errorf("cannot fetch health-record", err)
 	}
 
 	patient, err := s.Controller.GetPatientByGovID(govID)
 	if err != nil {
-		return err
+		return fmt.Errorf("cannot fetch patient", err)
 	}
 
 	resps := []models.HealthRecordResponse{}
@@ -215,7 +216,7 @@ func (s *Server) PatientsGovIDHealthRecordsGet(ctx echo.Context) error {
 		}
 
 		key, err := utils.GetAESDecrypted(
-			healthRecord.PublicKey,
+			healthRecord.PublicKey.String,
 			patient.PrivateKey,
 			s.ivEncryptionKey,
 		)
@@ -228,11 +229,16 @@ func (s *Server) PatientsGovIDHealthRecordsGet(ctx echo.Context) error {
 			return err
 		}
 
+		content := ""
+		if url != nil {
+			content = url.String()
+		}
+
 		resp, err := models.NewHealthRecordResponse(db.CreateHealthRecordResult{
 			HealthRecord: healthRecord,
 			Specialty:    specialty,
 			Patient:      patient,
-		}, url.String())
+		}, content)
 		if err != nil {
 			return err
 		}
@@ -298,7 +304,7 @@ func (s *Server) PatientsGovIDHealthRecordsSpecialtyIDGet(ctx echo.Context) erro
 		}
 
 		key, err := utils.GetAESDecrypted(
-			healthRecord.PublicKey,
+			healthRecord.PublicKey.String,
 			patient.PrivateKey,
 			s.ivEncryptionKey,
 		)
@@ -311,11 +317,16 @@ func (s *Server) PatientsGovIDHealthRecordsSpecialtyIDGet(ctx echo.Context) erro
 			return err
 		}
 
+		content := ""
+		if url != nil {
+			content = url.String()
+		}
+
 		resp, err := models.NewHealthRecordResponse(db.CreateHealthRecordResult{
 			HealthRecord: healthRecord,
 			Specialty:    specialty,
 			Patient:      patient,
-		}, url.String())
+		}, content)
 		if err != nil {
 			return err
 		}
@@ -348,7 +359,7 @@ func (s *Server) PatientsGovIDOrdersGet(ctx echo.Context) error {
 		}
 
 		key, err := utils.GetAESDecrypted(
-			healthRecord.PublicKey,
+			healthRecord.PublicKey.String,
 			patient.PrivateKey,
 			s.ivEncryptionKey,
 		)
@@ -361,11 +372,16 @@ func (s *Server) PatientsGovIDOrdersGet(ctx echo.Context) error {
 			return err
 		}
 
+		content := ""
+		if url != nil {
+			content = url.String()
+		}
+
 		resp, err := models.NewHealthRecordResponse(db.CreateHealthRecordResult{
 			HealthRecord: healthRecord,
 			Specialty:    specialty,
 			Patient:      patient,
-		}, url.String())
+		}, content)
 		if err != nil {
 			return err
 		}

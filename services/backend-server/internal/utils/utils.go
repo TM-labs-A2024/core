@@ -44,6 +44,10 @@ func rand32ByteStringBytesMaskImprSrcUnsafe() string {
 
 // GetAESDecrypted decrypts given text in AES 256 CBC
 func GetAESDecrypted(encrypted, key, iv string) (string, error) {
+	if encrypted == "" {
+		return "", nil
+	}
+
 	ciphertext, err := base64.StdEncoding.DecodeString(encrypted)
 
 	if err != nil {

@@ -32,6 +32,20 @@ func (s *Server) HealthRecordHealthReacordIDDelete(ctx echo.Context) error {
 	return ctx.NoContent(http.StatusNoContent)
 }
 
+// HealthRecordHealthReacordIDDetatchPost - Deletes a health-record on the DB ONLY
+func (s *Server) HealthRecordHealthReacordIDDetatchPost(ctx echo.Context) error {
+	healthReacordIDStr := ctx.Param("healthRecordId")
+	healthReacordID, err := uuid.Parse(healthReacordIDStr)
+	if err != nil {
+		return ctx.String(http.StatusBadRequest, err.Error())
+	}
+
+	if err := s.Controller.DeleteHealthRecordDataByID(healthReacordID); err != nil {
+		return err
+	}
+	return ctx.NoContent(http.StatusNoContent)
+}
+
 // HealthRecordHealthReacordIDGet - Find health-record by ID
 func (s *Server) HealthRecordHealthReacordIDGet(ctx echo.Context) error {
 	healthReacordIDStr := ctx.Param("healthRecordId")
@@ -56,7 +70,7 @@ func (s *Server) HealthRecordHealthReacordIDGet(ctx echo.Context) error {
 	}
 
 	key, err := utils.GetAESDecrypted(
-		hr.PublicKey,
+		hr.PublicKey.String,
 		patient.PrivateKey,
 		s.ivEncryptionKey,
 	)
@@ -69,11 +83,16 @@ func (s *Server) HealthRecordHealthReacordIDGet(ctx echo.Context) error {
 		return err
 	}
 
+	content := ""
+	if url != nil {
+		content = url.String()
+	}
+
 	resp, err := models.NewHealthRecordResponse(db.CreateHealthRecordResult{
 		HealthRecord: hr,
 		Specialty:    specialty,
 		Patient:      patient,
-	}, url.String())
+	}, content)
 	if err != nil {
 		return err
 	}
@@ -136,7 +155,7 @@ func (s *Server) HealthRecordPost(ctx echo.Context) error {
 	}
 
 	key, err := utils.GetAESDecrypted(
-		res.HealthRecord.PublicKey,
+		res.HealthRecord.PublicKey.String,
 		res.Patient.PrivateKey,
 		s.ivEncryptionKey,
 	)
@@ -149,7 +168,12 @@ func (s *Server) HealthRecordPost(ctx echo.Context) error {
 		return err
 	}
 
-	resp, err := models.NewHealthRecordResponse(res, url.String())
+	content := ""
+	if url != nil {
+		content = url.String()
+	}
+
+	resp, err := models.NewHealthRecordResponse(res, content)
 	if err != nil {
 		return err
 	}
@@ -177,7 +201,7 @@ func (s *Server) HealthRecordEvolutionPost(ctx echo.Context) error {
 	}
 
 	key, err := utils.GetAESDecrypted(
-		res.HealthRecord.PublicKey,
+		res.HealthRecord.PublicKey.String,
 		res.Patient.PrivateKey,
 		s.ivEncryptionKey,
 	)
@@ -190,7 +214,12 @@ func (s *Server) HealthRecordEvolutionPost(ctx echo.Context) error {
 		return err
 	}
 
-	resp, err := models.NewHealthRecordResponse(res, url.String())
+	content := ""
+	if url != nil {
+		content = url.String()
+	}
+
+	resp, err := models.NewHealthRecordResponse(res, content)
 	if err != nil {
 		return err
 	}

@@ -383,6 +383,10 @@ RETURNING *;
 -- name: DeleteHealthRecordByID :exec
 DELETE FROM health_record
 WHERE id = $1;
+-- name: DeleteHealthRecordDataByID :exec
+UPDATE health_record
+SET public_key = null
+WHERE id = $1;
 -- name: GetHealthRecordByID :one
 SELECT *
 FROM health_record
