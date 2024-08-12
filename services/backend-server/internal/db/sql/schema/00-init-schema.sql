@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS patient (
     private_key TEXT NOT NULL,
     blockchain_address TEXT NOT NULL,
     PRIMARY KEY(id),
-    CONSTRAINT fk_institution FOREIGN KEY(institution_id) REFERENCES institution(id) ON DELETE CASCADE
+    CONSTRAINT fk_institution FOREIGN KEY(institution_id) REFERENCES institution(id) ON DELETE SET NULL
 );
 CREATE TABLE IF NOT EXISTS doctor (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
