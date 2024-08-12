@@ -526,7 +526,7 @@ func (c Controller) ListOrdersByPatientGovID(govID string) ([]db.HealthRecord, e
 		context.Background(),
 		db.ListHealthRecordsByTypeAndPatientIDParams{
 			PatientID: patient.ID,
-			Type:      "order",
+			Type:      db.HealthRecordTypeOrden,
 		},
 	)
 	if err != nil {
