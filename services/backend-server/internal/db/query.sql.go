@@ -2060,9 +2060,10 @@ func (q *Queries) ListNurses(ctx context.Context) ([]Nurse, error) {
 }
 
 const listNursesByInstitutionID = `-- name: ListNursesByInstitutionID :many
-SELECT created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, sex, email, password, phone_number, credentials, pending
-FROM nurse
-WHERE institution_id = $1
+SELECT n.created_at, n.updated_at, n.id, n.institution_id, n.firstname, n.lastname, n.gov_id, n.birthdate, n.sex, n.email, n.password, n.phone_number, n.credentials, n.pending
+FROM nurse n
+JOIN institution_enrollment_request er ON er.doctor_id = n.id
+WHERE n.institution_id = $1 AND er.approved = TRUE
 `
 
 func (q *Queries) ListNursesByInstitutionID(ctx context.Context, institutionID pgtype.UUID) ([]Nurse, error) {
