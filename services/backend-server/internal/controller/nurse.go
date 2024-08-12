@@ -2,12 +2,14 @@ package controller
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"github.com/TM-labs-A2024/core/services/backend-server/internal/constants"
 	"github.com/TM-labs-A2024/core/services/backend-server/internal/db"
 	"github.com/TM-labs-A2024/core/services/backend-server/internal/server/models"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -41,6 +43,15 @@ func (c Controller) GetNurseByLogin(email, crypt string) (db.Nurse, error) {
 }
 
 func (c Controller) CreateNurse(req models.NursePostRequest) (db.Nurse, error) {
+	tx, err := c.pool.BeginTx(context.Background(), pgx.TxOptions{})
+	if err != nil {
+		c.logger.Debug("error message1:", slog.String("err", err.Error()))
+		return db.Nurse{}, err
+	}
+
+	defer tx.Rollback(context.Background())
+	txQuery := c.queries.WithTx(tx)
+
 	birthdate, err := time.Parse(constants.ISOLayout, req.Birthdate)
 	if err != nil {
 		return db.Nurse{}, err
@@ -63,8 +74,30 @@ func (c Controller) CreateNurse(req models.NursePostRequest) (db.Nurse, error) {
 		Credentials: req.Credentials,
 		Crypt:       req.Password,
 		Sex:         req.Sex,
+		Pending:     true,
 	})
 	if err != nil {
+		return db.Nurse{}, err
+	}
+
+	_, err = txQuery.CreateInstitutionEnrollmentRequest(
+		context.Background(),
+		db.CreateInstitutionEnrollmentRequestParams{
+			NurseID: pgtype.UUID{
+				Valid: true,
+				Bytes: nurse.ID.Bytes,
+			},
+			InstitutionID: pgtype.UUID{
+				Valid: true,
+				Bytes: nurse.InstitutionID.Bytes,
+			},
+		},
+	)
+	if err != nil {
+		return db.Nurse{}, err
+	}
+
+	if err := tx.Commit(context.Background()); err != nil {
 		return db.Nurse{}, err
 	}
 

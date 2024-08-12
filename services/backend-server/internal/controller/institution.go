@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"log"
 	"log/slog"
 
 	"github.com/TM-labs-A2024/core/services/backend-server/internal/db"
@@ -171,19 +172,20 @@ func (c Controller) updateInstitutionEnrollmentRequestByID(erByID db.Institution
 	}
 
 	if erByID.NurseID.Valid {
-		nurse, err := c.queries.GetNurseByID(context.Background(), erByID.NurseID)
+		nurse, err := txQuery.GetNurseByID(context.Background(), erByID.NurseID)
 		if err != nil {
 			return db.InstitutionEnrollmentRequest{}, err
 		}
 
-		count, err := c.queries.CountPendingInstitutionEnrollmentRequestByNurseID(context.Background(), er.NurseID)
+		count, err := txQuery.CountPendingInstitutionEnrollmentRequestByNurseID(context.Background(), er.NurseID)
 		if err != nil {
 			return db.InstitutionEnrollmentRequest{}, err
 
 		}
 
 		nurse.Pending = count > 0
-		if _, err := c.queries.UpdateNurseByID(context.Background(), db.UpdateNurseByIDParams{
+		log.Println(er.Pending)
+		if _, err := txQuery.UpdateNurseByID(context.Background(), db.UpdateNurseByIDParams{
 			InstitutionID: nurse.InstitutionID,
 			Firstname:     nurse.Firstname,
 			Lastname:      nurse.Lastname,
