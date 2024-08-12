@@ -117,26 +117,31 @@ func (c Controller) CreateEvolution(args CreateEvolutionArgs) (db.CreateHealthRe
 			Bytes: args.InstitutionID,
 			Valid: true,
 		}
+		patient.Status = db.PatientStatusHospitalizado
+	} else {
+		patient.Bed = ""
+		patient.InstitutionID = pgtype.UUID{}
+		patient.Status = db.PatientStatusRegular
+	}
 
-		if _, err := txQuery.UpdatePatientByID(
-			context.Background(),
-			db.UpdatePatientByIDParams{
-				Firstname:     patient.Firstname,
-				Lastname:      patient.Lastname,
-				GovID:         patient.GovID,
-				Birthdate:     patient.Birthdate,
-				Email:         patient.Email,
-				PhoneNumber:   patient.PhoneNumber,
-				Sex:           patient.Sex,
-				Pending:       patient.Pending,
-				Status:        db.PatientStatusHospitalizado,
-				Bed:           patient.Bed,
-				ID:            patient.ID,
-				InstitutionID: patient.InstitutionID,
-			},
-		); err != nil {
-			return db.CreateHealthRecordResult{}, err
-		}
+	if _, err := txQuery.UpdatePatientByID(
+		context.Background(),
+		db.UpdatePatientByIDParams{
+			Firstname:     patient.Firstname,
+			Lastname:      patient.Lastname,
+			GovID:         patient.GovID,
+			Birthdate:     patient.Birthdate,
+			Email:         patient.Email,
+			PhoneNumber:   patient.PhoneNumber,
+			Sex:           patient.Sex,
+			Pending:       patient.Pending,
+			Status:        patient.Status,
+			Bed:           patient.Bed,
+			ID:            patient.ID,
+			InstitutionID: patient.InstitutionID,
+		},
+	); err != nil {
+		return db.CreateHealthRecordResult{}, err
 	}
 
 	if tx.Commit(context.Background()); err != nil {
