@@ -139,6 +139,10 @@ func (c Controller) CreateEvolution(args CreateEvolutionArgs) (db.CreateHealthRe
 		}
 	}
 
+	if tx.Commit(context.Background()); err != nil {
+		return db.CreateHealthRecordResult{}, err
+	}
+
 	return res, nil
 }
 
