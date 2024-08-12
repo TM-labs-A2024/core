@@ -2062,7 +2062,7 @@ func (q *Queries) ListNurses(ctx context.Context) ([]Nurse, error) {
 const listNursesByInstitutionID = `-- name: ListNursesByInstitutionID :many
 SELECT n.created_at, n.updated_at, n.id, n.institution_id, n.firstname, n.lastname, n.gov_id, n.birthdate, n.sex, n.email, n.password, n.phone_number, n.credentials, n.pending
 FROM nurse n
-JOIN institution_enrollment_request er ON er.doctor_id = n.id
+JOIN institution_enrollment_request er ON er.nurse_id = n.id
 WHERE n.institution_id = $1 AND er.approved = TRUE
 `
 

@@ -232,7 +232,7 @@ FROM nurse;
 -- name: ListNursesByInstitutionID :many
 SELECT n.*
 FROM nurse n
-JOIN institution_enrollment_request er ON er.doctor_id = n.id
+JOIN institution_enrollment_request er ON er.nurse_id = n.id
 WHERE n.institution_id = $1 AND er.approved = TRUE;
 -- name: CreateNurse :one
 INSERT INTO nurse(
