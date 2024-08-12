@@ -129,7 +129,7 @@ func (c Controller) CreateEvolution(args CreateEvolutionArgs) (db.CreateHealthRe
 				PhoneNumber:   patient.PhoneNumber,
 				Sex:           patient.Sex,
 				Pending:       patient.Pending,
-				Status:        patient.Status,
+				Status:        db.PatientStatusHospitalizado,
 				Bed:           patient.Bed,
 				ID:            patient.ID,
 				InstitutionID: patient.InstitutionID,
