@@ -535,3 +535,18 @@ func (c Controller) ListOrdersByPatientGovID(govID string) ([]db.HealthRecord, e
 
 	return healthRecords, nil
 }
+
+func (c *Controller) ListPatientsByInstitutionID(institutionID uuid.UUID) ([]db.Patient, error) {
+	patients, err := c.queries.ListPatientsByInstitutionID(
+		context.Background(),
+		pgtype.UUID{
+			Valid: true,
+			Bytes: institutionID,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return patients, nil
+}

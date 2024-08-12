@@ -216,6 +216,10 @@ WHERE id = ANY(
         FROM health_record
         WHERE specialty_id = $2
     ) > 0;
+-- name: ListPatientsByInstitutionID :many
+SELECT p.*
+FROM patient p
+WHERE institution_id = $1;
 ----------------------------------- NURSE --------------------------------------
 -- name: GetNurseByID :one
 SELECT *
@@ -563,3 +567,7 @@ SELECT *
 FROM government_enrollment_request
 WHERE id = $1
     AND pending = TRUE;
+-- name: GetGovernmentEnrollmentRequestByInsitutionID :one
+SELECT *
+FROM government_enrollment_request
+WHERE institution_id = $1;

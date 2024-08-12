@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -55,6 +56,20 @@ func (c Controller) CreateNurse(req models.NursePostRequest) (db.Nurse, error) {
 	birthdate, err := time.Parse(constants.ISOLayout, req.Birthdate)
 	if err != nil {
 		return db.Nurse{}, err
+	}
+
+	institutionID := pgtype.UUID{
+		Bytes: req.InstitutionID,
+		Valid: true,
+	}
+
+	er, err := txQuery.GetGovernmentEnrollmentRequestByInsitutionID(context.Background(), institutionID)
+	if err != nil {
+		return db.Nurse{}, err
+	}
+
+	if !er.Approved {
+		return db.Nurse{}, fmt.Errorf("institution is not approved: %s", institutionID.Bytes)
 	}
 
 	nurse, err := c.queries.CreateNurse(context.Background(), db.CreateNurseParams{

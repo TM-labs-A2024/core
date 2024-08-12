@@ -200,12 +200,12 @@ func (s *Server) PatientsGovIDHealthRecordsGet(ctx echo.Context) error {
 
 	healthRecords, err := s.Controller.ListHealthRecordPatientsGovID(govID)
 	if err != nil {
-		return fmt.Errorf("cannot fetch health-record", err)
+		return fmt.Errorf("cannot fetch health-record %w", err)
 	}
 
 	patient, err := s.Controller.GetPatientByGovID(govID)
 	if err != nil {
-		return fmt.Errorf("cannot fetch patient", err)
+		return fmt.Errorf("cannot fetch patient %w", err)
 	}
 
 	resps := []models.HealthRecordResponse{}

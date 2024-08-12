@@ -169,6 +169,9 @@ func (s Server) AddRoutes() {
 	// InstitutionsInstitutionIDUsersUserIDDelete - Deletes a institution user
 	restricted.DELETE("/institutions/:institutionId/users/:userId", s.InstitutionsInstitutionIDUsersUserIDDelete)
 
+	// InstitutionPatientsGet - List all patientes hospitalized on institution the nurse belongs to
+	restricted.PUT("/institutions/patients", s.InstitutionsPatientsGet)
+
 	// NursesGet - List ALL nurses
 	restricted.GET("/nurses", s.NursesGet)
 

@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -104,6 +105,20 @@ func (c Controller) CreateDoctor(req models.DoctorsPostRequest) (db.Doctor, erro
 	defer tx.Rollback(context.Background())
 	txQuery := c.queries.WithTx(tx)
 
+	institutionID := pgtype.UUID{
+		Bytes: req.InstitutionID,
+		Valid: true,
+	}
+
+	er, err := txQuery.GetGovernmentEnrollmentRequestByInsitutionID(context.Background(), institutionID)
+	if err != nil {
+		return db.Doctor{}, err
+	}
+
+	if !er.Approved {
+		return db.Doctor{}, fmt.Errorf("institution is not approved: %s", institutionID.Bytes)
+	}
+
 	birthdate, err := time.Parse(constants.ISOLayout, req.Birthdate)
 	if err != nil {
 		return db.Doctor{}, err
@@ -112,13 +127,10 @@ func (c Controller) CreateDoctor(req models.DoctorsPostRequest) (db.Doctor, erro
 	doctor, err := txQuery.CreateDoctor(
 		context.Background(),
 		db.CreateDoctorParams{
-			InstitutionID: pgtype.UUID{
-				Bytes: req.InstitutionID,
-				Valid: true,
-			},
-			Firstname: req.Firstname,
-			Lastname:  req.Lastname,
-			GovID:     req.GovID,
+			InstitutionID: institutionID,
+			Firstname:     req.Firstname,
+			Lastname:      req.Lastname,
+			GovID:         req.GovID,
 			Birthdate: pgtype.Timestamp{
 				Time:  birthdate,
 				Valid: true,

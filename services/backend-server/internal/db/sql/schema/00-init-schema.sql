@@ -23,9 +23,8 @@ CREATE TABLE IF NOT EXISTS institution (
     type INSTITUTION_TYPE NOT NULL,
     gov_id TEXT NOT NULL UNIQUE,
     pending BOOLEAN NOT NULL DEFAULT true,
-    CONSTRAINT fk_government FOREIGN KEY(government_id) REFERENCES government(id) ON DELETE
-    SET NULL,
-        PRIMARY KEY(id)
+    CONSTRAINT fk_government FOREIGN KEY(government_id) REFERENCES government(id) ON DELETE CASCADE,
+    PRIMARY KEY(id)
 );
 CREATE TABLE IF NOT EXISTS specialty (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
@@ -51,8 +50,7 @@ CREATE TABLE IF NOT EXISTS nurse (
     credentials TEXT NOT NULL,
     pending BOOLEAN NOT NULL DEFAULT true,
     PRIMARY KEY(id),
-    CONSTRAINT fk_institution FOREIGN KEY(institution_id) REFERENCES institution(id) ON DELETE
-    SET NULL
+    CONSTRAINT fk_institution FOREIGN KEY(institution_id) REFERENCES institution(id) ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS patient (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
@@ -73,8 +71,7 @@ CREATE TABLE IF NOT EXISTS patient (
     private_key TEXT NOT NULL,
     blockchain_address TEXT NOT NULL,
     PRIMARY KEY(id),
-    CONSTRAINT fk_institution FOREIGN KEY(institution_id) REFERENCES institution(id) ON DELETE
-    SET NULL
+    CONSTRAINT fk_institution FOREIGN KEY(institution_id) REFERENCES institution(id) ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS doctor (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
@@ -93,8 +90,7 @@ CREATE TABLE IF NOT EXISTS doctor (
     pending BOOLEAN NOT NULL DEFAULT true,
     patient_pending BOOLEAN NOT NULL DEFAULT false,
     PRIMARY KEY(id),
-    CONSTRAINT fk_institution FOREIGN KEY(institution_id) REFERENCES institution(id) ON DELETE
-    SET NULL
+    CONSTRAINT fk_institution FOREIGN KEY(institution_id) REFERENCES institution(id) ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS doctor_access_request (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
@@ -104,11 +100,9 @@ CREATE TABLE IF NOT EXISTS doctor_access_request (
     doctor_id UUID NOT NULL,
     pending BOOLEAN NOT NULL DEFAULT true,
     approved BOOLEAN NOT NULL DEFAULT false,
-    CONSTRAINT fk_patient FOREIGN KEY(patient_id) REFERENCES patient(id) ON DELETE
-    SET NULL,
-        CONSTRAINT fk_doctor FOREIGN KEY(doctor_id) REFERENCES doctor(id) ON DELETE
-    SET NULL,
-        CONSTRAINT doctor_patient_pk PRIMARY KEY(doctor_id, patient_id)
+    CONSTRAINT fk_patient FOREIGN KEY(patient_id) REFERENCES patient(id) ON DELETE CASCADE,
+    CONSTRAINT fk_doctor FOREIGN KEY(doctor_id) REFERENCES doctor(id) ON DELETE CASCADE,
+    CONSTRAINT doctor_patient_pk PRIMARY KEY(doctor_id, patient_id)
 );
 CREATE TABLE IF NOT EXISTS institution_enrollment_request (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
@@ -120,16 +114,13 @@ CREATE TABLE IF NOT EXISTS institution_enrollment_request (
     pending BOOLEAN NOT NULL DEFAULT true,
     approved BOOLEAN NOT NULL DEFAULT false,
     PRIMARY KEY(id),
-    CONSTRAINT fk_institution FOREIGN KEY(institution_id) REFERENCES institution(id) ON DELETE
-    SET NULL,
-        CONSTRAINT fk_doctor FOREIGN KEY(doctor_id) REFERENCES doctor(id) ON DELETE
-    SET NULL,
-        CONSTRAINT fk_nurse FOREIGN KEY(nurse_id) REFERENCES nurse(id) ON DELETE
-    SET NULL,
-        CONSTRAINT chk_professional CHECK (
-            doctor_id IS NOT NULL
-            OR nurse_id IS NOT NULL
-        )
+    CONSTRAINT fk_institution FOREIGN KEY(institution_id) REFERENCES institution(id) ON DELETE CASCADE,
+    CONSTRAINT fk_doctor FOREIGN KEY(doctor_id) REFERENCES doctor(id) ON DELETE CASCADE,
+    CONSTRAINT fk_nurse FOREIGN KEY(nurse_id) REFERENCES nurse(id) ON DELETE CASCADE,
+    CONSTRAINT chk_professional CHECK (
+        doctor_id IS NOT NULL
+        OR nurse_id IS NOT NULL
+    )
 );
 CREATE TABLE IF NOT EXISTS health_record (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
@@ -144,10 +135,8 @@ CREATE TABLE IF NOT EXISTS health_record (
     specialty_id UUID NOT NULL,
     content_format TEXT NOT NULL,
     PRIMARY KEY(id),
-    CONSTRAINT fk_patient FOREIGN KEY(patient_id) REFERENCES patient(id) ON DELETE
-    SET NULL,
-        CONSTRAINT fk_specialty FOREIGN KEY(specialty_id) REFERENCES specialty(id) ON DELETE
-    SET NULL
+    CONSTRAINT fk_patient FOREIGN KEY(patient_id) REFERENCES patient(id) ON DELETE CASCADE,
+    CONSTRAINT fk_specialty FOREIGN KEY(specialty_id) REFERENCES specialty(id) ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS government_enrollment_request (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
@@ -158,10 +147,8 @@ CREATE TABLE IF NOT EXISTS government_enrollment_request (
     pending BOOLEAN NOT NULL DEFAULT true,
     approved BOOLEAN NOT NULL DEFAULT false,
     PRIMARY KEY(id),
-    CONSTRAINT fk_institution FOREIGN KEY(institution_id) REFERENCES institution(id) ON DELETE
-    SET NULL,
-        CONSTRAINT fk_government FOREIGN KEY(government_id) REFERENCES government(id) ON DELETE
-    SET NULL
+    CONSTRAINT fk_institution FOREIGN KEY(institution_id) REFERENCES institution(id) ON DELETE CASCADE,
+    CONSTRAINT fk_government FOREIGN KEY(government_id) REFERENCES government(id) ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS institution_user (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
@@ -177,13 +164,10 @@ CREATE TABLE IF NOT EXISTS institution_user (
     phone_number TEXT NOT NULL,
     role INSTITUTION_USER_ROLE NOT NULL,
     PRIMARY KEY(id),
-    CONSTRAINT fk_institution FOREIGN KEY(institution_id) REFERENCES institution(id) ON DELETE
-    SET NULL
+    CONSTRAINT fk_institution FOREIGN KEY(institution_id) REFERENCES institution(id) ON DELETE CASCADE
 );
 CREATE TABLE doctor_specialty(
-    doctor_id UUID REFERENCES doctor(id) ON DELETE
-    SET NULL,
-        specialty_id UUID REFERENCES specialty(id) ON DELETE
-    SET NULL,
-        CONSTRAINT doctor_specialty_pk PRIMARY KEY(doctor_id, specialty_id)
+    doctor_id UUID REFERENCES doctor(id) ON DELETE CASCADE,
+    specialty_id UUID REFERENCES specialty(id) ON DELETE CASCADE,
+    CONSTRAINT doctor_specialty_pk PRIMARY KEY(doctor_id, specialty_id)
 );

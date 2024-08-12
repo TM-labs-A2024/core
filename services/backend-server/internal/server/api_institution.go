@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/TM-labs-A2024/core/services/backend-server/internal/controller"
@@ -45,6 +46,22 @@ func (s *Server) InstitutionsEnrollmentDoctorIDRevokePost(ctx echo.Context) erro
 
 	if err := s.Controller.DeleteInstitutionEnrollmentRequestsByProfID(profID); err != nil {
 		return ctx.String(http.StatusBadRequest, err.Error())
+	}
+
+	doctor, doctorErr := s.Controller.GetDoctorByID(profID)
+	if doctorErr == nil {
+		if err := s.Controller.DeleteDoctorByID(doctor.ID.Bytes); err != nil {
+			return err
+		}
+	} else {
+		nurse, err := s.Controller.GetNurseByID(profID)
+		if err != nil {
+			return fmt.Errorf("prof id cannot be fetch by neither doctor:%w  nor nurse: %w", doctorErr, err)
+		}
+
+		if err := s.Controller.DeleteNurseByID(nurse.ID.Bytes); err != nil {
+			return err
+		}
 	}
 
 	return ctx.NoContent(http.StatusNoContent)
@@ -270,4 +287,26 @@ func (s *Server) InstitutionsPut(ctx echo.Context) error {
 	}
 
 	return ctx.JSON(http.StatusOK, resp)
+}
+
+func (s *Server) InstitutionsPatientsGet(ctx echo.Context) error {
+	user := ctx.Get("user").(*jwt.Token)
+	claims := user.Claims.(*controller.JWTCustomClaims)
+
+	patients, err := s.Controller.ListPatientsByInstitutionID(claims.InstitutionID)
+	if err != nil {
+		return err
+	}
+
+	resps := []models.PatientResponse{}
+	for _, patient := range patients {
+		resp, err := models.NewPatientResponse(patient)
+		if err != nil {
+			return err
+		}
+
+		resps = append(resps, resp)
+	}
+
+	return ctx.JSON(http.StatusOK, resps)
 }
