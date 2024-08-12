@@ -41,7 +41,7 @@ func (s *Server) GovernmentEnrollmentInstitutionIDRevokePost(ctx echo.Context) e
 		return ctx.String(http.StatusBadRequest, err.Error())
 	}
 
-	if err := s.Controller.DeleteGovernmentEnrollmentRequestByInsitutionID(instID); err != nil {
+	if err := s.Controller.DeleteInstitutionByID(instID); err != nil {
 		return err
 	}
 
