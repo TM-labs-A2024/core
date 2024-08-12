@@ -1597,9 +1597,10 @@ func (q *Queries) ListDoctors(ctx context.Context) ([]Doctor, error) {
 }
 
 const listDoctorsByInstitutionID = `-- name: ListDoctorsByInstitutionID :many
-SELECT created_at, updated_at, id, institution_id, firstname, lastname, gov_id, birthdate, email, sex, password, phone_number, credentials, pending, patient_pending
-FROM doctor
-WHERE institution_id = $1
+SELECT d.created_at, d.updated_at, d.id, d.institution_id, d.firstname, d.lastname, d.gov_id, d.birthdate, d.email, d.sex, d.password, d.phone_number, d.credentials, d.pending, d.patient_pending
+FROM doctor d
+JOIN institution_enrollment_request er ON er.doctor_id = d.id
+WHERE d.institution_id = $1 AND er.approved = TRUE
 `
 
 func (q *Queries) ListDoctorsByInstitutionID(ctx context.Context, institutionID pgtype.UUID) ([]Doctor, error) {

@@ -76,9 +76,10 @@ WHERE email = $1
 SELECT *
 FROM doctor;
 -- name: ListDoctorsByInstitutionID :many
-SELECT *
-FROM doctor
-WHERE institution_id = $1;
+SELECT d.*
+FROM doctor d
+JOIN institution_enrollment_request er ON er.doctor_id = d.id
+WHERE d.institution_id = $1 AND er.approved = TRUE;
 -- name: CreateDoctor :one
 INSERT INTO doctor(
         institution_id,
@@ -229,9 +230,10 @@ WHERE id = $1;
 SELECT *
 FROM nurse;
 -- name: ListNursesByInstitutionID :many
-SELECT *
-FROM nurse
-WHERE institution_id = $1;
+SELECT n.*
+FROM nurse n
+JOIN institution_enrollment_request er ON er.doctor_id = n.id
+WHERE n.institution_id = $1 AND er.approved = TRUE;
 -- name: CreateNurse :one
 INSERT INTO nurse(
         institution_id,
