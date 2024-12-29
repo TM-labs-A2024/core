@@ -1,0 +1,40 @@
+services:
+  backend.tmlabs.com:
+    build:
+      dockerfile: ./services/backend-server/Dockerfile
+    ports:
+      - 8080:8080
+    depends_on:
+      db.tmlabs.com:
+        condition: service_healthy
+    volumes:
+      - ./records:/records
+      - ./config.yaml:/config.yaml
+      - ./services/hyperledger/tm-network/organizations/peerOrganizations/org1.tmlabs.com:/hyperledger/tm-network/organizations/peerOrganizations/org1.tmlabs.com
+    networks:
+      - backend-network
+
+  db.tmlabs.com:
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - ./_postgres-data:/var/lib/postgresql/data
+      - ./services/backend-server/internal/db/sql/schema:/docker-entrypoint-initdb.d
+    ports:
+      - 5432:5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 30s
+      timeout: 1m
+      retries: 50
+    networks:
+      - backend-network
+
+networks:
+  backend-network:
+    name: fabric_test
+    external: true
